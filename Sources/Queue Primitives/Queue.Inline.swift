@@ -36,7 +36,7 @@ extension Queue.Inline where Element: ~Copyable {
     /// - Throws: ``Queue/Inline/Error/overflow`` if the queue is full.
     /// - Complexity: O(1)
     @inlinable
-    public mutating func enqueue(_ element: consuming Element) throws(__QueueInlineError) {
+    public mutating func enqueue(_ element: consuming Element) throws(Queue<Element>.Inline.Error) {
         guard _count < capacity else {
             throw .overflow
         }

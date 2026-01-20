@@ -51,8 +51,11 @@ public enum __QueueInlineError: Swift.Error, Sendable, Equatable {
 }
 
 // MARK: - Typealiases (Nest.Name API)
+//
+// IMPORTANT: Extensions MUST include `where Element: ~Copyable` to prevent
+// implicit Copyable constraint. This is a documented Swift compiler limitation.
 
-extension Queue {
+extension Queue where Element: ~Copyable {
     /// Errors that can occur during unbounded queue operations.
     ///
     /// For the unbounded `Queue`, only `invalidCapacity` can occur
@@ -65,7 +68,7 @@ extension Queue {
     public typealias Error = __QueueError
 }
 
-extension Queue.Bounded {
+extension Queue.Bounded where Element: ~Copyable {
     /// Errors that can occur during bounded queue operations.
     ///
     /// ## Cases
@@ -75,7 +78,7 @@ extension Queue.Bounded {
     public typealias Error = __QueueBoundedError
 }
 
-extension Queue.Inline {
+extension Queue.Inline where Element: ~Copyable {
     /// Errors that can occur during inline queue operations.
     ///
     /// For `Queue.Inline`, only `overflow` can occur. The capacity is

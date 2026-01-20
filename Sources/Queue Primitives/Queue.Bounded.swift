@@ -37,7 +37,7 @@ extension Queue.Bounded where Element: ~Copyable {
     /// - Throws: ``Queue/Bounded/Error/overflow`` if the queue is full.
     /// - Complexity: O(1)
     @inlinable
-    public mutating func enqueue(_ element: consuming Element) throws(__QueueBoundedError) {
+    public mutating func enqueue(_ element: consuming Element) throws(Queue<Element>.Bounded.Error) {
         guard _storage.header.count < capacity else {
             throw .overflow
         }
@@ -89,7 +89,7 @@ extension Queue.Bounded where Element: Copyable {
 
     /// Enqueues an element at the back of the queue (CoW-aware).
     @inlinable
-    public mutating func enqueue(_ element: Element) throws(__QueueBoundedError) {
+    public mutating func enqueue(_ element: Element) throws(Queue<Element>.Bounded.Error) {
         makeUnique()
         guard _storage.header.count < capacity else {
             throw .overflow

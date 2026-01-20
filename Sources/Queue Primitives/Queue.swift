@@ -504,7 +504,7 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
         /// - Parameter capacity: Maximum number of elements. Must be non-negative.
         /// - Throws: ``Queue/Bounded/Error/invalidCapacity`` if capacity is negative.
         @inlinable
-        public init(capacity: Int) throws(__QueueBoundedError) {
+        public init(capacity: Int) throws(Queue<Element>.Bounded.Error) {
             guard capacity >= 0 else {
                 throw .invalidCapacity
             }
@@ -546,7 +546,7 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
     /// - Parameter capacity: Number of elements to reserve space for. Must be non-negative.
     /// - Throws: ``Queue/Error/invalidCapacity`` if capacity is negative.
     @inlinable
-    public init(reservingCapacity capacity: Int) throws(__QueueError) {
+    public init(reservingCapacity capacity: Int) throws(Queue<Element>.Error) {
         guard capacity >= 0 else {
             throw .invalidCapacity
         }
