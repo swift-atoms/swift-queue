@@ -17,9 +17,15 @@ let package = Package(
             targets: ["Queue Primitives"]
         )
     ],
+    dependencies: [
+        .package(path: "../swift-list-primitives")
+    ],
     targets: [
         .target(
-            name: "Queue Primitives"
+            name: "Queue Primitives",
+            dependencies: [
+                .product(name: "List Primitives", package: "swift-list-primitives")
+            ]
         ),
         .testTarget(
             name: "Queue Primitives Tests",

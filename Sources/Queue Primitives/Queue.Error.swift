@@ -50,6 +50,50 @@ public enum __QueueInlineError: Swift.Error, Sendable, Equatable {
     case overflow
 }
 
+/// Hoisted implementation of ``Queue/Linked/Error``.
+///
+/// - Note: Use ``Queue/Linked/Error`` in your code, not this type directly.
+public enum __QueueLinkedError: Swift.Error, Sendable, Equatable {
+    /// The queue is empty and the operation requires elements.
+    case empty
+
+    /// The requested capacity is invalid (negative).
+    case invalidCapacity
+}
+
+/// Hoisted implementation of ``Queue/Linked/Bounded/Error``.
+///
+/// - Note: Use ``Queue/Linked/Bounded/Error`` in your code, not this type directly.
+public enum __QueueLinkedBoundedError: Swift.Error, Sendable, Equatable {
+    /// The queue is empty and the operation requires elements.
+    case empty
+
+    /// The requested capacity is invalid (negative).
+    case invalidCapacity
+
+    /// The queue is full and cannot accept more elements.
+    case overflow
+}
+
+/// Hoisted implementation of ``Queue/Linked/Inline/Error``.
+///
+/// - Note: Use ``Queue/Linked/Inline/Error`` in your code, not this type directly.
+public enum __QueueLinkedInlineError: Swift.Error, Sendable, Equatable {
+    /// The queue is empty and the operation requires elements.
+    case empty
+
+    /// The queue is full and cannot accept more elements.
+    case overflow
+}
+
+/// Hoisted implementation of ``Queue/Linked/Small/Error``.
+///
+/// - Note: Use ``Queue/Linked/Small/Error`` in your code, not this type directly.
+public enum __QueueLinkedSmallError: Swift.Error, Sendable, Equatable {
+    /// The queue is empty and the operation requires elements.
+    case empty
+}
+
 // MARK: - Typealiases (Nest.Name API)
 //
 // IMPORTANT: Extensions MUST include `where Element: ~Copyable` to prevent
@@ -89,3 +133,7 @@ extension Queue.Inline where Element: ~Copyable {
     /// - ``Queue/Inline/Error/overflow``: The queue is full and cannot accept more elements.
     public typealias Error = __QueueInlineError
 }
+
+// NOTE: All Queue.Linked.* Error typealiases are in Queue.swift
+// due to [MEM-COPY-006] Category 3: Extensions on nested types in separate files
+// break ~Copyable constraint propagation.
