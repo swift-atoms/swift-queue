@@ -9,8 +9,6 @@
 //
 // ===----------------------------------------------------------------------===//
 
-@_exported import List_Primitives
-
 /// A dynamically-growing FIFO queue supporting move-only elements.
 ///
 /// `Queue` is the general-purpose queue primitive. It provides O(1) amortized enqueue
@@ -219,10 +217,9 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
         var _count: Int
 
         /// Workaround for Swift compiler bug where deinit element cleanup
-        /// doesn't work correctly for ~Copyable structs without reference types.
-        /// Adding an optional reference type changes how the compiler generates deinit.
-        /// See: swift-deque-primitives/Experiments/deque-inline-deinit-investigation
-        /// TODO: Remove when Swift compiler bug is fixed.
+        /// fails for ~Copyable structs that contain only value-type properties.
+        /// Adding a reference type property (`AnyObject?`) fixes the bug.
+        /// See: https://github.com/swiftlang/swift/issues/86652
         @usableFromInline
         var _deinitWorkaround: AnyObject? = nil
 
