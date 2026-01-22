@@ -21,11 +21,11 @@ extension Queue: Collection where Element: Copyable {
     public var startIndex: Index { .zero }
 
     @inlinable
-    public var endIndex: Index { try! Index(count) }
+    public var endIndex: Index { Index(__unchecked: (), position: count) }
 
     @inlinable
     public func index(after i: Index) -> Index {
-        (i + 1)!
+        Index(__unchecked: (), position: i.position.rawValue + 1)
     }
 }
 
@@ -34,7 +34,8 @@ extension Queue: Collection where Element: Copyable {
 extension Queue: BidirectionalCollection where Element: Copyable {
     @inlinable
     public func index(before i: Index) -> Index {
-        (i - 1)!
+        precondition(i > startIndex, "Cannot decrement startIndex")
+        return Index(__unchecked: (), position: i.position.rawValue - 1)
     }
 }
 
@@ -48,17 +49,18 @@ extension Queue: RandomAccessCollection where Element: Copyable {
 
     @inlinable
     public func index(_ i: Index, offsetBy distance: Int) -> Index {
-        (i + Index.Offset(distance))!
+        Index(__unchecked: (), position: i.position.rawValue + distance)
     }
 
     @inlinable
     public func index(_ i: Index, offsetBy distance: Int, limitedBy limit: Index) -> Index? {
-        let result = i + Index.Offset(distance)
+        let newPosition = i.position.rawValue + distance
         if distance >= 0 {
-            return result! <= limit ? result : nil
+            guard newPosition <= limit.position.rawValue else { return nil }
         } else {
-            return result! >= limit ? result : nil
+            guard newPosition >= limit.position.rawValue else { return nil }
         }
+        return Index(__unchecked: (), position: newPosition)
     }
 }
 
@@ -68,7 +70,8 @@ extension Queue: Equatable where Element: Equatable & Copyable {
     @inlinable
     public static func == (lhs: Self, rhs: Self) -> Bool {
         guard lhs.count == rhs.count else { return false }
-        for i in try! (0..<lhs.count).map(Index.init) {
+        for position in 0..<lhs.count {
+            let i = Index(__unchecked: (), position: position)
             if lhs[i] != rhs[i] {
                 return false
             }
@@ -83,8 +86,8 @@ extension Queue: Hashable where Element: Hashable & Copyable {
     @inlinable
     public func hash(into hasher: inout Hasher) {
         hasher.combine(count)
-        for i in try! (0..<count).map(Index.init) {
-            hasher.combine(self[i])
+        for position in 0..<count {
+            hasher.combine(self[Index(__unchecked: (), position: position)])
         }
     }
 }
@@ -108,9 +111,9 @@ extension Queue: CustomStringConvertible where Element: Copyable {
     public var description: String {
         var result = "Queue(["
         var first = true
-        for i in try! (0..<count).map(Index.init) {
+        for position in 0..<count {
             if !first { result += ", " }
-            result += String(describing: self[i])
+            result += String(describing: self[Index(__unchecked: (), position: position)])
             first = false
         }
         result += "])"
