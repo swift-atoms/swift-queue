@@ -42,13 +42,13 @@ extension Queue where Element: ~Copyable {
     @inlinable
     public subscript(index: Index) -> Element {
         _read {
-            precondition(index.position >= 0 && index.position < count, "Index out of bounds")
-            let physicalIndex = (_storage.header.head + index.position) % _storage.capacity
+            precondition(index.position.rawValue >= 0 && index.position.rawValue < count, "Index out of bounds")
+            let physicalIndex = (_storage.header.head + index.position.rawValue) % _storage.capacity
             yield _cachedPtr[physicalIndex]
         }
         _modify {
-            precondition(index.position >= 0 && index.position < count, "Index out of bounds")
-            let physicalIndex = (_storage.header.head + index.position) % _storage.capacity
+            precondition(index.position.rawValue >= 0 && index.position.rawValue < count, "Index out of bounds")
+            let physicalIndex = (_storage.header.head + index.position.rawValue) % _storage.capacity
             yield &_cachedPtr[physicalIndex]
         }
     }
@@ -62,14 +62,14 @@ extension Queue where Element: Copyable {
     @inlinable
     public subscript(index: Index) -> Element {
         _read {
-            precondition(index.position >= 0 && index.position < count, "Index out of bounds")
-            let physicalIndex = (_storage.header.head + index.position) % _storage.capacity
+            precondition(index.position.rawValue >= 0 && index.position.rawValue < count, "Index out of bounds")
+            let physicalIndex = (_storage.header.head + index.position.rawValue) % _storage.capacity
             yield _cachedPtr[physicalIndex]
         }
         _modify {
             makeUnique()
-            precondition(index.position >= 0 && index.position < count, "Index out of bounds")
-            let physicalIndex = (_storage.header.head + index.position) % _storage.capacity
+            precondition(index.position.rawValue >= 0 && index.position.rawValue < count, "Index out of bounds")
+            let physicalIndex = (_storage.header.head + index.position.rawValue) % _storage.capacity
             yield &_cachedPtr[physicalIndex]
         }
     }
@@ -84,8 +84,8 @@ extension Queue where Element: Copyable {
     /// - Returns: The element at the index, or `nil` if out of bounds.
     @inlinable
     public func element(at index: Index) -> Element? {
-        guard index.position >= 0 && index.position < count else { return nil }
-        let physicalIndex = (_storage.header.head + index.position) % _storage.capacity
+        guard index.position.rawValue >= 0 && index.position.rawValue < count else { return nil }
+        let physicalIndex = (_storage.header.head + index.position.rawValue) % _storage.capacity
         return _cachedPtr[physicalIndex]
     }
 }

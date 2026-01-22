@@ -9,6 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
+public import List_Primitives
+
 /// A dynamically-growing FIFO queue supporting move-only elements.
 ///
 /// `Queue` is the general-purpose queue primitive. It provides O(1) amortized enqueue
