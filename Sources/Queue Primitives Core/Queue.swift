@@ -95,7 +95,7 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
     /// - Note: This must be nested, not module-level, due to Swift's generic
     ///   constraint propagation limitations with `~Copyable` and nested types.
     @usableFromInline
-    final class Storage: ManagedBuffer<(head: Int, tail: Int, count: Int), Element> {
+    package final class Storage: ManagedBuffer<(head: Int, tail: Int, count: Int), Element> {
 
         /// Creates empty storage with no capacity.
         @usableFromInline
@@ -179,12 +179,12 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
     }
 
     @usableFromInline
-    var _storage: Storage
+    package var _storage: Storage
 
     /// Cached pointer to element storage. Stored in struct to enable property-based Span access.
     /// CRITICAL: Must be updated whenever _storage is replaced (reallocation, CoW copy).
     @usableFromInline
-    var _cachedPtr: UnsafeMutablePointer<Element>
+    package var _cachedPtr: UnsafeMutablePointer<Element>
 
     // MARK: - Inline (declared here to fix Swift compiler bug with ~Copyable in extensions)
 
@@ -204,19 +204,19 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
 
         /// Raw byte storage. Each slot is 64 bytes (8 Ints on 64-bit).
         @usableFromInline
-        var _storage: InlineArray<capacity, (Int, Int, Int, Int, Int, Int, Int, Int)>
+        package var _storage: InlineArray<capacity, (Int, Int, Int, Int, Int, Int, Int, Int)>
 
         /// Ring buffer head index (next dequeue position).
         @usableFromInline
-        var _head: Int
+        package var _head: Int
 
         /// Ring buffer tail index (next enqueue position).
         @usableFromInline
-        var _tail: Int
+        package var _tail: Int
 
         /// Current element count.
         @usableFromInline
-        var _count: Int
+        package var _count: Int
 
         /// Workaround for Swift compiler bug where deinit element cleanup
         /// fails for ~Copyable structs that contain only value-type properties.
@@ -279,7 +279,7 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
         /// Returns a read-only pointer to the element at the given index.
         @usableFromInline
         @unsafe
-        func _readPointerToElement(at index: Int) -> UnsafePointer<Element> {
+        package func _readPointerToElement(at index: Int) -> UnsafePointer<Element> {
             let stride = MemoryLayout<Element>.stride
             return unsafe Swift.withUnsafePointer(to: _storage) { storagePtr in
                 let basePtr = unsafe UnsafeRawPointer(storagePtr)
@@ -346,27 +346,27 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
 
         /// Raw byte storage for inline elements. Each slot is 64 bytes (8 Ints on 64-bit).
         @usableFromInline
-        var _inline: InlineArray<inlineCapacity, (Int, Int, Int, Int, Int, Int, Int, Int)>
+        package var _inline: InlineArray<inlineCapacity, (Int, Int, Int, Int, Int, Int, Int, Int)>
 
         /// Ring buffer head index (inline mode only).
         @usableFromInline
-        var _head: Int
+        package var _head: Int
 
         /// Ring buffer tail index (inline mode only).
         @usableFromInline
-        var _tail: Int
+        package var _tail: Int
 
         /// Current element count (valid in both inline and heap modes).
         @usableFromInline
-        var _count: Int
+        package var _count: Int
 
         /// Heap storage when spilled. Nil when using inline storage.
         @usableFromInline
-        var _heap: Storage?
+        package var _heap: Storage?
 
         /// Cached pointer to heap elements. Only valid when _heap is non-nil.
         @usableFromInline
-        var _heapPtr: UnsafeMutablePointer<Element>?
+        package var _heapPtr: UnsafeMutablePointer<Element>?
 
         /// Creates an empty small queue.
         @inlinable
@@ -433,7 +433,7 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
         /// Returns a read-only pointer to the inline element at the given index.
         @usableFromInline
         @unsafe
-        func _inlineReadPointerToElement(at index: Int) -> UnsafePointer<Element> {
+        package func _inlineReadPointerToElement(at index: Int) -> UnsafePointer<Element> {
             let stride = MemoryLayout<Element>.stride
             return unsafe Swift.withUnsafePointer(to: _inline) { storagePtr in
                 let basePtr = unsafe UnsafeRawPointer(storagePtr)
@@ -502,12 +502,12 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
     @safe
     public struct Bounded: ~Copyable {
         @usableFromInline
-        var _storage: Storage  // Uses unified nested storage class
+        package var _storage: Storage  // Uses unified nested storage class
 
         /// Cached pointer to element storage. Stored in struct to enable property-based Span access.
         /// CRITICAL: Must be updated whenever _storage is replaced (CoW copy).
         @usableFromInline
-        var _cachedPtr: UnsafeMutablePointer<Element>
+        package var _cachedPtr: UnsafeMutablePointer<Element>
 
         /// The maximum number of elements the queue can hold.
         public let capacity: Int
@@ -777,7 +777,7 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
     /// - Parameter elements: The elements to enqueue.
     /// - Complexity: O(n) where n is the number of elements.
     @inlinable
-    public init(_ elements: some Sequence<Element>) {
+    public init(_ elements: some Swift.Sequence<Element>) {
         self.init()
         for element in elements {
             enqueue(element)
@@ -1289,7 +1289,7 @@ extension Queue.Linked where Element: ~Copyable {
 ///
 /// This enables `for-in` loops, `map`, `filter`, and other sequence operations.
 /// For `~Copyable` elements, use ``forEach(_:)`` instead.
-extension Queue.Linked: Sequence where Element: Copyable {
+extension Queue.Linked: Swift.Sequence where Element: Copyable {
 
     /// An iterator over the elements of a linked queue.
     public struct Iterator: IteratorProtocol {
@@ -1650,7 +1650,7 @@ extension Queue.Linked.Bounded where Element: ~Copyable {
 ///
 /// This enables `for-in` loops, `map`, `filter`, and other sequence operations.
 /// For `~Copyable` elements, use ``forEach(_:)`` instead.
-extension Queue.Linked.Bounded: Sequence where Element: Copyable {
+extension Queue.Linked.Bounded: Swift.Sequence where Element: Copyable {
 
     /// An iterator over the elements of a bounded linked queue.
     public struct Iterator: IteratorProtocol {
@@ -1944,7 +1944,7 @@ extension Queue.Linked.Small where Element: Copyable {
 /// - Note: This conformance must be in the same file as the type declaration
 ///   due to a Swift compiler bug where protocol conformances for nested types
 ///   in separate files cause `~Copyable` constraint propagation to fail.
-extension Queue.Bounded: Sequence where Element: Copyable {
+extension Queue.Bounded: Swift.Sequence where Element: Copyable {
 
     /// An iterator over the elements of a bounded queue.
     public struct Iterator: IteratorProtocol {
@@ -2089,7 +2089,7 @@ extension Queue where Element: ~Copyable {
 extension Queue where Element: Copyable {
     /// Ensures the storage is uniquely referenced before mutation.
     @usableFromInline
-    mutating func makeUnique() {
+    package mutating func makeUnique() {
         if !isKnownUniquelyReferenced(&_storage) {
             _storage = _storage.copy()
             unsafe (_cachedPtr = _storage._elementsPointer)  // CRITICAL: Update cached pointer
@@ -2218,7 +2218,7 @@ extension Queue where Element: ~Copyable {
 ///
 /// This enables `for-in` loops, `map`, `filter`, and other sequence operations.
 /// For `~Copyable` elements, use ``forEach(_:)`` instead.
-extension Queue: Sequence where Element: Copyable {
+extension Queue: Swift.Sequence where Element: Copyable {
 
     /// An iterator over the elements of a queue.
     public struct Iterator: IteratorProtocol {
@@ -2349,7 +2349,7 @@ extension Queue.Storage where Element: Copyable {
 
     /// Reads element at the given index.
     @usableFromInline
-    func _readElement(at index: Int) -> Element {
+    package func _readElement(at index: Int) -> Element {
         unsafe withUnsafeMutablePointerToElements { elements in
             unsafe elements[index]
         }

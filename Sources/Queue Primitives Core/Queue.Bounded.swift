@@ -80,7 +80,7 @@ extension Queue.Bounded where Element: ~Copyable {
 extension Queue.Bounded where Element: Copyable {
     /// Ensures the storage is uniquely referenced before mutation.
     @usableFromInline
-    mutating func makeUnique() {
+    package mutating func makeUnique() {
         if !isKnownUniquelyReferenced(&_storage) {
             _storage = _storage.copy()
             unsafe (_cachedPtr = _storage._elementsPointer)  // CRITICAL: Update cached pointer
@@ -170,5 +170,5 @@ extension Queue.Bounded where Element: ~Copyable {
 
 extension Queue.Bounded: @unchecked Sendable where Element: Sendable {}
 
-// Note: Sequence conformance for Queue.Bounded is in Queue.swift
+// Note: Swift.Sequence conformance for Queue.Bounded is in Queue.swift
 // (must be in same file as declaration due to Swift compiler bug with ~Copyable)

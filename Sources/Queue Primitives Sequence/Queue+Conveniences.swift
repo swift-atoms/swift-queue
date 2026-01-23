@@ -13,7 +13,7 @@
 
 public import Index_Primitives
 
-extension Queue: Collection where Element: Copyable {
+extension Queue: Swift.Collection where Element: Copyable {
     // Index typealias is defined in Queue.Index.swift as Index_Primitives.Index<Element>
     // Subscript is defined in Queue.Index.swift with typed Index
 

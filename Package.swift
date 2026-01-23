@@ -24,13 +24,32 @@ let package = Package(
         .package(path: "../swift-list-primitives"),
     ],
     targets: [
+        // Internal: Core types with ~Copyable support (no Sequence/Collection conformances)
         .target(
-            name: "Queue Primitives",
+            name: "Queue Primitives Core",
             dependencies: [
                 .product(name: "Index Primitives", package: "swift-index-primitives"),
                 .product(name: "Input Primitives", package: "swift-input-primitives"),
                 .product(name: "Collection Primitives", package: "swift-collection-primitives"),
                 .product(name: "List Primitives", package: "swift-list-primitives"),
+            ]
+        ),
+        // Internal: Sequence/Collection/Input conformances (Element: Copyable)
+        // Separate module to avoid constraint poisoning on Core types
+        .target(
+            name: "Queue Primitives Sequence",
+            dependencies: [
+                "Queue Primitives Core",
+                .product(name: "Collection Primitives", package: "swift-collection-primitives"),
+                .product(name: "Input Primitives", package: "swift-input-primitives"),
+            ]
+        ),
+        // Public: Re-exports Core and Sequence for users
+        .target(
+            name: "Queue Primitives",
+            dependencies: [
+                "Queue Primitives Core",
+                "Queue Primitives Sequence",
             ]
         ),
         .testTarget(

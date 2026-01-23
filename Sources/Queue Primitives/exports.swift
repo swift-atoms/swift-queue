@@ -1,6 +1,6 @@
 // exports.swift
-// Re-export dependencies for consumers.
+// Re-export internal modules for consumers.
+// Users import Queue_Primitives and get everything.
 
-@_exported import Index_Primitives
-@_exported import Input_Primitives
-@_exported import Collection_Primitives
+@_exported public import Queue_Primitives_Core
+@_exported public import Queue_Primitives_Sequence
