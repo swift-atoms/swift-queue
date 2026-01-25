@@ -94,6 +94,41 @@ public enum __QueueLinkedSmallError: Swift.Error, Sendable, Equatable {
     case empty
 }
 
+/// Hoisted implementation of ``Queue/DoubleEnded/Error``.
+///
+/// - Note: Use ``Queue/DoubleEnded/Error`` in your code, not this type directly.
+public enum __QueueDoubleEndedError: Swift.Error, Sendable, Equatable {
+    /// The requested capacity is invalid (negative).
+    case invalidCapacity
+}
+
+/// Hoisted implementation of ``Queue/DoubleEnded/Fixed/Error``.
+///
+/// - Note: Use ``Queue/DoubleEnded/Fixed/Error`` in your code, not this type directly.
+public enum __QueueDoubleEndedFixedError: Swift.Error, Sendable, Equatable {
+    /// The requested capacity is invalid (negative).
+    case invalidCapacity
+
+    /// The queue is full and cannot accept more elements.
+    case overflow
+}
+
+/// Hoisted implementation of ``Queue/DoubleEnded/Static/Error``.
+///
+/// - Note: Use ``Queue/DoubleEnded/Static/Error`` in your code, not this type directly.
+public enum __QueueDoubleEndedStaticError: Swift.Error, Sendable, Equatable {
+    /// The queue is full and cannot accept more elements.
+    case overflow
+}
+
+/// Hoisted implementation of ``Queue/DoubleEnded/Small/Error``.
+///
+/// - Note: Use ``Queue/DoubleEnded/Small/Error`` in your code, not this type directly.
+public enum __QueueDoubleEndedSmallError: Swift.Error, Sendable, Equatable {
+    /// The queue is empty and the operation requires elements.
+    case empty
+}
+
 // MARK: - Typealiases (Nest.Name API)
 //
 // IMPORTANT: Extensions MUST include `where Element: ~Copyable` to prevent

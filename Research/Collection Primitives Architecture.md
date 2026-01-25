@@ -105,7 +105,7 @@ This provides:
 The conditional conformance is not merely syntactic sugar—it enables `Sequence` conformance, which requires `Copyable`:
 
 ```swift
-extension Queue: Sequence where Element: Copyable { ... }
+extension Queue: Swift.Sequence where Element: Copyable { ... }
 ```
 
 ### 2.4 Method Shadowing for CoW
@@ -329,12 +329,12 @@ extension Deque.Bounded where Element: ~Copyable {
 ```swift
 // BROKEN: Conformance in separate file
 // File: Bounded.swift
-extension Deque.Bounded: Sequence where Element: Copyable { }
+extension Deque.Bounded: Swift.Sequence where Element: Copyable { }
 // Causes: "type 'Element' does not conform to 'Copyable'" in main file
 
 // FIXED: Conformance in same file as declaration
 // File: Deque.swift (same file as Deque.Bounded declaration)
-extension Deque.Bounded: Sequence where Element: Copyable { }
+extension Deque.Bounded: Swift.Sequence where Element: Copyable { }
 ```
 
 ### 5.2 Ownership-Aware Method Signatures
