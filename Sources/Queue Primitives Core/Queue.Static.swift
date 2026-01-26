@@ -9,11 +9,11 @@
 //
 // ===----------------------------------------------------------------------===//
 
-// Note: Queue.Inline is unconditionally ~Copyable due to deinit requirement
+// Note: Queue.Static is unconditionally ~Copyable due to deinit requirement
 
 // MARK: - Properties
 
-extension Queue.Inline where Element: ~Copyable {
+extension Queue.Static where Element: ~Copyable {
     /// The current number of elements in the queue.
     @inlinable
     public var count: Int { _count }
@@ -29,14 +29,14 @@ extension Queue.Inline where Element: ~Copyable {
 
 // MARK: - Core Operations
 
-extension Queue.Inline where Element: ~Copyable {
+extension Queue.Static where Element: ~Copyable {
     /// Enqueues an element at the back of the queue.
     ///
     /// - Parameter element: The element to enqueue.
-    /// - Throws: ``Queue/Inline/Error/overflow`` if the queue is full.
+    /// - Throws: ``Queue/Static/Error/overflow`` if the queue is full.
     /// - Complexity: O(1)
     @inlinable
-    public mutating func enqueue(_ element: consuming Element) throws(Queue<Element>.Inline.Error) {
+    public mutating func enqueue(_ element: consuming Element) throws(Queue<Element>.Static.Error) {
         guard _count < capacity else {
             throw .overflow
         }
@@ -90,7 +90,7 @@ extension Queue.Inline where Element: ~Copyable {
 
 // MARK: - Peek
 
-extension Queue.Inline where Element: ~Copyable {
+extension Queue.Static where Element: ~Copyable {
     /// Peeks at the front element without removing it.
     ///
     /// Uses a closure to support `~Copyable` elements via borrowing.
@@ -108,7 +108,7 @@ extension Queue.Inline where Element: ~Copyable {
     }
 }
 
-extension Queue.Inline where Element: Copyable {
+extension Queue.Static where Element: Copyable {
     /// Returns the front element without removing it, or nil if empty.
     ///
     /// This is a convenience method for `Copyable` elements.
@@ -127,7 +127,7 @@ extension Queue.Inline where Element: Copyable {
 
 // MARK: - Iteration (for ~Copyable elements)
 
-extension Queue.Inline where Element: ~Copyable {
+extension Queue.Static where Element: ~Copyable {
     /// Calls the given closure for each element in the queue.
     ///
     /// Elements are visited from front (oldest) to back (newest).
@@ -150,4 +150,4 @@ extension Queue.Inline where Element: ~Copyable {
 
 // MARK: - Sendable
 
-extension Queue.Inline: @unchecked Sendable where Element: Sendable {}
+extension Queue.Static: @unchecked Sendable where Element: Sendable {}

@@ -330,14 +330,14 @@ struct MoveOnlyElementTests {
     }
 }
 
-// MARK: - Queue.Inline Tests
+// MARK: - Queue.Static Tests
 
-@Suite("Queue.Inline")
-struct QueueInlineTests {
+@Suite("Queue.Static")
+struct QueueStaticTests {
 
     @Test("Initialize empty")
     func initializeEmpty() {
-        let queue = Queue<Int>.Inline<8>()
+        let queue = Queue<Int>.Static<8>()
         #expect(queue.count == 0)
         #expect(queue.isEmpty == true)
         #expect(queue.isFull == false)
@@ -345,7 +345,7 @@ struct QueueInlineTests {
 
     @Test("Enqueue and dequeue FIFO order")
     func enqueueAndDequeueFIFO() throws {
-        var queue = Queue<Int>.Inline<8>()
+        var queue = Queue<Int>.Static<8>()
         try queue.enqueue(1)
         try queue.enqueue(2)
         try queue.enqueue(3)
@@ -359,19 +359,19 @@ struct QueueInlineTests {
 
     @Test("Overflow throws error")
     func overflowThrows() throws {
-        var queue = Queue<Int>.Inline<2>()
+        var queue = Queue<Int>.Static<2>()
         try queue.enqueue(1)
         try queue.enqueue(2)
 
         #expect(queue.isFull == true)
-        #expect(throws: __QueueInlineError.overflow) {
+        #expect(throws: __QueueStaticError.overflow) {
             try queue.enqueue(3)
         }
     }
 
     @Test("Ring buffer wrap-around")
     func ringBufferWrapAround() throws {
-        var queue = Queue<Int>.Inline<3>()
+        var queue = Queue<Int>.Static<3>()
 
         try queue.enqueue(1)
         try queue.enqueue(2)
@@ -390,7 +390,7 @@ struct QueueInlineTests {
 
     @Test("Clear empties queue")
     func clearEmptiesQueue() throws {
-        var queue = Queue<Int>.Inline<8>()
+        var queue = Queue<Int>.Static<8>()
         try queue.enqueue(1)
         try queue.enqueue(2)
 
@@ -402,7 +402,7 @@ struct QueueInlineTests {
 
     @Test("Peek returns front element")
     func peekReturnsFront() throws {
-        var queue = Queue<Int>.Inline<8>()
+        var queue = Queue<Int>.Static<8>()
         try queue.enqueue(10)
         try queue.enqueue(20)
 
@@ -412,7 +412,7 @@ struct QueueInlineTests {
 
     @Test("ForEach iterates in FIFO order")
     func forEachIteratesInFIFOOrder() throws {
-        var queue = Queue<Int>.Inline<8>()
+        var queue = Queue<Int>.Static<8>()
         try queue.enqueue(1)
         try queue.enqueue(2)
         try queue.enqueue(3)

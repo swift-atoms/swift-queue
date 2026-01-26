@@ -51,11 +51,11 @@ struct QueueSendableTests {
         requireSendable(bounded)
     }
 
-    @Test("Queue.Inline<Int> is Sendable")
-    func inlineIntIsSendable() throws {
-        var inline = Queue<Int>.Inline<4>()
-        try inline.enqueue(1)
-        requireSendableNC(inline)
+    @Test("Queue.Static<Int> is Sendable")
+    func staticIntIsSendable() throws {
+        var staticQueue = Queue<Int>.Static<4>()
+        try staticQueue.enqueue(1)
+        requireSendableNC(staticQueue)
     }
 
     @Test("Queue.Small<Int> is Sendable")

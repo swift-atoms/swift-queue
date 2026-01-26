@@ -107,50 +107,50 @@ struct QueueNonCopyableTests {
         #expect(ids == [1, 2, 3])
     }
 
-    @Test("Queue.Inline with ~Copyable elements")
-    func inlineWithNonCopyable() throws {
-        var inline = Queue<Token>.Inline<4>()
-        try inline.enqueue(Token(100))
-        try inline.enqueue(Token(200))
+    @Test("Queue.Static with ~Copyable elements")
+    func staticWithNonCopyable() throws {
+        var staticQueue = Queue<Token>.Static<4>()
+        try staticQueue.enqueue(Token(100))
+        try staticQueue.enqueue(Token(200))
 
-        let count = inline.count
-        let isFull = inline.isFull
+        let count = staticQueue.count
+        let isFull = staticQueue.isFull
         #expect(count == 2)
         #expect(!isFull)
 
-        if let token = inline.dequeue() {
+        if let token = staticQueue.dequeue() {
             #expect(token.id == 100)
         } else {
             Issue.record("Expected to dequeue token")
         }
     }
 
-    @Test("Queue.Inline with ~Copyable elements: forEach")
-    func inlineForEach() throws {
-        var inline = Queue<Token>.Inline<4>()
-        try inline.enqueue(Token(1))
-        try inline.enqueue(Token(2))
-        try inline.enqueue(Token(3))
+    @Test("Queue.Static with ~Copyable elements: forEach")
+    func staticForEach() throws {
+        var staticQueue = Queue<Token>.Static<4>()
+        try staticQueue.enqueue(Token(1))
+        try staticQueue.enqueue(Token(2))
+        try staticQueue.enqueue(Token(3))
 
         var ids: [Int] = []
-        inline.forEach { token in
+        staticQueue.forEach { token in
             ids.append(token.id)
         }
 
         #expect(ids == [1, 2, 3])
     }
 
-    @Test("Queue.Inline with ~Copyable elements: ring buffer wraparound")
-    func inlineWraparound() throws {
-        var inline = Queue<Token>.Inline<3>()
-        try inline.enqueue(Token(1))
-        try inline.enqueue(Token(2))
-        _ = inline.dequeue()  // Remove 1, head moves
-        try inline.enqueue(Token(3))
-        try inline.enqueue(Token(4))  // Wraps around
+    @Test("Queue.Static with ~Copyable elements: ring buffer wraparound")
+    func staticWraparound() throws {
+        var staticQueue = Queue<Token>.Static<3>()
+        try staticQueue.enqueue(Token(1))
+        try staticQueue.enqueue(Token(2))
+        _ = staticQueue.dequeue()  // Remove 1, head moves
+        try staticQueue.enqueue(Token(3))
+        try staticQueue.enqueue(Token(4))  // Wraps around
 
         var ids: [Int] = []
-        inline.forEach { token in
+        staticQueue.forEach { token in
             ids.append(token.id)
         }
 

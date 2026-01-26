@@ -21,7 +21,7 @@
 // Use the typealias forms in your code:
 // - Queue<Element>.Error
 // - Queue<Element>.Bounded.Error
-// - Queue<Element>.Inline.Error
+// - Queue<Element>.Static.Error
 
 /// Hoisted implementation of ``Queue/Error``.
 ///
@@ -42,10 +42,10 @@ public enum __QueueBoundedError: Swift.Error, Sendable, Equatable {
     case overflow
 }
 
-/// Hoisted implementation of ``Queue/Inline/Error``.
+/// Hoisted implementation of ``Queue/Static/Error``.
 ///
-/// - Note: Use ``Queue/Inline/Error`` in your code, not this type directly.
-public enum __QueueInlineError: Swift.Error, Sendable, Equatable {
+/// - Note: Use ``Queue/Static/Error`` in your code, not this type directly.
+public enum __QueueStaticError: Swift.Error, Sendable, Equatable {
     /// The queue is full and cannot accept more elements.
     case overflow
 }
@@ -157,16 +157,16 @@ extension Queue.Bounded where Element: ~Copyable {
     public typealias Error = __QueueBoundedError
 }
 
-extension Queue.Inline where Element: ~Copyable {
-    /// Errors that can occur during inline queue operations.
+extension Queue.Static where Element: ~Copyable {
+    /// Errors that can occur during static queue operations.
     ///
-    /// For `Queue.Inline`, only `overflow` can occur. The capacity is
+    /// For `Queue.Static`, only `overflow` can occur. The capacity is
     /// fixed at compile time, so `invalidCapacity` is impossible.
     ///
     /// ## Cases
     ///
-    /// - ``Queue/Inline/Error/overflow``: The queue is full and cannot accept more elements.
-    public typealias Error = __QueueInlineError
+    /// - ``Queue/Static/Error/overflow``: The queue is full and cannot accept more elements.
+    public typealias Error = __QueueStaticError
 }
 
 // NOTE: All Queue.Linked.* Error typealiases are in Queue.swift

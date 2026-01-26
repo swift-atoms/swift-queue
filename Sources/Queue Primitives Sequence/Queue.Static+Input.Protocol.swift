@@ -13,10 +13,10 @@ public import Input_Primitives
 
 // MARK: - Input.Streaming Conformance
 
-// Note: Queue.Inline is unconditionally ~Copyable due to deinit requirement.
+// Note: Queue.Static is unconditionally ~Copyable due to deinit requirement.
 // Input.Streaming conformance requires Element: Copyable for `first: Element?`.
 
-extension Queue.Inline: Input.Streaming where Element: Copyable {
+extension Queue.Static: Input.Streaming where Element: Copyable {
     /// The front element, if any.
     ///
     /// Uses `_read` accessor for borrowing semantics per SE-0474 preparation.
@@ -48,7 +48,7 @@ extension Queue.Inline: Input.Streaming where Element: Copyable {
 
 // MARK: - Input.Protocol Conformance
 
-extension Queue.Inline: Input.`Protocol` where Element: Copyable {
+extension Queue.Static: Input.`Protocol` where Element: Copyable {
     /// Checkpoint for backtracking: stores head position and count.
     ///
     /// Restoring to a checkpoint moves the logical head pointer back,

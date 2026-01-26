@@ -94,6 +94,6 @@ extension Queue where Element: Copyable {
 // NOTE: Per [MEM-COPY-006], Queue.Bounded extensions are in Queue.swift
 // to avoid breaking ~Copyable propagation.
 
-// MARK: - Inline Queue Index Operations
-// NOTE: Per [MEM-COPY-006], Queue.Inline extensions are in Queue.swift
+// MARK: - Static Queue Index Operations
+// NOTE: Per [MEM-COPY-006], Queue.Static extensions are in Queue.swift
 // to avoid breaking ~Copyable propagation.

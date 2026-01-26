@@ -31,7 +31,7 @@ public import List_Primitives
 ///
 /// - ``Queue``: Dynamically-growing with amortized O(1) enqueue (this type)
 /// - ``Queue/Bounded``: Fixed-capacity ring buffer, throws on overflow
-/// - ``Queue/Inline``: Zero-allocation inline storage with compile-time capacity
+/// - ``Queue/Static``: Zero-allocation inline storage with compile-time capacity
 /// - ``Queue/Small``: Inline storage with automatic spill to heap
 ///
 /// ## Ring Buffer Storage
@@ -247,18 +247,18 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
     @usableFromInline
     package var _cachedPtr: UnsafeMutablePointer<Element>
 
-    // MARK: - Inline (declared here to fix Swift compiler bug with ~Copyable in extensions)
+    // MARK: - Static (declared here to fix Swift compiler bug with ~Copyable in extensions)
 
     /// A fixed-capacity, inline-storage FIFO queue with compile-time capacity.
     ///
-    /// `Queue.Inline` stores elements directly within the struct's memory layout,
+    /// `Queue.Static` stores elements directly within the struct's memory layout,
     /// requiring no heap allocation. The capacity is specified as a compile-time
     /// generic parameter. Uses ring buffer semantics for O(1) operations.
     ///
     /// - Note: This type is declared inside `Queue` (not in an extension) due to a
     ///   Swift compiler bug where nested types with value generic parameters declared
     ///   in extensions do not properly inherit `~Copyable` constraints from the outer type.
-    public struct Inline<let capacity: Int>: ~Copyable {
+    public struct Static<let capacity: Int>: ~Copyable {
         /// Maximum element stride supported by inline storage (64 bytes per slot).
         @usableFromInline
         static var _maxStride: Int { 64 }
@@ -894,7 +894,7 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
         ///
         /// Accessed as `Queue<E>.DoubleEnded.Static<N>` or via the `Deque.Static` typealias.
         /// Implemented at Queue level due to Swift's ~Copyable constraint propagation limitations.
-        public typealias Static<let capacity: Int> = Queue<Element>._DoubleEndedStatic<capacity>
+        public typealias Static<let capacity: Int> = _DoubleEndedStatic<capacity>
 
         // MARK: - Small (typealias to Queue-level type)
 
@@ -902,7 +902,7 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
         ///
         /// Accessed as `Queue<E>.DoubleEnded.Small<N>` or via the `Deque.Small` typealias.
         /// Implemented at Queue level due to Swift's ~Copyable constraint propagation limitations.
-        public typealias Small<let inlineCapacity: Int> = Queue<Element>._DoubleEndedSmall<inlineCapacity>
+        public typealias Small<let inlineCapacity: Int> = _DoubleEndedSmall<inlineCapacity>
     }
 
     // MARK: - _DoubleEndedStatic (Queue-level implementation)
@@ -1117,7 +1117,7 @@ extension Queue.DoubleEnded: Copyable where Element: Copyable {}
 extension Queue.DoubleEnded.Fixed: Copyable where Element: Copyable {}
 
 // Note: Queue.DoubleEnded.Static and Queue.DoubleEnded.Small are UNCONDITIONALLY ~Copyable due to deinit
-// Note: Queue.Small and Queue.Inline are UNCONDITIONALLY ~Copyable due to deinit requirement
+// Note: Queue.Small and Queue.Static are UNCONDITIONALLY ~Copyable due to deinit requirement
 
 // MARK: - Queue.Linked Copyable Conformances
 
@@ -2525,10 +2525,10 @@ extension Queue.DoubleEnded: @unchecked Sendable where Element: Sendable {}
 extension Queue.DoubleEnded.Fixed: @unchecked Sendable where Element: Sendable {}
 
 /// `Queue.DoubleEnded.Static` is `Sendable` when its elements are `Sendable`.
-extension Queue.DoubleEnded.Static: @unchecked Sendable where Element: Sendable {}
+extension Queue._DoubleEndedStatic: @unchecked Sendable where Element: Sendable {}
 
 /// `Queue.DoubleEnded.Small` is `Sendable` when its elements are `Sendable`.
-extension Queue.DoubleEnded.Small: @unchecked Sendable where Element: Sendable {}
+extension Queue._DoubleEndedSmall: @unchecked Sendable where Element: Sendable {}
 
 // MARK: - Capacity Management (Additional)
 

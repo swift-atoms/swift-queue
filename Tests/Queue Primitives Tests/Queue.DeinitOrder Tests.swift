@@ -92,14 +92,14 @@ struct QueueDeinitOrderTests {
         #expect(order == [1, 2, 3])
     }
 
-    @Test("Queue.Inline deinit order")
-    func inlineDeinitOrder() throws {
+    @Test("Queue.Static deinit order")
+    func staticDeinitOrder() throws {
         let tracker = Tracker()
         do {
-            var inline = Queue<TrackedElement>.Inline<4>()
-            try inline.enqueue(TrackedElement(1, tracker: tracker))
-            try inline.enqueue(TrackedElement(2, tracker: tracker))
-            try inline.enqueue(TrackedElement(3, tracker: tracker))
+            var staticQueue = Queue<TrackedElement>.Static<4>()
+            try staticQueue.enqueue(TrackedElement(1, tracker: tracker))
+            try staticQueue.enqueue(TrackedElement(2, tracker: tracker))
+            try staticQueue.enqueue(TrackedElement(3, tracker: tracker))
         }
         let order = tracker.deinitOrder
         #expect(order == [1, 2, 3])
@@ -122,16 +122,16 @@ struct QueueDeinitOrderTests {
         #expect(order == [1, 2, 3, 4])
     }
 
-    @Test("Queue.Inline deinit order (with wraparound)")
-    func inlineDeinitWraparound() throws {
+    @Test("Queue.Static deinit order (with wraparound)")
+    func staticDeinitWraparound() throws {
         let tracker = Tracker()
         do {
-            var inline = Queue<TrackedElement>.Inline<4>()
-            try inline.enqueue(TrackedElement(1, tracker: tracker))
-            try inline.enqueue(TrackedElement(2, tracker: tracker))
-            _ = inline.dequeue()  // Remove and deinit 1
-            try inline.enqueue(TrackedElement(3, tracker: tracker))
-            try inline.enqueue(TrackedElement(4, tracker: tracker))
+            var staticQueue = Queue<TrackedElement>.Static<4>()
+            try staticQueue.enqueue(TrackedElement(1, tracker: tracker))
+            try staticQueue.enqueue(TrackedElement(2, tracker: tracker))
+            _ = staticQueue.dequeue()  // Remove and deinit 1
+            try staticQueue.enqueue(TrackedElement(3, tracker: tracker))
+            try staticQueue.enqueue(TrackedElement(4, tracker: tracker))
             // When do block ends, elements 2, 3, 4 should be deinitialized in order
         }
         // Full order: [1, 2, 3, 4] (1 from dequeue, then 2,3,4 from deinit)
@@ -145,7 +145,7 @@ struct QueueDeinitOrderTests {
         do {
             let _: Queue<TrackedElement> = Queue()
             let _: Queue<TrackedElement>.Bounded = try Queue<TrackedElement>.Bounded(capacity: 5)
-            let _: Queue<TrackedElement>.Inline<4> = Queue<TrackedElement>.Inline<4>()
+            let _: Queue<TrackedElement>.Static<4> = Queue<TrackedElement>.Static<4>()
             let _: Queue<TrackedElement>.Small<4> = Queue<TrackedElement>.Small<4>()
         }
         let order = tracker.deinitOrder
