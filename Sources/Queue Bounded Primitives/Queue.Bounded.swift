@@ -9,6 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
+public import Queue_Primitives_Core
+
 // Note: Conditional Copyable conformance and Sequence conformance are in Queue.swift
 // (must be same file as declaration due to Swift compiler bug)
 

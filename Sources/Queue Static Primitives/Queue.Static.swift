@@ -9,7 +9,59 @@
 //
 // ===----------------------------------------------------------------------===//
 
+public import Queue_Primitives_Core
+
 // Note: Queue.Static is unconditionally ~Copyable due to deinit requirement
+
+// MARK: - Pointer Helpers
+
+extension Queue.Static where Element: ~Copyable {
+    /// Returns a mutable pointer to the element at the given index.
+    @usableFromInline
+    @unsafe
+    package mutating func _pointerToElement(at index: Int) -> UnsafeMutablePointer<Element> {
+        let stride = MemoryLayout<Element>.stride
+        return unsafe Swift.withUnsafeMutablePointer(to: &_storage) { storagePtr in
+            let basePtr = UnsafeMutableRawPointer(storagePtr)
+            let elementPtr = unsafe (basePtr + index * stride)
+                .assumingMemoryBound(to: Element.self)
+            return unsafe elementPtr
+        }
+    }
+
+    /// Returns a read-only pointer to the element at the given index.
+    @usableFromInline
+    @unsafe
+    package func _readPointerToElement(at index: Int) -> UnsafePointer<Element> {
+        let stride = MemoryLayout<Element>.stride
+        return unsafe Swift.withUnsafePointer(to: _storage) { storagePtr in
+            let basePtr = unsafe UnsafeRawPointer(storagePtr)
+            let elementPtr = unsafe (basePtr + index * stride)
+                .assumingMemoryBound(to: Element.self)
+            return unsafe elementPtr
+        }
+    }
+
+    /// Returns the base pointer for element storage.
+    @usableFromInline
+    @unsafe
+    package func _basePointer() -> UnsafePointer<Element> {
+        unsafe Swift.withUnsafePointer(to: _storage) { storagePtr in
+            let basePtr = unsafe UnsafeRawPointer(storagePtr)
+            return unsafe basePtr.assumingMemoryBound(to: Element.self)
+        }
+    }
+
+    /// Returns the mutable base pointer for element storage.
+    @usableFromInline
+    @unsafe
+    package mutating func _mutableBasePointer() -> UnsafeMutablePointer<Element> {
+        unsafe Swift.withUnsafeMutablePointer(to: &_storage) { storagePtr in
+            let basePtr = UnsafeMutableRawPointer(storagePtr)
+            return unsafe basePtr.assumingMemoryBound(to: Element.self)
+        }
+    }
+}
 
 // MARK: - Properties
 

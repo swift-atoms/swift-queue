@@ -10,6 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 public import Input_Primitives
+import Queue_Dynamic_Primitives
 
 // MARK: - Input.Streaming Conformance
 
@@ -21,7 +22,7 @@ extension Queue: Input.Streaming where Element: Copyable {
     public var first: Element? {
         _read {
             if _storage.header.count > 0 {
-                yield _storage._readElement(at: _storage.header.head)
+                yield _storage._readElement(at: _storage.header.head.position.rawValue)
             } else {
                 yield nil
             }
@@ -79,8 +80,8 @@ extension Queue: Input.`Protocol` where Element: Copyable {
     @inlinable
     public var checkpoint: Checkpoint {
         Checkpoint(
-            head: _storage.header.head,
-            count: _storage.header.count
+            head: _storage.header.head.position.rawValue,
+            count: _storage.header.count.rawValue
         )
     }
 

@@ -9,7 +9,70 @@
 //
 // ===----------------------------------------------------------------------===//
 
+public import Queue_Primitives_Core
+import Index_Primitives
+import Queue_Dynamic_Primitives
+
 // Note: Queue.Small is unconditionally ~Copyable due to deinit requirement
+
+// MARK: - Internal Helpers
+
+extension Queue.Small where Element: ~Copyable {
+    /// Returns a mutable pointer to the inline element at the given index.
+    @usableFromInline
+    @unsafe
+    package mutating func _inlinePointerToElement(at index: Int) -> UnsafeMutablePointer<Element> {
+        let stride = MemoryLayout<Element>.stride
+        return unsafe Swift.withUnsafeMutablePointer(to: &_inline) { storagePtr in
+            let basePtr = UnsafeMutableRawPointer(storagePtr)
+            let elementPtr = unsafe (basePtr + index * stride)
+                .assumingMemoryBound(to: Element.self)
+            return unsafe elementPtr
+        }
+    }
+
+    /// Returns a read-only pointer to the inline element at the given index.
+    @usableFromInline
+    @unsafe
+    package func _inlineReadPointerToElement(at index: Int) -> UnsafePointer<Element> {
+        let stride = MemoryLayout<Element>.stride
+        return unsafe Swift.withUnsafePointer(to: _inline) { storagePtr in
+            let basePtr = unsafe UnsafeRawPointer(storagePtr)
+            let elementPtr = unsafe (basePtr + index * stride)
+                .assumingMemoryBound(to: Element.self)
+            return unsafe elementPtr
+        }
+    }
+
+    /// Spills inline storage to heap, linearizing the ring buffer.
+    @usableFromInline
+    package mutating func _spillToHeap(minimumCapacity: Int) {
+        precondition(_heap == nil, "Already spilled")
+
+        // Create heap storage with growth factor
+        let newCapacity = Swift.max(minimumCapacity, inlineCapacity * 2, 8)
+        let newStorage = Queue<Element>.Storage.create(minimumCapacity: newCapacity)
+        newStorage.header = (head: Index(position: 0), tail: Index(position: _count), count: Index<Element>.Count(__unchecked: _count))
+
+        // Move elements from inline (ring buffer) to heap (linear)
+        let stride = MemoryLayout<Element>.stride
+        var srcIndex = _head
+        _ = unsafe Swift.withUnsafeBytes(of: _inline) { bytes in
+            unsafe newStorage.withUnsafeMutablePointerToElements { heapPtr in
+                let inlineBase = unsafe UnsafeMutableRawPointer(mutating: bytes.baseAddress!)
+                for dstIndex in 0..<_count {
+                    let inlineElement = unsafe (inlineBase + srcIndex * stride)
+                        .assumingMemoryBound(to: Element.self)
+                    unsafe (heapPtr + dstIndex).initialize(to: inlineElement.move())
+                    srcIndex = (srcIndex + 1) % inlineCapacity
+                }
+            }
+        }
+
+        _heap = newStorage
+        unsafe (_heapPtr = newStorage._elementsPointer)
+    }
+}
 
 // MARK: - Properties
 

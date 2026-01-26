@@ -9,6 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
+public import Queue_Primitives_Core
+
 // Note: Queue.DoubleEnded struct declaration is in Queue.swift
 // (must be same file due to Swift compiler bug [MEM-COPY-006])
 // This file contains extensions with operations and conformances.

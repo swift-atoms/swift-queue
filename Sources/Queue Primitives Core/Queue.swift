@@ -9,7 +9,9 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import List_Primitives
+import List_Primitives
+public import Index_Primitives
+import Range_Primitives
 
 /// A dynamically-growing FIFO queue supporting move-only elements.
 ///
@@ -80,6 +82,36 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
 
     // MARK: - Unified Storage (nested to inherit Element's ~Copyable context)
 
+    /// Header for ring buffer storage with typed indices.
+    ///
+    /// Uses `Index<Element>` for physical buffer positions and `Index<Element>.Count`
+    /// for element count, providing type safety across the queue implementation.
+    @usableFromInline
+    package struct Header {
+        /// Physical position of next element to dequeue.
+        @usableFromInline package var head: Index_Primitives.Index<Element>
+        /// Physical position where next element will be enqueued.
+        @usableFromInline package var tail: Index_Primitives.Index<Element>
+        /// Number of valid elements in the buffer.
+        @usableFromInline package var count: Index_Primitives.Index<Element>.Count
+
+        /// Creates a header with all positions at zero.
+        @inlinable
+        init() {
+            self.head = .zero
+            self.tail = .zero
+            self.count = .zero
+        }
+
+        /// Creates a header with the specified values.
+        @inlinable
+        init(head: Index_Primitives.Index<Element>, tail: Index_Primitives.Index<Element>, count: Index_Primitives.Index<Element>.Count) {
+            self.head = head
+            self.tail = tail
+            self.count = count
+        }
+    }
+
     /// Internal storage class for ring buffer-based queues.
     ///
     /// Uses `ManagedBuffer` for efficient single-allocation storage.
@@ -95,147 +127,37 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
     /// - Note: This must be nested, not module-level, due to Swift's generic
     ///   constraint propagation limitations with `~Copyable` and nested types.
     @usableFromInline
-    package final class Storage: ManagedBuffer<(head: Int, tail: Int, count: Int), Element> {
+    package final class Storage: ManagedBuffer<Header, Element> {
 
         /// Creates empty storage with no capacity.
         @usableFromInline
         static func create() -> Storage {
-            let storage = Storage.create(minimumCapacity: 0) { _ in (head: 0, tail: 0, count: 0) }
+            let storage = Storage.create(minimumCapacity: 0) { _ in Header() }
             return unsafe unsafeDowncast(storage, to: Storage.self)
         }
 
         /// Creates storage with the specified minimum capacity.
         @usableFromInline
         static func create(minimumCapacity: Int) -> Storage {
-            let storage = Storage.create(minimumCapacity: minimumCapacity) { _ in (head: 0, tail: 0, count: 0) }
+            let storage = Storage.create(minimumCapacity: minimumCapacity) { _ in Header() }
             return unsafe unsafeDowncast(storage, to: Storage.self)
         }
 
         deinit {
-            let count = header.count
-            guard count > 0 else { return }
-            let cap = capacity
-            var index = header.head
-            _ = unsafe withUnsafeMutablePointerToElements { elements in
-                for _ in 0..<count {
-                    unsafe (elements + index).deinitialize(count: 1)
-                    index = (index + 1) % cap
+            guard header.count > 0 else { return }
+            var physicalIndex = header.head.position.rawValue
+            _ = unsafe withUnsafeMutablePointerToElements { ptr in
+                for _ in 0..<header.count {
+                    unsafe (ptr + physicalIndex).deinitialize(count: 1)
+                    physicalIndex = (physicalIndex + 1) % capacity
                 }
             }
         }
 
-        /// Returns pointer to element storage.
+        /// Returns the elements pointer.
         @usableFromInline
-        var _elementsPointer: UnsafeMutablePointer<Element> {
+        package var _elementsPointer: UnsafeMutablePointer<Element> {
             unsafe withUnsafeMutablePointerToElements { unsafe $0 }
-        }
-
-        /// Initializes element at the given index.
-        @usableFromInline
-        func _initializeElement(at index: Int, to element: consuming Element) {
-            let ptr = unsafe withUnsafeMutablePointerToElements { unsafe $0 + index }
-            unsafe ptr.initialize(to: element)
-        }
-
-        /// Moves element from the given index.
-        @usableFromInline
-        func _moveElement(at index: Int) -> Element {
-            unsafe withUnsafeMutablePointerToElements { elements in
-                unsafe (elements + index).move()
-            }
-        }
-
-        /// Deinitializes elements in ring buffer order from head.
-        @usableFromInline
-        func _deinitializeAllElements() {
-            let count = header.count
-            guard count > 0 else { return }
-            let cap = capacity
-            var index = header.head
-            _ = unsafe withUnsafeMutablePointerToElements { elements in
-                for _ in 0..<count {
-                    unsafe (elements + index).deinitialize(count: 1)
-                    index = (index + 1) % cap
-                }
-            }
-        }
-
-        /// Moves all elements to new storage, linearizing the ring buffer.
-        @usableFromInline
-        func _moveAllElements(to newStorage: Storage) {
-            let count = header.count
-            guard count > 0 else { return }
-            let cap = capacity
-            var srcIndex = header.head
-            _ = unsafe withUnsafeMutablePointerToElements { src in
-                unsafe newStorage.withUnsafeMutablePointerToElements { dst in
-                    for dstIndex in 0..<count {
-                        unsafe (dst + dstIndex).initialize(to: (src + srcIndex).move())
-                        srcIndex = (srcIndex + 1) % cap
-                    }
-                }
-            }
-        }
-
-        // MARK: - Double-Ended Operations
-        //
-        // These methods enable Queue.Storage to be used by Queue.DoubleEnded,
-        // eliminating the need for a separate storage class.
-
-        /// Converts a logical index (0 = front) to physical ring buffer index.
-        @usableFromInline
-        func physicalIndex(_ logicalIndex: Int) -> Int {
-            (header.head + logicalIndex) % capacity
-        }
-
-        /// Appends element at the back (tail position).
-        @usableFromInline
-        func append(_ element: consuming Element) {
-            let tail = header.tail
-            let ptr = unsafe _elementsPointer
-            unsafe (ptr + tail).initialize(to: element)
-            header.tail = (tail + 1) % capacity
-            header.count += 1
-        }
-
-        /// Prepends element at the front (before head).
-        @usableFromInline
-        func prepend(_ element: consuming Element) {
-            let cap = capacity
-            let newHead = (header.head - 1 + cap) % cap
-            let ptr = unsafe _elementsPointer
-            unsafe (ptr + newHead).initialize(to: element)
-            header.head = newHead
-            header.count += 1
-        }
-
-        /// Removes and returns the first element (at head).
-        @usableFromInline
-        func removeFirst() -> Element {
-            let oldHead = header.head
-            header.head = (oldHead + 1) % capacity
-            header.count -= 1
-            let ptr = unsafe _elementsPointer
-            return unsafe (ptr + oldHead).move()
-        }
-
-        /// Removes and returns the last element (before tail).
-        @usableFromInline
-        func removeLast() -> Element {
-            header.count -= 1
-            let newTail = (header.tail - 1 + capacity) % capacity
-            header.tail = newTail
-            let ptr = unsafe _elementsPointer
-            return unsafe (ptr + newTail).move()
-        }
-
-        /// Deinitializes all elements and resets head/tail/count.
-        @usableFromInline
-        func deinitializeAll() {
-            _deinitializeAllElements()
-            header.head = 0
-            header.tail = 0
-            header.count = 0
         }
     }
 
@@ -314,59 +236,13 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
             let stride = MemoryLayout<Element>.stride
 
             unsafe Swift.withUnsafePointer(to: _storage) { storagePtr in
-                let basePtr = UnsafeMutableRawPointer(mutating: UnsafeRawPointer(storagePtr))
+                let basePtr = unsafe UnsafeMutableRawPointer(mutating: UnsafeRawPointer(storagePtr))
                 for i in 0..<count {
                     let physicalIndex = (head + i) % Self.capacity
                     let elementPtr = unsafe (basePtr + physicalIndex * stride)
                         .assumingMemoryBound(to: Element.self)
                     unsafe elementPtr.deinitialize(count: 1)
                 }
-            }
-        }
-
-        /// Returns a mutable pointer to the element at the given index.
-        @usableFromInline
-        @unsafe
-        mutating func _pointerToElement(at index: Int) -> UnsafeMutablePointer<Element> {
-            let stride = MemoryLayout<Element>.stride
-            return unsafe Swift.withUnsafeMutablePointer(to: &_storage) { storagePtr in
-                let basePtr = UnsafeMutableRawPointer(storagePtr)
-                let elementPtr = unsafe (basePtr + index * stride)
-                    .assumingMemoryBound(to: Element.self)
-                return unsafe elementPtr
-            }
-        }
-
-        /// Returns a read-only pointer to the element at the given index.
-        @usableFromInline
-        @unsafe
-        package func _readPointerToElement(at index: Int) -> UnsafePointer<Element> {
-            let stride = MemoryLayout<Element>.stride
-            return unsafe Swift.withUnsafePointer(to: _storage) { storagePtr in
-                let basePtr = unsafe UnsafeRawPointer(storagePtr)
-                let elementPtr = unsafe (basePtr + index * stride)
-                    .assumingMemoryBound(to: Element.self)
-                return unsafe elementPtr
-            }
-        }
-
-        /// Returns the base pointer for element storage.
-        @usableFromInline
-        @unsafe
-        func _basePointer() -> UnsafePointer<Element> {
-            unsafe Swift.withUnsafePointer(to: _storage) { storagePtr in
-                let basePtr = unsafe UnsafeRawPointer(storagePtr)
-                return unsafe basePtr.assumingMemoryBound(to: Element.self)
-            }
-        }
-
-        /// Returns the mutable base pointer for element storage.
-        @usableFromInline
-        @unsafe
-        mutating func _mutableBasePointer() -> UnsafeMutablePointer<Element> {
-            unsafe Swift.withUnsafeMutablePointer(to: &_storage) { storagePtr in
-                let basePtr = UnsafeMutableRawPointer(storagePtr)
-                return unsafe basePtr.assumingMemoryBound(to: Element.self)
             }
         }
     }
@@ -455,7 +331,7 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
             if let heap = _heap {
                 // Elements are on heap - Storage handles cleanup via its deinit
                 // Set header count for proper cleanup
-                heap.header = (head: heap.header.head, tail: heap.header.tail, count: count)
+                heap.header.count = Index_Primitives.Index<Element>.Count(__unchecked: count)
             } else {
                 // Elements are inline - clean up manually using ring buffer order
                 let stride = MemoryLayout<Element>.stride
@@ -475,63 +351,6 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
         /// Whether the queue is currently using heap storage.
         @inlinable
         public var isSpilled: Bool { _heap != nil }
-
-        // MARK: - Internal Helpers
-
-        /// Returns a mutable pointer to the inline element at the given index.
-        @usableFromInline
-        @unsafe
-        mutating func _inlinePointerToElement(at index: Int) -> UnsafeMutablePointer<Element> {
-            let stride = MemoryLayout<Element>.stride
-            return unsafe Swift.withUnsafeMutablePointer(to: &_inline) { storagePtr in
-                let basePtr = UnsafeMutableRawPointer(storagePtr)
-                let elementPtr = unsafe (basePtr + index * stride)
-                    .assumingMemoryBound(to: Element.self)
-                return unsafe elementPtr
-            }
-        }
-
-        /// Returns a read-only pointer to the inline element at the given index.
-        @usableFromInline
-        @unsafe
-        package func _inlineReadPointerToElement(at index: Int) -> UnsafePointer<Element> {
-            let stride = MemoryLayout<Element>.stride
-            return unsafe Swift.withUnsafePointer(to: _inline) { storagePtr in
-                let basePtr = unsafe UnsafeRawPointer(storagePtr)
-                let elementPtr = unsafe (basePtr + index * stride)
-                    .assumingMemoryBound(to: Element.self)
-                return unsafe elementPtr
-            }
-        }
-
-        /// Spills inline storage to heap, linearizing the ring buffer.
-        @usableFromInline
-        mutating func _spillToHeap(minimumCapacity: Int) {
-            precondition(_heap == nil, "Already spilled")
-
-            // Create heap storage with growth factor
-            let newCapacity = Swift.max(minimumCapacity, inlineCapacity * 2, 8)
-            let newStorage = Storage.create(minimumCapacity: newCapacity)
-            newStorage.header = (head: 0, tail: _count, count: _count)
-
-            // Move elements from inline (ring buffer) to heap (linear)
-            let stride = MemoryLayout<Element>.stride
-            var srcIndex = _head
-            _ = unsafe Swift.withUnsafeBytes(of: _inline) { bytes in
-                unsafe newStorage.withUnsafeMutablePointerToElements { heapPtr in
-                    let inlineBase = unsafe UnsafeMutableRawPointer(mutating: bytes.baseAddress!)
-                    for dstIndex in 0..<_count {
-                        let inlineElement = unsafe (inlineBase + srcIndex * stride)
-                            .assumingMemoryBound(to: Element.self)
-                        unsafe (heapPtr + dstIndex).initialize(to: inlineElement.move())
-                        srcIndex = (srcIndex + 1) % inlineCapacity
-                    }
-                }
-            }
-
-            _heap = newStorage
-            unsafe (_heapPtr = newStorage._elementsPointer)
-        }
     }
 
     /// A fixed-capacity FIFO queue supporting move-only elements.
@@ -640,15 +459,15 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
 
         /// Header for arena-based linked list storage.
         @usableFromInline
-        struct Header {
-            @usableFromInline var head: Int
-            @usableFromInline var tail: Int
-            @usableFromInline var freeHead: Int
-            @usableFromInline var count: Int
-            @usableFromInline var capacity: Int
+        package struct Header {
+            @usableFromInline package var head: Int
+            @usableFromInline package var tail: Int
+            @usableFromInline package var freeHead: Int
+            @usableFromInline package var count: Int
+            @usableFromInline package var capacity: Int
 
             @usableFromInline
-            init() {
+            package init() {
                 self.head = -1
                 self.tail = -1
                 self.freeHead = -1
@@ -658,13 +477,14 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
         }
 
         /// A node in the arena-based linked list.
+        @frozen
         @usableFromInline
-        struct Node: ~Copyable {
-            @usableFromInline var element: Element
-            @usableFromInline var nextIndex: Int
+        package struct Node: ~Copyable {
+            @usableFromInline package var element: Element
+            @usableFromInline package var nextIndex: Int
 
             @usableFromInline
-            init(element: consuming Element, nextIndex: Int) {
+            package init(element: consuming Element, nextIndex: Int) {
                 self.element = element
                 self.nextIndex = nextIndex
             }
@@ -672,16 +492,16 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
 
         /// Internal storage class for arena-based linked list.
         @usableFromInline
-        final class Storage: ManagedBuffer<Header, Node> {
+        package final class Storage: ManagedBuffer<Header, Node> {
 
             @usableFromInline
-            static func create() -> Storage {
+            package static func create() -> Storage {
                 let storage = Storage.create(minimumCapacity: 0) { _ in Header() }
                 return unsafe unsafeDowncast(storage, to: Storage.self)
             }
 
             @usableFromInline
-            static func create(minimumCapacity: Int) -> Storage {
+            package static func create(minimumCapacity: Int) -> Storage {
                 var header = Header()
                 header.capacity = minimumCapacity
                 let storage = Storage.create(minimumCapacity: minimumCapacity) { _ in header }
@@ -700,60 +520,6 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
                     }
                 }
             }
-
-            @usableFromInline
-            var _nodesPointer: UnsafeMutablePointer<Node> {
-                unsafe withUnsafeMutablePointerToElements { unsafe $0 }
-            }
-
-            @usableFromInline
-            func _initializeNode(at index: Int, element: consuming Element, nextIndex: Int) {
-                let ptr = unsafe withUnsafeMutablePointerToElements { unsafe $0 + index }
-                unsafe ptr.initialize(to: Node(element: element, nextIndex: nextIndex))
-            }
-
-            @usableFromInline
-            func _loadFreeNext(at index: Int) -> Int {
-                unsafe withUnsafeMutablePointerToElements { ptr in
-                    unsafe UnsafeRawPointer(ptr.advanced(by: index)).load(as: Int.self)
-                }
-            }
-
-            @usableFromInline
-            func _storeFreeNext(at index: Int, next: Int) {
-                unsafe withUnsafeMutablePointerToElements { ptr in
-                    unsafe UnsafeMutableRawPointer(ptr.advanced(by: index)).storeBytes(of: next, as: Int.self)
-                }
-            }
-
-            @usableFromInline
-            func _moveAllElements(to newStorage: Storage) {
-                let count = header.count
-                guard count > 0 else { return }
-
-                var srcIndex = header.head
-                var dstIndex = 0
-                _ = unsafe withUnsafeMutablePointerToElements { src in
-                    unsafe newStorage.withUnsafeMutablePointerToElements { dst in
-                        while srcIndex >= 0 {
-                            let nextSrcIndex = unsafe src[srcIndex].nextIndex
-                            let newNextIndex = dstIndex + 1 < count ? dstIndex + 1 : -1
-
-                            unsafe (dst + dstIndex).initialize(
-                                to: Node(element: (src + srcIndex).move().element, nextIndex: newNextIndex)
-                            )
-
-                            srcIndex = nextSrcIndex
-                            dstIndex += 1
-                        }
-                    }
-                }
-
-                header.head = -1
-                header.tail = -1
-                header.freeHead = -1
-                header.count = 0
-            }
         }
 
         // ============================================================================
@@ -761,7 +527,7 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
         // ============================================================================
 
         @usableFromInline
-        var _storage: Storage
+        package var _storage: Storage
 
         /// Creates an empty linked queue.
         @inlinable
@@ -804,7 +570,7 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
         @safe
         public struct Bounded: ~Copyable {
             @usableFromInline
-            var _storage: Storage
+            package var _storage: Storage
 
             /// The maximum number of elements the queue can hold.
             public let capacity: Int
@@ -991,7 +757,7 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
             let count = _count
             guard count > 0 else { return }
             if let heap = _heap {
-                heap.header.count = count
+                heap.header.count = Index_Primitives.Index<Element>.Count(__unchecked: count)
             } else {
                 let stride = MemoryLayout<Element>.stride
                 unsafe Swift.withUnsafeBytes(of: _inline) { bytes in
@@ -1013,18 +779,6 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
     public init() {
         self._storage = Storage.create()
         unsafe (self._cachedPtr = _storage._elementsPointer)
-    }
-
-    /// Creates a queue initialized with elements from a sequence.
-    ///
-    /// - Parameter elements: The elements to enqueue.
-    /// - Complexity: O(n) where n is the number of elements.
-    @inlinable
-    public init(_ elements: some Swift.Sequence<Element>) {
-        self.init()
-        for element in elements {
-            enqueue(element)
-        }
     }
 
     /// Creates a queue with reserved capacity.
@@ -1049,46 +803,6 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
     }
 
     // Note: No deinit needed - Storage handles cleanup
-}
-
-// MARK: - Queue.Linked.Storage Copyable Helpers
-
-extension Queue.Linked.Storage where Element: Copyable {
-    @usableFromInline
-    func copy() -> Queue<Element>.Linked.Storage {
-        let count = header.count
-        guard count > 0 else {
-            return Queue<Element>.Linked.Storage.create()
-        }
-
-        let new = Queue<Element>.Linked.Storage.create(minimumCapacity: capacity)
-        new.header = Queue<Element>.Linked.Header()
-        new.header.head = 0
-        new.header.tail = count - 1
-        new.header.freeHead = -1
-        new.header.count = count
-        new.header.capacity = capacity
-
-        var srcIndex = header.head
-        var dstIndex = 0
-        _ = unsafe withUnsafeMutablePointerToElements { src in
-            unsafe new.withUnsafeMutablePointerToElements { dst in
-                while srcIndex >= 0 {
-                    let newNextIndex = dstIndex + 1 < count ? dstIndex + 1 : -1
-                    unsafe (dst + dstIndex).initialize(
-                        to: Queue<Element>.Linked.Node(
-                            element: src[srcIndex].element,
-                            nextIndex: newNextIndex
-                        )
-                    )
-                    srcIndex = unsafe src[srcIndex].nextIndex
-                    dstIndex += 1
-                }
-            }
-        }
-
-        return new
-    }
 }
 
 // MARK: - Conditional Copyable
@@ -1168,7 +882,8 @@ extension Queue.Linked where Element: Copyable {
     /// This variant requires `Element: Copyable` due to InlineArray limitations.
     /// For ~Copyable elements, use ``Queue/Linked`` or ``Queue/Linked/Bounded`` instead.
     public struct Inline<let capacity: Int>: ~Copyable {
-        var _storage: List<Element>.Linked<1>.Inline<capacity>
+        @usableFromInline
+        package var _storage: List<Element>.Linked<1>.Inline<capacity>
 
         /// Creates an empty inline linked queue.
         public init() {
@@ -1204,7 +919,8 @@ extension Queue.Linked where Element: Copyable {
     /// For ~Copyable elements, use ``Queue/Linked`` or ``Queue/Linked/Bounded`` instead.
     @safe
     public struct Small<let inlineCapacity: Int>: ~Copyable {
-        var _storage: List<Element>.Linked<1>.Small<inlineCapacity>
+        @usableFromInline
+        package var _storage: List<Element>.Linked<1>.Small<inlineCapacity>
 
         /// Creates an empty small linked queue.
         public init() {
@@ -1217,1301 +933,6 @@ extension Queue.Linked where Element: Copyable {
 }
 
 // Note: Queue.Linked.Small and Queue.Linked.Inline are UNCONDITIONALLY ~Copyable due to deinit requirement
-
-// ============================================================================
-// MARK: - Queue.Linked Extensions
-// ============================================================================
-// NOTE: These extensions MUST be in the same file as Queue.Linked declaration
-// due to Swift compiler bug [MEM-COPY-006] Category 3: Protocol conformances
-// and extensions for nested types in separate files break ~Copyable propagation.
-
-// MARK: - Queue.Linked Properties
-
-extension Queue.Linked where Element: ~Copyable {
-    /// The current number of elements in the queue.
-    @inlinable
-    public var count: Int { _storage.header.count }
-
-    /// Whether the queue is empty.
-    @inlinable
-    public var isEmpty: Bool { _storage.header.count == 0 }
-
-    /// The current capacity of the queue.
-    @inlinable
-    public var capacity: Int { _storage.capacity }
-}
-
-// MARK: - Queue.Linked Capacity Management
-
-extension Queue.Linked where Element: ~Copyable {
-    /// Ensures the queue has capacity for at least the specified number of elements.
-    @usableFromInline
-    mutating func _ensureCapacity(_ minimumCapacity: Int) {
-        guard _storage.capacity < minimumCapacity else { return }
-
-        let newCapacity = Swift.max(minimumCapacity, _storage.capacity * 2, 4)
-        let newStorage = Queue<Element>.Linked.Storage.create(minimumCapacity: newCapacity)
-        let currentCount = _storage.header.count
-
-        _storage._moveAllElements(to: newStorage)
-        newStorage.header.head = currentCount > 0 ? 0 : -1
-        newStorage.header.tail = currentCount > 0 ? currentCount - 1 : -1
-        newStorage.header.count = currentCount
-        newStorage.header.capacity = newCapacity
-        _storage = newStorage
-    }
-
-    /// Allocates a node slot, returning its index.
-    @usableFromInline
-    mutating func _allocateSlot() -> Int {
-        if _storage.header.freeHead >= 0 {
-            let index = _storage.header.freeHead
-            _storage.header.freeHead = _storage._loadFreeNext(at: index)
-            return index
-        }
-        return _storage.header.count
-    }
-
-    /// Reserves capacity for at least the specified number of elements.
-    ///
-    /// Use this method to avoid multiple reallocations when adding a known
-    /// number of elements.
-    ///
-    /// - Parameter minimumCapacity: The minimum total capacity to reserve.
-    @inlinable
-    public mutating func reserve(_ minimumCapacity: Int) {
-        _ensureCapacity(minimumCapacity)
-    }
-}
-
-// MARK: - Queue.Linked Core Operations (~Copyable)
-
-extension Queue.Linked where Element: ~Copyable {
-    /// Enqueues an element at the back of the queue.
-    ///
-    /// - Parameter element: The element to enqueue.
-    /// - Complexity: O(1) amortized
-    @inlinable
-    public mutating func enqueue(_ element: consuming Element) {
-        _ensureCapacity(_storage.header.count + 1)
-        let newIndex = _allocateSlot()
-
-        // Initialize node with next = -1 (new tail)
-        _storage._initializeNode(at: newIndex, element: element, nextIndex: -1)
-
-        // Update old tail's next link
-        if _storage.header.tail >= 0 {
-            let nodes = unsafe _storage._nodesPointer
-            unsafe (nodes[_storage.header.tail].nextIndex = newIndex)
-        }
-
-        if _storage.header.head < 0 {
-            _storage.header.head = newIndex
-        }
-
-        _storage.header.tail = newIndex
-        _storage.header.count += 1
-    }
-
-    /// Dequeues and returns the front element, or nil if empty.
-    ///
-    /// - Returns: The front element, or `nil` if the queue is empty.
-    /// - Complexity: O(1)
-    @inlinable
-    public mutating func dequeue() -> Element? {
-        guard _storage.header.count > 0 else { return nil }
-
-        let headIndex = _storage.header.head
-
-        // Capture next index BEFORE move
-        let nextIndex: Int = unsafe _storage.withUnsafeMutablePointerToElements { nodes in
-            unsafe nodes[headIndex].nextIndex
-        }
-
-        // Update header
-        _storage.header.head = nextIndex
-        if nextIndex < 0 {
-            _storage.header.tail = -1
-        }
-
-        // Move element out (deinitializes node)
-        let element: Element = unsafe _storage.withUnsafeMutablePointerToElements { nodes in
-            unsafe (nodes + headIndex).move().element
-        }
-
-        // Add to free list
-        _storage._storeFreeNext(at: headIndex, next: _storage.header.freeHead)
-        _storage.header.freeHead = headIndex
-
-        _storage.header.count -= 1
-        return element
-    }
-
-    /// Removes all elements from the queue.
-    ///
-    /// - Parameter keepingCapacity: If `true`, the queue keeps its current capacity.
-    ///   If `false`, the storage is released. Default is `true`.
-    /// - Complexity: O(n) where n is the number of elements.
-    @inlinable
-    public mutating func clear(keepingCapacity: Bool = true) {
-        guard _storage.header.count > 0 else { return }
-
-        // Deinitialize all nodes
-        var index = _storage.header.head
-        _ = unsafe _storage.withUnsafeMutablePointerToElements { nodes in
-            while index >= 0 {
-                let nextIndex = unsafe nodes[index].nextIndex
-                unsafe (nodes + index).deinitialize(count: 1)
-                index = nextIndex
-            }
-        }
-
-        if keepingCapacity {
-            _storage.header.head = -1
-            _storage.header.tail = -1
-            _storage.header.freeHead = -1
-            _storage.header.count = 0
-        } else {
-            _storage = Queue<Element>.Linked.Storage.create()
-        }
-    }
-}
-
-// MARK: - Queue.Linked Copy-on-Write (Copyable elements only)
-
-extension Queue.Linked where Element: Copyable {
-    /// Ensures the storage is uniquely referenced before mutation.
-    @usableFromInline
-    mutating func _makeUnique() {
-        if !isKnownUniquelyReferenced(&_storage) {
-            _storage = _storage.copy()
-        }
-    }
-
-    /// Enqueues an element at the back of the queue (CoW-aware).
-    ///
-    /// - Parameter element: The element to enqueue.
-    /// - Complexity: O(1) amortized, O(n) if copy triggered
-    @inlinable
-    public mutating func enqueue(_ element: Element) {
-        _makeUnique()
-        _ensureCapacity(_storage.header.count + 1)
-        let newIndex = _allocateSlot()
-
-        _storage._initializeNode(at: newIndex, element: element, nextIndex: -1)
-
-        if _storage.header.tail >= 0 {
-            let nodes = unsafe _storage._nodesPointer
-            unsafe (nodes[_storage.header.tail].nextIndex = newIndex)
-        }
-
-        if _storage.header.head < 0 {
-            _storage.header.head = newIndex
-        }
-
-        _storage.header.tail = newIndex
-        _storage.header.count += 1
-    }
-
-    /// Dequeues and returns the front element, or nil if empty (CoW-aware).
-    ///
-    /// - Returns: The front element, or `nil` if the queue is empty.
-    /// - Complexity: O(1), O(n) if copy triggered
-    @inlinable
-    public mutating func dequeue() -> Element? {
-        _makeUnique()
-        guard _storage.header.count > 0 else { return nil }
-
-        let headIndex = _storage.header.head
-
-        // Capture element and next BEFORE deinitialize
-        var element: Element?
-        var nextIndex: Int = -1
-        _ = unsafe _storage.withUnsafeMutablePointerToElements { nodes in
-            element = unsafe nodes[headIndex].element
-            nextIndex = unsafe nodes[headIndex].nextIndex
-        }
-
-        _storage.header.head = nextIndex
-        if nextIndex < 0 {
-            _storage.header.tail = -1
-        }
-
-        // Deinitialize the node
-        _ = unsafe _storage.withUnsafeMutablePointerToElements { nodes in
-            unsafe (nodes + headIndex).deinitialize(count: 1)
-        }
-
-        _storage._storeFreeNext(at: headIndex, next: _storage.header.freeHead)
-        _storage.header.freeHead = headIndex
-
-        _storage.header.count -= 1
-        return element
-    }
-
-    /// Removes all elements from the queue (CoW-aware).
-    ///
-    /// - Parameter keepingCapacity: If `true`, the queue keeps its current capacity.
-    ///   If `false`, the storage is released. Default is `true`.
-    /// - Complexity: O(n) where n is the number of elements.
-    @inlinable
-    public mutating func clear(keepingCapacity: Bool = true) {
-        _makeUnique()
-        guard _storage.header.count > 0 else { return }
-
-        var index = _storage.header.head
-        _ = unsafe _storage.withUnsafeMutablePointerToElements { nodes in
-            while index >= 0 {
-                let nextIndex = unsafe nodes[index].nextIndex
-                unsafe (nodes + index).deinitialize(count: 1)
-                index = nextIndex
-            }
-        }
-
-        if keepingCapacity {
-            _storage.header.head = -1
-            _storage.header.tail = -1
-            _storage.header.freeHead = -1
-            _storage.header.count = 0
-        } else {
-            _storage = Queue<Element>.Linked.Storage.create()
-        }
-    }
-}
-
-// MARK: - Queue.Linked Peek
-
-extension Queue.Linked where Element: ~Copyable {
-    /// Peeks at the front element without removing it.
-    ///
-    /// Uses a closure to support `~Copyable` elements via borrowing.
-    ///
-    /// - Parameter body: A closure that receives a borrowed reference to the front element.
-    /// - Returns: The result of the closure, or `nil` if the queue is empty.
-    /// - Complexity: O(1)
-    @inlinable
-    public func peek<R>(_ body: (borrowing Element) -> R) -> R? {
-        guard _storage.header.count > 0 else { return nil }
-        let headIndex = _storage.header.head
-        return unsafe _storage.withUnsafeMutablePointerToElements { nodes in
-            body(unsafe nodes[headIndex].element)
-        }
-    }
-}
-
-extension Queue.Linked {
-    /// Returns the front element without removing it, or nil if empty.
-    ///
-    /// This is a convenience method for `Copyable` elements. For `~Copyable`
-    /// elements, use ``peek(_:)`` with a closure.
-    ///
-    /// - Returns: A copy of the front element, or `nil` if the queue is empty.
-    /// - Complexity: O(1)
-    @inlinable
-    public func peek() -> Element? {
-        guard _storage.header.count > 0 else { return nil }
-        let headIndex = _storage.header.head
-        return unsafe _storage.withUnsafeMutablePointerToElements { nodes in
-            unsafe nodes[headIndex].element
-        }
-    }
-}
-
-// MARK: - Queue.Linked ForEach
-
-extension Queue.Linked where Element: ~Copyable {
-    /// Calls the given closure for each element in the queue.
-    ///
-    /// Elements are visited from front (oldest) to back (newest).
-    ///
-    /// - Parameter body: A closure that receives each element.
-    /// - Complexity: O(n) where n is the number of elements.
-    @inlinable
-    public func forEach(_ body: (borrowing Element) -> Void) {
-        var index = _storage.header.head
-        _ = unsafe _storage.withUnsafeMutablePointerToElements { nodes in
-            while index >= 0 {
-                body(unsafe nodes[index].element)
-                index = unsafe nodes[index].nextIndex
-            }
-        }
-    }
-}
-
-// MARK: - Queue.Linked Sequence (Copyable elements only)
-
-/// `Queue.Linked` conforms to `Sequence` when `Element` is `Copyable`.
-///
-/// This enables `for-in` loops, `map`, `filter`, and other sequence operations.
-/// For `~Copyable` elements, use ``forEach(_:)`` instead.
-extension Queue.Linked: Swift.Sequence where Element: Copyable {
-
-    /// An iterator over the elements of a linked queue.
-    public struct Iterator: IteratorProtocol {
-        @usableFromInline
-        let _storage: Queue<Element>.Linked.Storage
-
-        @usableFromInline
-        var _current: Int
-
-        @usableFromInline
-        init(storage: Queue<Element>.Linked.Storage) {
-            self._storage = storage
-            self._current = storage.header.head
-        }
-
-        /// Advances to the next element and returns it, or nil if no next element exists.
-        @inlinable
-        public mutating func next() -> Element? {
-            guard _current >= 0 else { return nil }
-            return unsafe _storage.withUnsafeMutablePointerToElements { nodes in
-                let element = unsafe nodes[_current].element
-                _current = unsafe nodes[_current].nextIndex
-                return element
-            }
-        }
-    }
-
-    /// Returns an iterator over the elements of the queue.
-    ///
-    /// Elements are yielded from front (oldest) to back (newest).
-    @inlinable
-    public func makeIterator() -> Iterator {
-        Iterator(storage: _storage)
-    }
-}
-
-// MARK: - Queue.Linked Equatable
-
-extension Queue.Linked: Equatable where Element: Equatable {
-    @inlinable
-    public static func == (lhs: Self, rhs: Self) -> Bool {
-        guard lhs.count == rhs.count else { return false }
-
-        var lhsIndex = lhs._storage.header.head
-        var rhsIndex = rhs._storage.header.head
-
-        while lhsIndex >= 0 && rhsIndex >= 0 {
-            let lhsElement = unsafe lhs._storage.withUnsafeMutablePointerToElements { nodes in
-                unsafe nodes[lhsIndex].element
-            }
-            let rhsElement = unsafe rhs._storage.withUnsafeMutablePointerToElements { nodes in
-                unsafe nodes[rhsIndex].element
-            }
-
-            if lhsElement != rhsElement { return false }
-
-            lhsIndex = unsafe lhs._storage.withUnsafeMutablePointerToElements { nodes in
-                unsafe nodes[lhsIndex].nextIndex
-            }
-            rhsIndex = unsafe rhs._storage.withUnsafeMutablePointerToElements { nodes in
-                unsafe nodes[rhsIndex].nextIndex
-            }
-        }
-
-        return true
-    }
-}
-
-// MARK: - Queue.Linked Hashable
-
-extension Queue.Linked: Hashable where Element: Hashable {
-    @inlinable
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(_storage.header.count)
-        forEach { hasher.combine($0) }
-    }
-}
-
-// MARK: - Queue.Linked Sendable
-
-extension Queue.Linked: @unchecked Sendable where Element: Sendable {}
-
-// ============================================================================
-// MARK: - Queue.Linked.Bounded Extensions
-// ============================================================================
-
-// MARK: - Queue.Linked.Bounded Properties
-
-extension Queue.Linked.Bounded where Element: ~Copyable {
-    /// The current number of elements in the queue.
-    @inlinable
-    public var count: Int { _storage.header.count }
-
-    /// Whether the queue is empty.
-    @inlinable
-    public var isEmpty: Bool { _storage.header.count == 0 }
-
-    /// Whether the queue is at capacity.
-    @inlinable
-    public var isFull: Bool { _storage.header.count >= capacity }
-}
-
-// MARK: - Queue.Linked.Bounded Core Operations (~Copyable)
-
-extension Queue.Linked.Bounded where Element: ~Copyable {
-    /// Allocates a node slot, returning its index.
-    @usableFromInline
-    mutating func _allocateSlot() -> Int {
-        if _storage.header.freeHead >= 0 {
-            let index = _storage.header.freeHead
-            _storage.header.freeHead = _storage._loadFreeNext(at: index)
-            return index
-        }
-        return _storage.header.count
-    }
-
-    /// Enqueues an element at the back of the queue.
-    ///
-    /// - Parameter element: The element to enqueue.
-    /// - Throws: ``Bounded/Error/overflow`` if the queue is at capacity.
-    /// - Complexity: O(1)
-    @inlinable
-    public mutating func enqueue(_ element: consuming Element) throws(__QueueLinkedBoundedError) {
-        guard _storage.header.count < capacity else {
-            throw .overflow
-        }
-
-        let newIndex = _allocateSlot()
-
-        _storage._initializeNode(at: newIndex, element: element, nextIndex: -1)
-
-        if _storage.header.tail >= 0 {
-            let nodes = unsafe _storage._nodesPointer
-            unsafe (nodes[_storage.header.tail].nextIndex = newIndex)
-        }
-
-        if _storage.header.head < 0 {
-            _storage.header.head = newIndex
-        }
-
-        _storage.header.tail = newIndex
-        _storage.header.count += 1
-    }
-
-    /// Dequeues and returns the front element, or nil if empty.
-    ///
-    /// - Returns: The front element, or `nil` if the queue is empty.
-    /// - Complexity: O(1)
-    @inlinable
-    public mutating func dequeue() -> Element? {
-        guard _storage.header.count > 0 else { return nil }
-
-        let headIndex = _storage.header.head
-
-        let nextIndex: Int = unsafe _storage.withUnsafeMutablePointerToElements { nodes in
-            unsafe nodes[headIndex].nextIndex
-        }
-
-        _storage.header.head = nextIndex
-        if nextIndex < 0 {
-            _storage.header.tail = -1
-        }
-
-        let element: Element = unsafe _storage.withUnsafeMutablePointerToElements { nodes in
-            unsafe (nodes + headIndex).move().element
-        }
-
-        _storage._storeFreeNext(at: headIndex, next: _storage.header.freeHead)
-        _storage.header.freeHead = headIndex
-
-        _storage.header.count -= 1
-        return element
-    }
-
-    /// Removes all elements from the queue.
-    ///
-    /// - Complexity: O(n) where n is the number of elements.
-    @inlinable
-    public mutating func clear() {
-        guard _storage.header.count > 0 else { return }
-
-        var index = _storage.header.head
-        _ = unsafe _storage.withUnsafeMutablePointerToElements { nodes in
-            while index >= 0 {
-                let nextIndex = unsafe nodes[index].nextIndex
-                unsafe (nodes + index).deinitialize(count: 1)
-                index = nextIndex
-            }
-        }
-
-        _storage.header.head = -1
-        _storage.header.tail = -1
-        _storage.header.freeHead = -1
-        _storage.header.count = 0
-    }
-}
-
-// MARK: - Queue.Linked.Bounded Copy-on-Write (Copyable elements only)
-
-extension Queue.Linked.Bounded where Element: Copyable {
-    /// Ensures the storage is uniquely referenced before mutation.
-    @usableFromInline
-    mutating func _makeUnique() {
-        if !isKnownUniquelyReferenced(&_storage) {
-            _storage = _storage.copy()
-        }
-    }
-
-    /// Enqueues an element at the back of the queue (CoW-aware).
-    ///
-    /// - Parameter element: The element to enqueue.
-    /// - Throws: ``Bounded/Error/overflow`` if the queue is at capacity.
-    /// - Complexity: O(1), O(n) if copy triggered
-    @inlinable
-    public mutating func enqueue(_ element: Element) throws(__QueueLinkedBoundedError) {
-        _makeUnique()
-        guard _storage.header.count < capacity else {
-            throw .overflow
-        }
-
-        let newIndex = _allocateSlot()
-
-        _storage._initializeNode(at: newIndex, element: element, nextIndex: -1)
-
-        if _storage.header.tail >= 0 {
-            let nodes = unsafe _storage._nodesPointer
-            unsafe (nodes[_storage.header.tail].nextIndex = newIndex)
-        }
-
-        if _storage.header.head < 0 {
-            _storage.header.head = newIndex
-        }
-
-        _storage.header.tail = newIndex
-        _storage.header.count += 1
-    }
-
-    /// Dequeues and returns the front element, or nil if empty (CoW-aware).
-    ///
-    /// - Returns: The front element, or `nil` if the queue is empty.
-    /// - Complexity: O(1), O(n) if copy triggered
-    @inlinable
-    public mutating func dequeue() -> Element? {
-        _makeUnique()
-        guard _storage.header.count > 0 else { return nil }
-
-        let headIndex = _storage.header.head
-
-        var element: Element?
-        var nextIndex: Int = -1
-        _ = unsafe _storage.withUnsafeMutablePointerToElements { nodes in
-            element = unsafe nodes[headIndex].element
-            nextIndex = unsafe nodes[headIndex].nextIndex
-        }
-
-        _storage.header.head = nextIndex
-        if nextIndex < 0 {
-            _storage.header.tail = -1
-        }
-
-        _ = unsafe _storage.withUnsafeMutablePointerToElements { nodes in
-            unsafe (nodes + headIndex).deinitialize(count: 1)
-        }
-
-        _storage._storeFreeNext(at: headIndex, next: _storage.header.freeHead)
-        _storage.header.freeHead = headIndex
-
-        _storage.header.count -= 1
-        return element
-    }
-
-    /// Removes all elements from the queue (CoW-aware).
-    ///
-    /// - Complexity: O(n) where n is the number of elements.
-    @inlinable
-    public mutating func clear() {
-        _makeUnique()
-        guard _storage.header.count > 0 else { return }
-
-        var index = _storage.header.head
-        _ = unsafe _storage.withUnsafeMutablePointerToElements { nodes in
-            while index >= 0 {
-                let nextIndex = unsafe nodes[index].nextIndex
-                unsafe (nodes + index).deinitialize(count: 1)
-                index = nextIndex
-            }
-        }
-
-        _storage.header.head = -1
-        _storage.header.tail = -1
-        _storage.header.freeHead = -1
-        _storage.header.count = 0
-    }
-}
-
-// MARK: - Queue.Linked.Bounded Peek
-
-extension Queue.Linked.Bounded where Element: ~Copyable {
-    /// Peeks at the front element without removing it.
-    ///
-    /// Uses a closure to support `~Copyable` elements via borrowing.
-    ///
-    /// - Parameter body: A closure that receives a borrowed reference to the front element.
-    /// - Returns: The result of the closure, or `nil` if the queue is empty.
-    /// - Complexity: O(1)
-    @inlinable
-    public func peek<R>(_ body: (borrowing Element) -> R) -> R? {
-        guard _storage.header.count > 0 else { return nil }
-        let headIndex = _storage.header.head
-        return unsafe _storage.withUnsafeMutablePointerToElements { nodes in
-            body(unsafe nodes[headIndex].element)
-        }
-    }
-}
-
-extension Queue.Linked.Bounded {
-    /// Returns the front element without removing it, or nil if empty.
-    ///
-    /// This is a convenience method for `Copyable` elements. For `~Copyable`
-    /// elements, use ``peek(_:)`` with a closure.
-    ///
-    /// - Returns: A copy of the front element, or `nil` if the queue is empty.
-    /// - Complexity: O(1)
-    @inlinable
-    public func peek() -> Element? {
-        guard _storage.header.count > 0 else { return nil }
-        let headIndex = _storage.header.head
-        return unsafe _storage.withUnsafeMutablePointerToElements { nodes in
-            unsafe nodes[headIndex].element
-        }
-    }
-}
-
-// MARK: - Queue.Linked.Bounded ForEach
-
-extension Queue.Linked.Bounded where Element: ~Copyable {
-    /// Calls the given closure for each element in the queue.
-    ///
-    /// Elements are visited from front (oldest) to back (newest).
-    ///
-    /// - Parameter body: A closure that receives each element.
-    /// - Complexity: O(n) where n is the number of elements.
-    @inlinable
-    public func forEach(_ body: (borrowing Element) -> Void) {
-        var index = _storage.header.head
-        _ = unsafe _storage.withUnsafeMutablePointerToElements { nodes in
-            while index >= 0 {
-                body(unsafe nodes[index].element)
-                index = unsafe nodes[index].nextIndex
-            }
-        }
-    }
-}
-
-// MARK: - Queue.Linked.Bounded Sequence (Copyable elements only)
-
-/// `Queue.Linked.Bounded` conforms to `Sequence` when `Element` is `Copyable`.
-///
-/// This enables `for-in` loops, `map`, `filter`, and other sequence operations.
-/// For `~Copyable` elements, use ``forEach(_:)`` instead.
-extension Queue.Linked.Bounded: Swift.Sequence where Element: Copyable {
-
-    /// An iterator over the elements of a bounded linked queue.
-    public struct Iterator: IteratorProtocol {
-        @usableFromInline
-        let _storage: Queue<Element>.Linked.Storage
-
-        @usableFromInline
-        var _current: Int
-
-        @usableFromInline
-        init(storage: Queue<Element>.Linked.Storage) {
-            self._storage = storage
-            self._current = storage.header.head
-        }
-
-        /// Advances to the next element and returns it, or nil if no next element exists.
-        @inlinable
-        public mutating func next() -> Element? {
-            guard _current >= 0 else { return nil }
-            return unsafe _storage.withUnsafeMutablePointerToElements { nodes in
-                let element = unsafe nodes[_current].element
-                _current = unsafe nodes[_current].nextIndex
-                return element
-            }
-        }
-    }
-
-    /// Returns an iterator over the elements of the queue.
-    ///
-    /// Elements are yielded from front (oldest) to back (newest).
-    @inlinable
-    public func makeIterator() -> Iterator {
-        Iterator(storage: _storage)
-    }
-}
-
-// MARK: - Queue.Linked.Bounded Equatable
-
-extension Queue.Linked.Bounded: Equatable where Element: Equatable {
-    @inlinable
-    public static func == (lhs: Self, rhs: Self) -> Bool {
-        guard lhs.count == rhs.count else { return false }
-
-        var lhsIndex = lhs._storage.header.head
-        var rhsIndex = rhs._storage.header.head
-
-        while lhsIndex >= 0 && rhsIndex >= 0 {
-            let lhsElement = unsafe lhs._storage.withUnsafeMutablePointerToElements { nodes in
-                unsafe nodes[lhsIndex].element
-            }
-            let rhsElement = unsafe rhs._storage.withUnsafeMutablePointerToElements { nodes in
-                unsafe nodes[rhsIndex].element
-            }
-
-            if lhsElement != rhsElement { return false }
-
-            lhsIndex = unsafe lhs._storage.withUnsafeMutablePointerToElements { nodes in
-                unsafe nodes[lhsIndex].nextIndex
-            }
-            rhsIndex = unsafe rhs._storage.withUnsafeMutablePointerToElements { nodes in
-                unsafe nodes[rhsIndex].nextIndex
-            }
-        }
-
-        return true
-    }
-}
-
-// MARK: - Queue.Linked.Bounded Hashable
-
-extension Queue.Linked.Bounded: Hashable where Element: Hashable {
-    @inlinable
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(_storage.header.count)
-        forEach { hasher.combine($0) }
-    }
-}
-
-// MARK: - Queue.Linked.Bounded Sendable
-
-extension Queue.Linked.Bounded: @unchecked Sendable where Element: Sendable {}
-
-// MARK: - Queue.Linked Error Types
-
-extension Queue.Linked where Element: ~Copyable {
-    /// Errors that can occur during linked queue operations.
-    ///
-    /// ## Cases
-    ///
-    /// - ``Queue/Linked/Error/empty``: The queue is empty and the operation requires elements.
-    /// - ``Queue/Linked/Error/invalidCapacity``: The requested capacity is invalid (negative).
-    public typealias Error = __QueueLinkedError
-}
-
-extension Queue.Linked.Bounded where Element: ~Copyable {
-    /// Errors that can occur during bounded linked queue operations.
-    ///
-    /// ## Cases
-    ///
-    /// - ``Queue/Linked/Bounded/Error/empty``: The queue is empty and the operation requires elements.
-    /// - ``Queue/Linked/Bounded/Error/invalidCapacity``: The requested capacity is invalid (negative).
-    /// - ``Queue/Linked/Bounded/Error/overflow``: The queue is full and cannot accept more elements.
-    public typealias Error = __QueueLinkedBoundedError
-}
-
-// ============================================================================
-// MARK: - Queue.Linked.Inline Extensions
-// ============================================================================
-
-// MARK: - Queue.Linked.Inline Properties
-
-extension Queue.Linked.Inline where Element: Copyable {
-    /// The current number of elements in the queue.
-    public var count: Int { _storage.count }
-
-    /// Whether the queue is empty.
-    public var isEmpty: Bool { _storage.isEmpty }
-
-    /// Whether the queue is at capacity.
-    public var isFull: Bool { _storage.isFull }
-}
-
-// MARK: - Queue.Linked.Inline Core Operations
-
-extension Queue.Linked.Inline where Element: Copyable {
-    /// Enqueues an element at the back of the queue.
-    ///
-    /// - Parameter element: The element to enqueue.
-    /// - Throws: ``Inline/Error/overflow`` if the queue is at capacity.
-    /// - Complexity: O(1)
-    public mutating func enqueue(_ element: Element) throws(__QueueLinkedInlineError) {
-        do throws(__ListLinkedInlineError) {
-            try _storage.append(element)
-        } catch {
-            switch error {
-            case .overflow: throw .overflow
-            case .empty: fatalError("Unexpected error: empty")
-            }
-        }
-    }
-
-    /// Dequeues and returns the front element, or nil if empty.
-    ///
-    /// - Returns: The front element, or `nil` if the queue is empty.
-    /// - Complexity: O(1)
-    public mutating func dequeue() -> Element? {
-        _storage.popFirst()
-    }
-
-    /// Removes all elements from the queue.
-    ///
-    /// - Complexity: O(n) where n is the number of elements.
-    public mutating func clear() {
-        _storage.clear()
-    }
-}
-
-// MARK: - Queue.Linked.Inline Peek
-
-extension Queue.Linked.Inline where Element: Copyable {
-    /// Returns the front element without removing it, or nil if empty.
-    ///
-    /// - Returns: A copy of the front element, or `nil` if the queue is empty.
-    /// - Complexity: O(1)
-    public func peek() -> Element? {
-        _storage.first
-    }
-}
-
-// MARK: - Queue.Linked.Inline ForEach
-
-extension Queue.Linked.Inline where Element: Copyable {
-    /// Calls the given closure for each element in the queue.
-    ///
-    /// Elements are visited from front (oldest) to back (newest).
-    ///
-    /// - Parameter body: A closure that receives each element.
-    /// - Complexity: O(n) where n is the number of elements.
-    public func forEach(_ body: (Element) -> Void) {
-        _storage.forEach(body)
-    }
-}
-
-// MARK: - Queue.Linked.Inline Sendable
-
-extension Queue.Linked.Inline: @unchecked Sendable where Element: Sendable {}
-
-// MARK: - Queue.Linked.Inline Error Types
-
-extension Queue.Linked.Inline where Element: Copyable {
-    /// Errors that can occur during inline linked queue operations.
-    ///
-    /// ## Cases
-    ///
-    /// - ``Queue/Linked/Inline/Error/empty``: The queue is empty and the operation requires elements.
-    /// - ``Queue/Linked/Inline/Error/overflow``: The queue is full and cannot accept more elements.
-    public typealias Error = __QueueLinkedInlineError
-}
-
-// ============================================================================
-// MARK: - Queue.Linked.Small Extensions
-// ============================================================================
-
-// MARK: - Queue.Linked.Small Properties
-
-extension Queue.Linked.Small where Element: Copyable {
-    /// The current number of elements in the queue.
-    public var count: Int { _storage.count }
-
-    /// Whether the queue is empty.
-    public var isEmpty: Bool { _storage.isEmpty }
-
-    /// The current capacity of the queue.
-    public var capacity: Int { _storage.capacity }
-}
-
-// MARK: - Queue.Linked.Small Core Operations
-
-extension Queue.Linked.Small where Element: Copyable {
-    /// Enqueues an element at the back of the queue.
-    ///
-    /// - Parameter element: The element to enqueue.
-    /// - Complexity: O(1) amortized
-    public mutating func enqueue(_ element: Element) {
-        _storage.append(element)
-    }
-
-    /// Dequeues and returns the front element, or nil if empty.
-    ///
-    /// - Returns: The front element, or `nil` if the queue is empty.
-    /// - Complexity: O(1)
-    public mutating func dequeue() -> Element? {
-        _storage.popFirst()
-    }
-
-    /// Removes all elements from the queue.
-    ///
-    /// - Complexity: O(n) where n is the number of elements.
-    public mutating func clear() {
-        _storage.clear()
-    }
-}
-
-// MARK: - Queue.Linked.Small Peek
-
-extension Queue.Linked.Small where Element: Copyable {
-    /// Returns the front element without removing it, or nil if empty.
-    ///
-    /// - Returns: A copy of the front element, or `nil` if the queue is empty.
-    /// - Complexity: O(1)
-    public func peek() -> Element? {
-        _storage.first
-    }
-}
-
-// MARK: - Queue.Linked.Small ForEach
-
-extension Queue.Linked.Small where Element: Copyable {
-    /// Calls the given closure for each element in the queue.
-    ///
-    /// Elements are visited from front (oldest) to back (newest).
-    ///
-    /// - Parameter body: A closure that receives each element.
-    /// - Complexity: O(n) where n is the number of elements.
-    public func forEach(_ body: (Element) -> Void) {
-        _storage.forEach(body)
-    }
-}
-
-// MARK: - Queue.Linked.Small Sendable
-
-extension Queue.Linked.Small: @unchecked Sendable where Element: Sendable {}
-
-// MARK: - Queue.Linked.Small Error Types
-
-extension Queue.Linked.Small where Element: Copyable {
-    /// Errors that can occur during small linked queue operations.
-    ///
-    /// ## Cases
-    ///
-    /// - ``Queue/Linked/Small/Error/empty``: The queue is empty and the operation requires elements.
-    public typealias Error = __QueueLinkedSmallError
-}
-
-// ============================================================================
-// MARK: - End Queue.Linked Extensions
-// ============================================================================
-
-/// `Queue.Bounded` conforms to `Sequence` when `Element` is `Copyable`.
-///
-/// - Note: This conformance must be in the same file as the type declaration
-///   due to a Swift compiler bug where protocol conformances for nested types
-///   in separate files cause `~Copyable` constraint propagation to fail.
-extension Queue.Bounded: Swift.Sequence where Element: Copyable {
-
-    /// An iterator over the elements of a bounded queue.
-    public struct Iterator: IteratorProtocol {
-        @usableFromInline
-        let _storage: Queue<Element>.Storage
-
-        @usableFromInline
-        let _capacity: Int
-
-        @usableFromInline
-        var _current: Int
-
-        @usableFromInline
-        var _remaining: Int
-
-        @usableFromInline
-        init(storage: Queue<Element>.Storage, capacity: Int) {
-            self._storage = storage
-            self._capacity = capacity
-            self._current = storage.header.head
-            self._remaining = storage.header.count
-        }
-
-        /// Advances to the next element and returns it, or nil if no next element exists.
-        @inlinable
-        public mutating func next() -> Element? {
-            guard _remaining > 0 else { return nil }
-            let element = _storage._readElement(at: _current)
-            _current = (_current + 1) % _capacity
-            _remaining -= 1
-            return element
-        }
-    }
-
-    /// Returns an iterator over the elements of the queue.
-    ///
-    /// Elements are yielded from front (oldest) to back (newest).
-    @inlinable
-    public func makeIterator() -> Iterator {
-        Iterator(storage: _storage, capacity: _storage.capacity)
-    }
-}
-
-// MARK: - Properties
-
-extension Queue where Element: ~Copyable {
-    /// The current number of elements in the queue.
-    @inlinable
-    public var count: Int { _storage.header.count }
-
-    /// Whether the queue is empty.
-    @inlinable
-    public var isEmpty: Bool { _storage.header.count == 0 }
-
-    /// The current capacity of the queue.
-    @inlinable
-    public var capacity: Int { _storage.capacity }
-}
-
-// MARK: - Capacity Management
-
-extension Queue where Element: ~Copyable {
-    /// Ensures the queue has capacity for at least the specified number of elements.
-    @usableFromInline
-    mutating func ensureCapacity(_ minimumCapacity: Int) {
-        guard _storage.capacity < minimumCapacity else { return }
-
-        // Growth factor 2.0, minimum capacity 4
-        let newCapacity = Swift.max(minimumCapacity, _storage.capacity * 2, 4)
-        let newStorage = Queue<Element>.Storage.create(minimumCapacity: newCapacity)
-        let currentCount = _storage.header.count
-
-        _storage._moveAllElements(to: newStorage)
-        newStorage.header = (head: 0, tail: currentCount, count: currentCount)
-        _storage = newStorage
-        unsafe (_cachedPtr = _storage._elementsPointer)  // CRITICAL: Update cached pointer
-    }
-
-    /// Reserves capacity for at least the specified number of elements.
-    ///
-    /// Use this method to avoid multiple reallocations when adding a known
-    /// number of elements.
-    ///
-    /// - Parameter minimumCapacity: The minimum total capacity to reserve.
-    @inlinable
-    public mutating func reserve(_ minimumCapacity: Int) {
-        ensureCapacity(minimumCapacity)
-    }
-}
-
-// MARK: - Core Operations (Base - for ~Copyable elements)
-
-extension Queue where Element: ~Copyable {
-    /// Enqueues an element at the back of the queue.
-    ///
-    /// - Parameter element: The element to enqueue.
-    /// - Complexity: O(1) amortized
-    @inlinable
-    public mutating func enqueue(_ element: consuming Element) {
-        ensureCapacity(_storage.header.count + 1)
-        let tail = _storage.header.tail
-        _storage._initializeElement(at: tail, to: element)
-        _storage.header.tail = (tail + 1) % _storage.capacity
-        _storage.header.count += 1
-    }
-
-    /// Dequeues and returns the front element, or nil if empty.
-    ///
-    /// - Returns: The front element, or `nil` if the queue is empty.
-    /// - Complexity: O(1)
-    @inlinable
-    public mutating func dequeue() -> Element? {
-        guard _storage.header.count > 0 else {
-            return nil
-        }
-        let head = _storage.header.head
-        let element = _storage._moveElement(at: head)
-        _storage.header.head = (head + 1) % _storage.capacity
-        _storage.header.count -= 1
-        return element
-    }
-
-    /// Removes all elements from the queue.
-    ///
-    /// - Parameter keepingCapacity: If `true`, the queue keeps its current capacity.
-    ///   If `false`, the storage is released. Default is `true`.
-    /// - Complexity: O(n) where n is the number of elements.
-    @inlinable
-    public mutating func clear(keepingCapacity: Bool = true) {
-        _storage._deinitializeAllElements()
-        _storage.header = (head: 0, tail: 0, count: 0)
-
-        if !keepingCapacity {
-            _storage = Storage.create()
-            unsafe (_cachedPtr = _storage._elementsPointer)  // Update cached pointer
-        }
-    }
-}
-
-// MARK: - Copy-on-Write (Copyable elements only)
-
-extension Queue where Element: Copyable {
-    /// Ensures the storage is uniquely referenced before mutation.
-    @usableFromInline
-    package mutating func makeUnique() {
-        if !isKnownUniquelyReferenced(&_storage) {
-            _storage = _storage.copy()
-            unsafe (_cachedPtr = _storage._elementsPointer)  // CRITICAL: Update cached pointer
-        }
-    }
-
-    /// Enqueues an element at the back of the queue (CoW-aware).
-    ///
-    /// - Parameter element: The element to enqueue.
-    /// - Complexity: O(1) amortized, O(n) if copy triggered
-    @inlinable
-    public mutating func enqueue(_ element: Element) {
-        makeUnique()
-        ensureCapacity(_storage.header.count + 1)
-        let tail = _storage.header.tail
-        _storage._initializeElement(at: tail, to: element)
-        _storage.header.tail = (tail + 1) % _storage.capacity
-        _storage.header.count += 1
-    }
-
-    /// Dequeues and returns the front element, or nil if empty (CoW-aware).
-    ///
-    /// - Returns: The front element, or `nil` if the queue is empty.
-    /// - Complexity: O(1), O(n) if copy triggered
-    @inlinable
-    public mutating func dequeue() -> Element? {
-        makeUnique()
-        guard _storage.header.count > 0 else {
-            return nil
-        }
-        let head = _storage.header.head
-        let element = _storage._moveElement(at: head)
-        _storage.header.head = (head + 1) % _storage.capacity
-        _storage.header.count -= 1
-        return element
-    }
-
-    /// Removes all elements from the queue (CoW-aware).
-    ///
-    /// - Parameter keepingCapacity: If `true`, the queue keeps its current capacity.
-    ///   If `false`, the storage is released. Default is `true`.
-    /// - Complexity: O(n) where n is the number of elements.
-    @inlinable
-    public mutating func clear(keepingCapacity: Bool = true) {
-        makeUnique()
-        _storage._deinitializeAllElements()
-        _storage.header = (head: 0, tail: 0, count: 0)
-
-        if !keepingCapacity {
-            _storage = Storage.create()
-            unsafe (_cachedPtr = _storage._elementsPointer)  // Update cached pointer
-        }
-    }
-}
-
-// MARK: - Peek
-
-extension Queue where Element: ~Copyable {
-    /// Peeks at the front element without removing it.
-    ///
-    /// Uses a closure to support `~Copyable` elements via borrowing.
-    ///
-    /// - Parameter body: A closure that receives a borrowed reference to the front element.
-    /// - Returns: The result of the closure, or `nil` if the queue is empty.
-    /// - Complexity: O(1)
-    @inlinable
-    public func peek<R>(_ body: (borrowing Element) -> R) -> R? {
-        guard _storage.header.count > 0 else {
-            return nil
-        }
-        let head = _storage.header.head
-        return unsafe _storage.withUnsafeMutablePointerToElements { elements in
-            body(unsafe (elements + head).pointee)
-        }
-    }
-}
-
-extension Queue {
-    /// Returns the front element without removing it, or nil if empty.
-    ///
-    /// This is a convenience method for `Copyable` elements. For `~Copyable`
-    /// elements, use ``peek(_:)`` with a closure.
-    ///
-    /// - Returns: A copy of the front element, or `nil` if the queue is empty.
-    /// - Complexity: O(1)
-    @inlinable
-    public func peek() -> Element? {
-        guard _storage.header.count > 0 else {
-            return nil
-        }
-        return _storage._readElement(at: _storage.header.head)
-    }
-}
-
-// MARK: - Span Access
-//
-// Note: Ring buffer queues may have non-contiguous storage (wrapping).
-// Full Span access requires linearizing, which we avoid for efficiency.
-// Instead, provide forEach-based iteration for ~Copyable elements.
-
-extension Queue where Element: ~Copyable {
-    /// Calls the given closure for each element in the queue.
-    ///
-    /// Elements are visited from front (oldest) to back (newest).
-    ///
-    /// - Parameter body: A closure that receives each element.
-    /// - Complexity: O(n) where n is the number of elements.
-    @inlinable
-    public func forEach(_ body: (borrowing Element) -> Void) {
-        let count = _storage.header.count
-        guard count > 0 else { return }
-        let cap = _storage.capacity
-        var index = _storage.header.head
-        _ = unsafe _storage.withUnsafeMutablePointerToElements { elements in
-            for _ in 0..<count {
-                body(unsafe (elements + index).pointee)
-                index = (index + 1) % cap
-            }
-        }
-    }
-}
-
-// MARK: - Sequence (Copyable elements only)
-
-/// `Queue` conforms to `Sequence` when `Element` is `Copyable`.
-///
-/// This enables `for-in` loops, `map`, `filter`, and other sequence operations.
-/// For `~Copyable` elements, use ``forEach(_:)`` instead.
-extension Queue: Swift.Sequence where Element: Copyable {
-
-    /// An iterator over the elements of a queue.
-    public struct Iterator: IteratorProtocol {
-        @usableFromInline
-        let _storage: Queue<Element>.Storage
-
-        @usableFromInline
-        var _current: Int
-
-        @usableFromInline
-        var _remaining: Int
-
-        @usableFromInline
-        init(storage: Queue<Element>.Storage) {
-            self._storage = storage
-            self._current = storage.header.head
-            self._remaining = storage.header.count
-        }
-
-        /// Advances to the next element and returns it, or nil if no next element exists.
-        @inlinable
-        public mutating func next() -> Element? {
-            guard _remaining > 0 else { return nil }
-            let element = _storage._readElement(at: _current)
-            _current = (_current + 1) % _storage.capacity
-            _remaining -= 1
-            return element
-        }
-    }
-
-    /// Returns an iterator over the elements of the queue.
-    ///
-    /// Elements are yielded from front (oldest) to back (newest).
-    @inlinable
-    public func makeIterator() -> Iterator {
-        Iterator(storage: _storage)
-    }
-}
 
 // MARK: - Sendable
 
@@ -2530,112 +951,11 @@ extension Queue._DoubleEndedStatic: @unchecked Sendable where Element: Sendable 
 /// `Queue.DoubleEnded.Small` is `Sendable` when its elements are `Sendable`.
 extension Queue._DoubleEndedSmall: @unchecked Sendable where Element: Sendable {}
 
-// MARK: - Capacity Management (Additional)
+/// `Queue.Bounded` is `Sendable` when its elements are `Sendable`.
+extension Queue.Bounded: @unchecked Sendable where Element: Sendable {}
 
-extension Queue where Element: ~Copyable {
-    /// Reduces capacity to match the current count, releasing unused memory.
-    ///
-    /// After calling this method, `capacity == count`. The ring buffer is
-    /// linearized during compaction.
-    ///
-    /// - Complexity: O(n) where n is the number of elements.
-    @inlinable
-    public mutating func compact() {
-        let currentCount = _storage.header.count
-        guard _storage.capacity > currentCount else { return }
+/// `Queue.Static` is `Sendable` when its elements are `Sendable`.
+extension Queue.Static: @unchecked Sendable where Element: Sendable {}
 
-        if currentCount == 0 {
-            _storage = Storage.create()
-            unsafe (_cachedPtr = _storage._elementsPointer)  // Update cached pointer
-            return
-        }
-
-        let newStorage = Queue<Element>.Storage.create(minimumCapacity: currentCount)
-        _storage._moveAllElements(to: newStorage)
-        newStorage.header = (head: 0, tail: currentCount, count: currentCount)
-        _storage = newStorage
-        unsafe (_cachedPtr = _storage._elementsPointer)  // Update cached pointer
-    }
-}
-
-// MARK: - CoW-aware Capacity Management (Copyable elements)
-
-extension Queue where Element: Copyable {
-    /// Reduces capacity to match the current count, releasing unused memory (CoW-aware).
-    ///
-    /// - Complexity: O(n) where n is the number of elements.
-    @inlinable
-    public mutating func compact() {
-        makeUnique()
-        let currentCount = _storage.header.count
-        guard _storage.capacity > currentCount else { return }
-
-        if currentCount == 0 {
-            _storage = Storage.create()
-            unsafe (_cachedPtr = _storage._elementsPointer)  // Update cached pointer
-            return
-        }
-
-        let newStorage = Queue<Element>.Storage.create(minimumCapacity: currentCount)
-        _storage._copyAllElements(to: newStorage)
-        newStorage.header = (head: 0, tail: currentCount, count: currentCount)
-        _storage = newStorage
-        unsafe (_cachedPtr = _storage._elementsPointer)  // Update cached pointer
-    }
-}
-
-// MARK: - Storage Copyable Helpers
-
-extension Queue.Storage where Element: Copyable {
-
-    /// Creates a copy of this storage with all elements duplicated and linearized.
-    @usableFromInline
-    func copy() -> Queue.Storage {
-        let count = header.count
-        guard count > 0 else {
-            return Queue.Storage.create()
-        }
-
-        let new = Queue.Storage.create(minimumCapacity: capacity)
-        new.header = (head: 0, tail: count, count: count)
-
-        // Copy elements in ring buffer order, linearizing
-        let cap = capacity
-        var srcIndex = header.head
-        _ = unsafe withUnsafeMutablePointerToElements { src in
-            unsafe new.withUnsafeMutablePointerToElements { dst in
-                for dstIndex in 0..<count {
-                    unsafe (dst + dstIndex).initialize(to: src[srcIndex])
-                    srcIndex = (srcIndex + 1) % cap
-                }
-            }
-        }
-
-        return new
-    }
-
-    /// Reads element at the given index.
-    @usableFromInline
-    package func _readElement(at index: Int) -> Element {
-        unsafe withUnsafeMutablePointerToElements { elements in
-            unsafe elements[index]
-        }
-    }
-
-    /// Copies all elements to new storage (linearized).
-    @usableFromInline
-    func _copyAllElements(to newStorage: Queue.Storage) {
-        let count = header.count
-        guard count > 0 else { return }
-        let cap = capacity
-        var srcIndex = header.head
-        _ = unsafe withUnsafeMutablePointerToElements { src in
-            unsafe newStorage.withUnsafeMutablePointerToElements { dst in
-                for dstIndex in 0..<count {
-                    unsafe (dst + dstIndex).initialize(to: src[srcIndex])
-                    srcIndex = (srcIndex + 1) % cap
-                }
-            }
-        }
-    }
-}
+/// `Queue.Small` is `Sendable` when its elements are `Sendable`.
+extension Queue.Small: @unchecked Sendable where Element: Sendable {}

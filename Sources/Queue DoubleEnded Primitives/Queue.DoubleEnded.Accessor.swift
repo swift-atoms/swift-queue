@@ -9,6 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
+public import Queue_Primitives_Core
 public import Property_Primitives
 
 // MARK: - Position Namespaces
