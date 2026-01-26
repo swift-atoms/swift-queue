@@ -10,6 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 public import Queue_Primitives_Core
+import Queue_Dynamic_Primitives
 
 // Note: Queue.DoubleEnded struct declaration is in Queue.swift
 // (must be same file due to Swift compiler bug [MEM-COPY-006])
@@ -27,12 +28,12 @@ extension Queue.DoubleEnded.Fixed where Element: ~Copyable {
     public typealias Error = __QueueDoubleEndedFixedError
 }
 
-extension Queue._DoubleEndedStatic {
+extension Queue.DoubleEnded.Static {
     /// Errors that can occur during static double-ended queue operations.
     public typealias Error = __QueueDoubleEndedStaticError
 }
 
-extension Queue._DoubleEndedSmall {
+extension Queue.DoubleEnded.Small {
     /// Errors that can occur during small double-ended queue operations.
     public typealias Error = __QueueDoubleEndedSmallError
 }
@@ -425,7 +426,7 @@ extension Queue.DoubleEnded.Fixed where Element: Copyable {
 
 // MARK: - Static Properties and Operations
 
-extension Queue._DoubleEndedStatic {
+extension Queue.DoubleEnded.Static {
     /// The current number of elements.
     @inlinable
     public var count: Int { _count }
@@ -439,28 +440,6 @@ extension Queue._DoubleEndedStatic {
     public var isFull: Bool { _count == Self.capacity }
 
     @usableFromInline
-    @unsafe
-    package mutating func _pointerToElement(at physicalIndex: Int) -> UnsafeMutablePointer<Element> {
-        let stride = MemoryLayout<Element>.stride
-        return unsafe Swift.withUnsafeMutablePointer(to: &_storage) { storagePtr in
-            let basePtr = UnsafeMutableRawPointer(storagePtr)
-            let elementPtr = unsafe (basePtr + physicalIndex * stride).assumingMemoryBound(to: Element.self)
-            return unsafe elementPtr
-        }
-    }
-
-    @usableFromInline
-    @unsafe
-    package func _readPointerToElement(at physicalIndex: Int) -> UnsafePointer<Element> {
-        let stride = MemoryLayout<Element>.stride
-        return unsafe Swift.withUnsafePointer(to: _storage) { storagePtr in
-            let basePtr = unsafe UnsafeRawPointer(storagePtr)
-            let elementPtr = unsafe (basePtr + physicalIndex * stride).assumingMemoryBound(to: Element.self)
-            return unsafe elementPtr
-        }
-    }
-
-    @usableFromInline
     package func _physicalIndex(_ logicalIndex: Int) -> Int {
         (_head + logicalIndex) % Self.capacity
     }
@@ -470,16 +449,16 @@ extension Queue._DoubleEndedStatic {
     public mutating func push(
         _ element: consuming Element,
         to position: Queue<Element>.DoubleEnded.Position
-    ) throws(Queue<Element>._DoubleEndedStatic<capacity>.Error) {
+    ) throws(Queue<Element>.DoubleEnded.Static<capacity>.Error) {
         guard !isFull else { throw .overflow }
         switch position {
         case .back:
             let tail = _physicalIndex(_count)
-            unsafe _pointerToElement(at: tail).initialize(to: element)
+            _storage.initialize(to: element, at: tail)
             _count += 1
         case .front:
             let newHead = (_head - 1 + Self.capacity) % Self.capacity
-            unsafe _pointerToElement(at: newHead).initialize(to: element)
+            _storage.initialize(to: element, at: newHead)
             _head = newHead
             _count += 1
         }
@@ -491,14 +470,14 @@ extension Queue._DoubleEndedStatic {
         guard !isEmpty else { return nil }
         switch position {
         case .front:
-            let elementPtr = unsafe _pointerToElement(at: _head)
+            let element = _storage.move(at: _head)
             _head = (_head + 1) % Self.capacity
             _count -= 1
-            return unsafe elementPtr.move()
+            return element
         case .back:
             _count -= 1
             let tail = _physicalIndex(_count)
-            return unsafe _pointerToElement(at: tail).move()
+            return _storage.move(at: tail)
         }
     }
 
@@ -517,23 +496,14 @@ extension Queue._DoubleEndedStatic {
         guard !isEmpty else { return nil }
         let logicalIndex = position == .front ? 0 : _count - 1
         let physicalIndex = _physicalIndex(logicalIndex)
-        return unsafe body(_readPointerToElement(at: physicalIndex).pointee)
+        let ptr = unsafe _storage.read(at: physicalIndex)
+        return body(unsafe ptr.pointee)
     }
 
     /// Removes all elements.
     @inlinable
     public mutating func clear() {
-        let count = _count
-        let head = _head
-        let stride = MemoryLayout<Element>.stride
-        unsafe Swift.withUnsafeMutablePointer(to: &_storage) { storagePtr in
-            let basePtr = UnsafeMutableRawPointer(storagePtr)
-            for i in 0..<count {
-                let physicalIndex = (head + i) % capacity
-                let elementPtr = unsafe (basePtr + physicalIndex * stride).assumingMemoryBound(to: Element.self)
-                unsafe elementPtr.deinitialize(count: 1)
-            }
-        }
+        _storage.deinitialize(from: _head, count: _count)
         _count = 0
         _head = 0
     }
@@ -544,18 +514,15 @@ extension Queue._DoubleEndedStatic {
         guard _count > 0 else { return }
         for i in 0..<_count {
             let physicalIndex = _physicalIndex(i)
-            body(unsafe _readPointerToElement(at: physicalIndex).pointee)
+            let ptr = unsafe _storage.read(at: physicalIndex)
+            body(unsafe ptr.pointee)
         }
     }
 }
 
 // MARK: - Small Properties and Operations
 
-extension Queue._DoubleEndedSmall {
-    /// Whether the deque is currently using heap storage.
-    @inlinable
-    public var isSpilled: Bool { _heap != nil }
-
+extension Queue.DoubleEnded.Small {
     /// The current number of elements.
     @inlinable
     public var count: Int { _count }
@@ -563,28 +530,6 @@ extension Queue._DoubleEndedSmall {
     /// Whether the deque is empty.
     @inlinable
     public var isEmpty: Bool { _count == 0 }
-
-    @usableFromInline
-    @unsafe
-    package mutating func _inlinePointerToElement(at physicalIndex: Int) -> UnsafeMutablePointer<Element> {
-        let stride = MemoryLayout<Element>.stride
-        return unsafe Swift.withUnsafeMutablePointer(to: &_inline) { storagePtr in
-            let basePtr = UnsafeMutableRawPointer(storagePtr)
-            let elementPtr = unsafe (basePtr + physicalIndex * stride).assumingMemoryBound(to: Element.self)
-            return unsafe elementPtr
-        }
-    }
-
-    @usableFromInline
-    @unsafe
-    package func _inlineReadPointerToElement(at physicalIndex: Int) -> UnsafePointer<Element> {
-        let stride = MemoryLayout<Element>.stride
-        return unsafe Swift.withUnsafePointer(to: _inline) { storagePtr in
-            let basePtr = unsafe UnsafeRawPointer(storagePtr)
-            let elementPtr = unsafe (basePtr + physicalIndex * stride).assumingMemoryBound(to: Element.self)
-            return unsafe elementPtr
-        }
-    }
 
     @usableFromInline
     package func _inlinePhysicalIndex(_ logicalIndex: Int) -> Int {
@@ -595,21 +540,12 @@ extension Queue._DoubleEndedSmall {
     package mutating func _spillToHeap(minimumCapacity: Int) {
         precondition(_heap == nil, "Already spilled")
         let newCapacity = Swift.max(minimumCapacity, inlineCapacity * 2, 8)
-        let newStorage = Queue.DoubleEnded.Storage.create(minimumCapacity: newCapacity)
+        let newStorage = Queue<Element>.DoubleEnded.Storage.create(minimumCapacity: newCapacity)
         newStorage.header.count = _count
         newStorage.header.head = 0
 
-        let stride = MemoryLayout<Element>.stride
-        _ = unsafe Swift.withUnsafeBytes(of: _inline) { bytes in
-            unsafe newStorage.withUnsafeMutablePointerToElements { heapPtr in
-                let inlineBase = unsafe UnsafeMutableRawPointer(mutating: bytes.baseAddress!)
-                for i in 0..<_count {
-                    let physicalIndex = (_head + i) % inlineCapacity
-                    let inlineElement = unsafe (inlineBase + physicalIndex * stride).assumingMemoryBound(to: Element.self)
-                    unsafe (heapPtr + i).initialize(to: inlineElement.move())
-                }
-            }
-        }
+        // Move elements from inline (ring buffer) to heap (linear)
+        _inline.linearize(to: newStorage, from: _head, count: _count)
 
         _head = 0
         _heap = newStorage
@@ -624,7 +560,7 @@ extension Queue._DoubleEndedSmall {
         if let heap = _heap {
             if heap.header.count >= heap.capacity {
                 let newCapacity = heap.capacity * 2
-                let newStorage = Queue.DoubleEnded.Storage.create(minimumCapacity: newCapacity)
+                let newStorage = Queue<Element>.DoubleEnded.Storage.create(minimumCapacity: newCapacity)
                 let count = _count
 
                 _ = unsafe heap.withUnsafeMutablePointerToElements { src in
@@ -655,11 +591,11 @@ extension Queue._DoubleEndedSmall {
             switch position {
             case .back:
                 let tail = _inlinePhysicalIndex(_count)
-                unsafe _inlinePointerToElement(at: tail).initialize(to: element)
+                _inline.initialize(to: element, at: tail)
                 _count += 1
             case .front:
                 let newHead = (_head - 1 + inlineCapacity) % inlineCapacity
-                unsafe _inlinePointerToElement(at: newHead).initialize(to: element)
+                _inline.initialize(to: element, at: newHead)
                 _head = newHead
                 _count += 1
             }
@@ -691,14 +627,14 @@ extension Queue._DoubleEndedSmall {
         } else {
             switch position {
             case .front:
-                let elementPtr = unsafe _inlinePointerToElement(at: _head)
+                let element = _inline.move(at: _head)
                 _head = (_head + 1) % inlineCapacity
                 _count -= 1
-                return unsafe elementPtr.move()
+                return element
             case .back:
                 _count -= 1
                 let tail = _inlinePhysicalIndex(_count)
-                return unsafe _inlinePointerToElement(at: tail).move()
+                return _inline.move(at: tail)
             }
         }
     }
@@ -726,28 +662,19 @@ extension Queue._DoubleEndedSmall {
         } else {
             let logicalIndex = position == .front ? 0 : _count - 1
             let physicalIndex = _inlinePhysicalIndex(logicalIndex)
-            return unsafe body(_inlineReadPointerToElement(at: physicalIndex).pointee)
+            let ptr = unsafe _inline.read(at: physicalIndex)
+            return body(unsafe ptr.pointee)
         }
     }
 
     /// Removes all elements.
     @inlinable
     public mutating func clear() {
-        let count = _count
         if let heap = _heap {
             heap.deinitializeAll()
             _count = 0
         } else {
-            let head = _head
-            let stride = MemoryLayout<Element>.stride
-            unsafe Swift.withUnsafeMutablePointer(to: &_inline) { storagePtr in
-                let basePtr = UnsafeMutableRawPointer(storagePtr)
-                for i in 0..<count {
-                    let physicalIndex = (head + i) % inlineCapacity
-                    let elementPtr = unsafe (basePtr + physicalIndex * stride).assumingMemoryBound(to: Element.self)
-                    unsafe elementPtr.deinitialize(count: 1)
-                }
-            }
+            _inline.deinitialize(from: _head, count: _count)
             _count = 0
             _head = 0
         }
@@ -770,7 +697,8 @@ extension Queue._DoubleEndedSmall {
         } else {
             for i in 0..<_count {
                 let physicalIndex = _inlinePhysicalIndex(i)
-                body(unsafe _inlineReadPointerToElement(at: physicalIndex).pointee)
+                let ptr = unsafe _inline.read(at: physicalIndex)
+                body(unsafe ptr.pointee)
             }
         }
     }

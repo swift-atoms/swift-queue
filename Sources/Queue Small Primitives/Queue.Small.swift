@@ -18,32 +18,6 @@ import Queue_Dynamic_Primitives
 // MARK: - Internal Helpers
 
 extension Queue.Small where Element: ~Copyable {
-    /// Returns a mutable pointer to the inline element at the given index.
-    @usableFromInline
-    @unsafe
-    package mutating func _inlinePointerToElement(at index: Int) -> UnsafeMutablePointer<Element> {
-        let stride = MemoryLayout<Element>.stride
-        return unsafe Swift.withUnsafeMutablePointer(to: &_inline) { storagePtr in
-            let basePtr = UnsafeMutableRawPointer(storagePtr)
-            let elementPtr = unsafe (basePtr + index * stride)
-                .assumingMemoryBound(to: Element.self)
-            return unsafe elementPtr
-        }
-    }
-
-    /// Returns a read-only pointer to the inline element at the given index.
-    @usableFromInline
-    @unsafe
-    package func _inlineReadPointerToElement(at index: Int) -> UnsafePointer<Element> {
-        let stride = MemoryLayout<Element>.stride
-        return unsafe Swift.withUnsafePointer(to: _inline) { storagePtr in
-            let basePtr = unsafe UnsafeRawPointer(storagePtr)
-            let elementPtr = unsafe (basePtr + index * stride)
-                .assumingMemoryBound(to: Element.self)
-            return unsafe elementPtr
-        }
-    }
-
     /// Spills inline storage to heap, linearizing the ring buffer.
     @usableFromInline
     package mutating func _spillToHeap(minimumCapacity: Int) {
@@ -55,19 +29,7 @@ extension Queue.Small where Element: ~Copyable {
         newStorage.header = (head: Index(position: 0), tail: Index(position: _count), count: Index<Element>.Count(__unchecked: _count))
 
         // Move elements from inline (ring buffer) to heap (linear)
-        let stride = MemoryLayout<Element>.stride
-        var srcIndex = _head
-        _ = unsafe Swift.withUnsafeBytes(of: _inline) { bytes in
-            unsafe newStorage.withUnsafeMutablePointerToElements { heapPtr in
-                let inlineBase = unsafe UnsafeMutableRawPointer(mutating: bytes.baseAddress!)
-                for dstIndex in 0..<_count {
-                    let inlineElement = unsafe (inlineBase + srcIndex * stride)
-                        .assumingMemoryBound(to: Element.self)
-                    unsafe (heapPtr + dstIndex).initialize(to: inlineElement.move())
-                    srcIndex = (srcIndex + 1) % inlineCapacity
-                }
-            }
-        }
+        _inline.linearize(to: newStorage, from: _head, count: _count)
 
         _heap = newStorage
         unsafe (_heapPtr = newStorage._elementsPointer)
@@ -140,8 +102,7 @@ extension Queue.Small where Element: ~Copyable {
     /// Internal: enqueue to inline storage.
     @usableFromInline
     mutating func _enqueueInline(_ element: consuming Element) {
-        let ptr = unsafe _inlinePointerToElement(at: _tail)
-        unsafe ptr.initialize(to: element)
+        _inline.initialize(to: element, at: _tail)
         _tail = (_tail + 1) % inlineCapacity
         _count += 1
     }
@@ -166,8 +127,7 @@ extension Queue.Small where Element: ~Copyable {
             return element
         } else {
             // Dequeue from inline
-            let ptr = unsafe _inlinePointerToElement(at: _head)
-            let element = unsafe ptr.move()
+            let element = _inline.move(at: _head)
             _head = (_head + 1) % inlineCapacity
             _count -= 1
             return element
@@ -199,17 +159,7 @@ extension Queue.Small where Element: ~Copyable {
             }
         } else {
             // Clear inline storage
-            let stride = MemoryLayout<Element>.stride
-            var index = _head
-            unsafe Swift.withUnsafeBytes(of: _inline) { bytes in
-                let basePtr = unsafe UnsafeMutableRawPointer(mutating: bytes.baseAddress!)
-                for _ in 0..<_count {
-                    let elementPtr = unsafe (basePtr + index * stride)
-                        .assumingMemoryBound(to: Element.self)
-                    unsafe elementPtr.deinitialize(count: 1)
-                    index = (index + 1) % inlineCapacity
-                }
-            }
+            _inline.deinitialize(from: _head, count: _count)
         }
 
         _head = 0
@@ -256,7 +206,7 @@ extension Queue.Small where Element: ~Copyable {
                 body(unsafe (elements + head).pointee)
             }
         } else {
-            let ptr = unsafe _inlineReadPointerToElement(at: _head)
+            let ptr = unsafe _inline.read(at: _head)
             return body(unsafe ptr.pointee)
         }
     }
@@ -276,7 +226,7 @@ extension Queue.Small where Element: Copyable {
         if let heap = _heap {
             return heap._readElement(at: heap.header.head)
         } else {
-            let ptr = unsafe _inlineReadPointerToElement(at: _head)
+            let ptr = unsafe _inline.read(at: _head)
             return unsafe ptr.pointee
         }
     }
@@ -308,7 +258,7 @@ extension Queue.Small where Element: ~Copyable {
         } else {
             var index = _head
             for _ in 0..<count {
-                let ptr = unsafe _inlineReadPointerToElement(at: index)
+                let ptr = unsafe _inline.read(at: index)
                 body(unsafe ptr.pointee)
                 index = (index + 1) % inlineCapacity
             }

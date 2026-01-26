@@ -13,56 +13,6 @@ public import Queue_Primitives_Core
 
 // Note: Queue.Static is unconditionally ~Copyable due to deinit requirement
 
-// MARK: - Pointer Helpers
-
-extension Queue.Static where Element: ~Copyable {
-    /// Returns a mutable pointer to the element at the given index.
-    @usableFromInline
-    @unsafe
-    package mutating func _pointerToElement(at index: Int) -> UnsafeMutablePointer<Element> {
-        let stride = MemoryLayout<Element>.stride
-        return unsafe Swift.withUnsafeMutablePointer(to: &_storage) { storagePtr in
-            let basePtr = UnsafeMutableRawPointer(storagePtr)
-            let elementPtr = unsafe (basePtr + index * stride)
-                .assumingMemoryBound(to: Element.self)
-            return unsafe elementPtr
-        }
-    }
-
-    /// Returns a read-only pointer to the element at the given index.
-    @usableFromInline
-    @unsafe
-    package func _readPointerToElement(at index: Int) -> UnsafePointer<Element> {
-        let stride = MemoryLayout<Element>.stride
-        return unsafe Swift.withUnsafePointer(to: _storage) { storagePtr in
-            let basePtr = unsafe UnsafeRawPointer(storagePtr)
-            let elementPtr = unsafe (basePtr + index * stride)
-                .assumingMemoryBound(to: Element.self)
-            return unsafe elementPtr
-        }
-    }
-
-    /// Returns the base pointer for element storage.
-    @usableFromInline
-    @unsafe
-    package func _basePointer() -> UnsafePointer<Element> {
-        unsafe Swift.withUnsafePointer(to: _storage) { storagePtr in
-            let basePtr = unsafe UnsafeRawPointer(storagePtr)
-            return unsafe basePtr.assumingMemoryBound(to: Element.self)
-        }
-    }
-
-    /// Returns the mutable base pointer for element storage.
-    @usableFromInline
-    @unsafe
-    package mutating func _mutableBasePointer() -> UnsafeMutablePointer<Element> {
-        unsafe Swift.withUnsafeMutablePointer(to: &_storage) { storagePtr in
-            let basePtr = UnsafeMutableRawPointer(storagePtr)
-            return unsafe basePtr.assumingMemoryBound(to: Element.self)
-        }
-    }
-}
-
 // MARK: - Properties
 
 extension Queue.Static where Element: ~Copyable {
@@ -92,8 +42,7 @@ extension Queue.Static where Element: ~Copyable {
         guard _count < capacity else {
             throw .overflow
         }
-        let ptr = unsafe _pointerToElement(at: _tail)
-        unsafe ptr.initialize(to: element)
+        _storage.initialize(to: element, at: _tail)
         _tail = (_tail + 1) % capacity
         _count += 1
     }
@@ -107,8 +56,7 @@ extension Queue.Static where Element: ~Copyable {
         guard _count > 0 else {
             return nil
         }
-        let ptr = unsafe _pointerToElement(at: _head)
-        let element = unsafe ptr.move()
+        let element = _storage.move(at: _head)
         _head = (_head + 1) % capacity
         _count -= 1
         return element
@@ -119,21 +67,7 @@ extension Queue.Static where Element: ~Copyable {
     /// - Complexity: O(n) where n is the number of elements.
     @inlinable
     public mutating func clear() {
-        let count = _count
-        guard count > 0 else { return }
-
-        let stride = MemoryLayout<Element>.stride
-        var index = _head
-        unsafe Swift.withUnsafeBytes(of: _storage) { bytes in
-            let basePtr = unsafe UnsafeMutableRawPointer(mutating: bytes.baseAddress!)
-            for _ in 0..<count {
-                let elementPtr = unsafe (basePtr + index * stride)
-                    .assumingMemoryBound(to: Element.self)
-                unsafe elementPtr.deinitialize(count: 1)
-                index = (index + 1) % capacity
-            }
-        }
-
+        _storage.deinitialize(from: _head, count: _count)
         _head = 0
         _tail = 0
         _count = 0
@@ -155,7 +89,7 @@ extension Queue.Static where Element: ~Copyable {
         guard _count > 0 else {
             return nil
         }
-        let ptr = unsafe _readPointerToElement(at: _head)
+        let ptr = unsafe _storage.read(at: _head)
         return body(unsafe ptr.pointee)
     }
 }
@@ -172,7 +106,7 @@ extension Queue.Static where Element: Copyable {
         guard _count > 0 else {
             return nil
         }
-        let ptr = unsafe _readPointerToElement(at: _head)
+        let ptr = unsafe _storage.read(at: _head)
         return unsafe ptr.pointee
     }
 }
@@ -193,7 +127,7 @@ extension Queue.Static where Element: ~Copyable {
 
         var index = _head
         for _ in 0..<count {
-            let ptr = unsafe _readPointerToElement(at: index)
+            let ptr = unsafe _storage.read(at: index)
             body(unsafe ptr.pointee)
             index = (index + 1) % capacity
         }

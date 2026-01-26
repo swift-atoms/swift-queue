@@ -181,13 +181,9 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
     ///   Swift compiler bug where nested types with value generic parameters declared
     ///   in extensions do not properly inherit `~Copyable` constraints from the outer type.
     public struct Static<let capacity: Int>: ~Copyable {
-        /// Maximum element stride supported by inline storage (64 bytes per slot).
+        /// Inline storage for ring buffer elements.
         @usableFromInline
-        static var _maxStride: Int { 64 }
-
-        /// Raw byte storage. Each slot is 64 bytes (8 Ints on 64-bit).
-        @usableFromInline
-        package var _storage: InlineArray<capacity, (Int, Int, Int, Int, Int, Int, Int, Int)>
+        package var _storage: Queue<Element>.Storage.Inline<capacity>
 
         /// Ring buffer head index (next dequeue position).
         @usableFromInline
@@ -211,39 +207,14 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
         /// Creates an empty inline queue.
         @inlinable
         public init() {
-            precondition(
-                MemoryLayout<Element>.stride <= Self._maxStride,
-                "Element stride (\(MemoryLayout<Element>.stride)) exceeds inline storage slot size (\(Self._maxStride) bytes). Use Queue.Bounded instead."
-            )
-            precondition(
-                MemoryLayout<Element>.alignment <= MemoryLayout<Int>.alignment,
-                "Element alignment (\(MemoryLayout<Element>.alignment)) exceeds inline storage alignment (\(MemoryLayout<Int>.alignment)). Use Queue.Bounded instead."
-            )
-            self._storage = InlineArray(repeating: (0, 0, 0, 0, 0, 0, 0, 0))
+            self._storage = .init()
             self._head = 0
             self._tail = 0
             self._count = 0
         }
 
         deinit {
-            let count = _count
-            guard count > 0 else { return }
-
-            // Workaround: Copy storage state to local vars before cleanup.
-            // The _storage access through withUnsafeBytes may be optimized incorrectly
-            // for ~Copyable structs without reference type properties.
-            let head = _head
-            let stride = MemoryLayout<Element>.stride
-
-            unsafe Swift.withUnsafePointer(to: _storage) { storagePtr in
-                let basePtr = unsafe UnsafeMutableRawPointer(mutating: UnsafeRawPointer(storagePtr))
-                for i in 0..<count {
-                    let physicalIndex = (head + i) % Self.capacity
-                    let elementPtr = unsafe (basePtr + physicalIndex * stride)
-                        .assumingMemoryBound(to: Element.self)
-                    unsafe elementPtr.deinitialize(count: 1)
-                }
-            }
+            _storage.deinitialize(from: _head, count: _count)
         }
     }
 
@@ -277,13 +248,9 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
     ///   in extensions do not properly inherit `~Copyable` constraints from the outer type.
     @safe
     public struct Small<let inlineCapacity: Int>: ~Copyable {
-        /// Maximum element stride supported by inline storage (64 bytes per slot).
+        /// Inline storage for ring buffer elements.
         @usableFromInline
-        static var _maxStride: Int { 64 }
-
-        /// Raw byte storage for inline elements. Each slot is 64 bytes (8 Ints on 64-bit).
-        @usableFromInline
-        package var _inline: InlineArray<inlineCapacity, (Int, Int, Int, Int, Int, Int, Int, Int)>
+        package var _inline: Queue<Element>.Storage.Inline<inlineCapacity>
 
         /// Ring buffer head index (inline mode only).
         @usableFromInline
@@ -308,15 +275,7 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
         /// Creates an empty small queue.
         @inlinable
         public init() {
-            precondition(
-                MemoryLayout<Element>.stride <= Self._maxStride,
-                "Element stride (\(MemoryLayout<Element>.stride)) exceeds inline storage slot size (\(Self._maxStride) bytes). Use Queue.Bounded instead."
-            )
-            precondition(
-                MemoryLayout<Element>.alignment <= MemoryLayout<Int>.alignment,
-                "Element alignment (\(MemoryLayout<Element>.alignment)) exceeds inline storage alignment (\(MemoryLayout<Int>.alignment)). Use Queue.Bounded instead."
-            )
-            self._inline = InlineArray(repeating: (0, 0, 0, 0, 0, 0, 0, 0))
+            self._inline = .init()
             self._head = 0
             self._tail = 0
             self._count = 0
@@ -325,26 +284,13 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
         }
 
         deinit {
-            let count = _count
-            guard count > 0 else { return }
-
             if let heap = _heap {
                 // Elements are on heap - Storage handles cleanup via its deinit
                 // Set header count for proper cleanup
-                heap.header.count = Index_Primitives.Index<Element>.Count(__unchecked: count)
+                heap.header.count = Index_Primitives.Index<Element>.Count(__unchecked: _count)
             } else {
-                // Elements are inline - clean up manually using ring buffer order
-                let stride = MemoryLayout<Element>.stride
-                var index = _head
-                unsafe Swift.withUnsafeBytes(of: _inline) { bytes in
-                    let basePtr = unsafe UnsafeMutableRawPointer(mutating: bytes.baseAddress!)
-                    for _ in 0..<count {
-                        let elementPtr = unsafe (basePtr + index * stride)
-                            .assumingMemoryBound(to: Element.self)
-                        unsafe elementPtr.deinitialize(count: 1)
-                        index = (index + 1) % inlineCapacity
-                    }
-                }
+                // Elements are inline - clean up using Storage.Inline
+                _inline.deinitialize(from: _head, count: _count)
             }
         }
 
@@ -654,121 +600,94 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
             }
         }
 
-        // MARK: - Static (typealias to Queue-level type)
+        // MARK: - Static (inline-storage double-ended queue)
 
         /// Inline-storage double-ended queue with compile-time capacity.
         ///
-        /// Accessed as `Queue<E>.DoubleEnded.Static<N>` or via the `Deque.Static` typealias.
-        /// Implemented at Queue level due to Swift's ~Copyable constraint propagation limitations.
-        public typealias Static<let capacity: Int> = _DoubleEndedStatic<capacity>
+        /// `Queue.DoubleEnded.Static` stores elements directly within the struct's memory layout,
+        /// requiring no heap allocation. The capacity is specified as a compile-time
+        /// generic parameter. Uses ring buffer semantics for O(1) operations at both ends.
+        ///
+        /// - Note: This type is declared inside `Queue.DoubleEnded` (not via typealias) for
+        ///   proper API organization after Swift compiler improvements.
+        public struct Static<let capacity: Int>: ~Copyable {
+            /// Inline storage for ring buffer elements.
+            @usableFromInline
+            package var _storage: Queue<Element>.Storage.Inline<capacity>
 
-        // MARK: - Small (typealias to Queue-level type)
+            /// Ring buffer head index (front position).
+            @usableFromInline
+            package var _head: Int
+
+            /// Current element count.
+            @usableFromInline
+            package var _count: Int
+
+            /// Workaround for Swift compiler bug where deinit element cleanup
+            /// fails for ~Copyable structs that contain only value-type properties.
+            @usableFromInline
+            package var _deinitWorkaround: AnyObject? = nil
+
+            /// Creates an empty inline double-ended queue.
+            @inlinable
+            public init() {
+                self._storage = .init()
+                self._head = 0
+                self._count = 0
+            }
+
+            deinit {
+                _storage.deinitialize(from: _head, count: _count)
+            }
+        }
+
+        // MARK: - Small (small-buffer optimization double-ended queue)
 
         /// Small-buffer optimization double-ended queue.
         ///
-        /// Accessed as `Queue<E>.DoubleEnded.Small<N>` or via the `Deque.Small` typealias.
-        /// Implemented at Queue level due to Swift's ~Copyable constraint propagation limitations.
-        public typealias Small<let inlineCapacity: Int> = _DoubleEndedSmall<inlineCapacity>
-    }
+        /// `Queue.DoubleEnded.Small` stores up to `inlineCapacity` elements in inline storage,
+        /// then automatically spills to heap storage when that capacity is exceeded.
+        ///
+        /// - Note: This type is declared inside `Queue.DoubleEnded` (not via typealias) for
+        ///   proper API organization after Swift compiler improvements.
+        @safe
+        public struct Small<let inlineCapacity: Int>: ~Copyable {
+            /// Inline storage for ring buffer elements.
+            @usableFromInline
+            package var _inline: Queue<Element>.Storage.Inline<inlineCapacity>
 
-    // MARK: - _DoubleEndedStatic (Queue-level implementation)
+            /// Ring buffer head index (inline mode only).
+            @usableFromInline
+            package var _head: Int
 
-    /// Internal implementation for `Queue.DoubleEnded.Static`.
-    ///
-    /// Declared at Queue level (not inside DoubleEnded) because Swift's ~Copyable
-    /// constraint propagation doesn't work at deeper nesting levels.
-    /// Access via `Queue<E>.DoubleEnded.Static<N>` typealias.
-    public struct _DoubleEndedStatic<let capacity: Int>: ~Copyable {
-        @usableFromInline
-        package static var _maxStride: Int { 64 }
+            /// Current element count.
+            @usableFromInline
+            package var _count: Int
 
-        @usableFromInline
-        package var _head: Int
+            /// Heap storage when spilled. Nil when using inline storage.
+            @usableFromInline
+            package var _heap: Storage?
 
-        @usableFromInline
-        package var _count: Int
+            /// Creates an empty small double-ended queue.
+            @inlinable
+            public init() {
+                self._inline = .init()
+                self._head = 0
+                self._count = 0
+                self._heap = nil
+            }
 
-        @usableFromInline
-        package var _storage: InlineArray<capacity, (Int, Int, Int, Int, Int, Int, Int, Int)>
-
-        @usableFromInline
-        package var _deinitWorkaround: AnyObject? = nil
-
-        @inlinable
-        public init() {
-            precondition(MemoryLayout<Element>.stride <= Self._maxStride)
-            precondition(MemoryLayout<Element>.alignment <= MemoryLayout<Int>.alignment)
-            self._head = 0
-            self._count = 0
-            self._storage = InlineArray(repeating: (0, 0, 0, 0, 0, 0, 0, 0))
-        }
-
-        deinit {
-            let count = _count
-            guard count > 0 else { return }
-            let stride = MemoryLayout<Element>.stride
-            var index = _head
-            unsafe Swift.withUnsafeBytes(of: _storage) { bytes in
-                let basePtr = unsafe UnsafeMutableRawPointer(mutating: bytes.baseAddress!)
-                for _ in 0..<count {
-                    let elementPtr = unsafe (basePtr + index * stride).assumingMemoryBound(to: Element.self)
-                    unsafe elementPtr.deinitialize(count: 1)
-                    index = (index + 1) % capacity
+            deinit {
+                if let heap = _heap {
+                    heap.header.count = Index_Primitives.Index<Element>.Count(__unchecked: _count)
+                } else {
+                    _inline.deinitialize(from: _head, count: _count)
                 }
             }
-        }
-    }
 
-    // MARK: - _DoubleEndedSmall (Queue-level implementation)
-
-    /// Internal implementation for `Queue.DoubleEnded.Small`.
-    ///
-    /// Declared at Queue level (not inside DoubleEnded) because Swift's ~Copyable
-    /// constraint propagation doesn't work at deeper nesting levels.
-    /// Access via `Queue<E>.DoubleEnded.Small<N>` typealias.
-    @safe
-    public struct _DoubleEndedSmall<let inlineCapacity: Int>: ~Copyable {
-        @usableFromInline
-        package static var _maxStride: Int { 64 }
-
-        @usableFromInline
-        package var _head: Int
-
-        @usableFromInline
-        package var _count: Int
-
-        @usableFromInline
-        package var _inline: InlineArray<inlineCapacity, (Int, Int, Int, Int, Int, Int, Int, Int)>
-
-        @usableFromInline
-        package var _heap: Storage?
-
-        @inlinable
-        public init() {
-            precondition(MemoryLayout<Element>.stride <= Self._maxStride)
-            precondition(MemoryLayout<Element>.alignment <= MemoryLayout<Int>.alignment)
-            self._head = 0
-            self._count = 0
-            self._inline = InlineArray(repeating: (0, 0, 0, 0, 0, 0, 0, 0))
-            self._heap = nil
-        }
-
-        deinit {
-            let count = _count
-            guard count > 0 else { return }
-            if let heap = _heap {
-                heap.header.count = Index_Primitives.Index<Element>.Count(__unchecked: count)
-            } else {
-                let stride = MemoryLayout<Element>.stride
-                unsafe Swift.withUnsafeBytes(of: _inline) { bytes in
-                    let basePtr = unsafe UnsafeMutableRawPointer(mutating: bytes.baseAddress!)
-                    for i in 0..<count {
-                        let physicalIndex = (_head + i) % inlineCapacity
-                        let elementPtr = unsafe (basePtr + physicalIndex * stride).assumingMemoryBound(to: Element.self)
-                        unsafe elementPtr.deinitialize(count: 1)
-                    }
-                }
-            }
+            /// Whether the deque is currently using heap storage.
+            @inlinable
+            public var isSpilled: Bool { _heap != nil }
         }
     }
 
@@ -946,10 +865,10 @@ extension Queue.DoubleEnded: @unchecked Sendable where Element: Sendable {}
 extension Queue.DoubleEnded.Fixed: @unchecked Sendable where Element: Sendable {}
 
 /// `Queue.DoubleEnded.Static` is `Sendable` when its elements are `Sendable`.
-extension Queue._DoubleEndedStatic: @unchecked Sendable where Element: Sendable {}
+extension Queue.DoubleEnded.Static: @unchecked Sendable where Element: Sendable {}
 
 /// `Queue.DoubleEnded.Small` is `Sendable` when its elements are `Sendable`.
-extension Queue._DoubleEndedSmall: @unchecked Sendable where Element: Sendable {}
+extension Queue.DoubleEnded.Small: @unchecked Sendable where Element: Sendable {}
 
 /// `Queue.Bounded` is `Sendable` when its elements are `Sendable`.
 extension Queue.Bounded: @unchecked Sendable where Element: Sendable {}
