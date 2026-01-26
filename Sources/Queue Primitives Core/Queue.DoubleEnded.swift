@@ -25,12 +25,12 @@ extension Queue.DoubleEnded.Fixed where Element: ~Copyable {
     public typealias Error = __QueueDoubleEndedFixedError
 }
 
-extension Queue.DoubleEnded.Static {
+extension Queue._DoubleEndedStatic {
     /// Errors that can occur during static double-ended queue operations.
     public typealias Error = __QueueDoubleEndedStaticError
 }
 
-extension Queue.DoubleEnded.Small {
+extension Queue._DoubleEndedSmall {
     /// Errors that can occur during small double-ended queue operations.
     public typealias Error = __QueueDoubleEndedSmallError
 }
@@ -423,7 +423,7 @@ extension Queue.DoubleEnded.Fixed where Element: Copyable {
 
 // MARK: - Static Properties and Operations
 
-extension Queue.DoubleEnded.Static {
+extension Queue._DoubleEndedStatic {
     /// The current number of elements.
     @inlinable
     public var count: Int { _count }
@@ -468,7 +468,7 @@ extension Queue.DoubleEnded.Static {
     public mutating func push(
         _ element: consuming Element,
         to position: Queue<Element>.DoubleEnded.Position
-    ) throws(Queue<Element>.DoubleEnded.Static<capacity>.Error) {
+    ) throws(Queue<Element>._DoubleEndedStatic<capacity>.Error) {
         guard !isFull else { throw .overflow }
         switch position {
         case .back:
@@ -549,7 +549,7 @@ extension Queue.DoubleEnded.Static {
 
 // MARK: - Small Properties and Operations
 
-extension Queue.DoubleEnded.Small {
+extension Queue._DoubleEndedSmall {
     /// Whether the deque is currently using heap storage.
     @inlinable
     public var isSpilled: Bool { _heap != nil }
