@@ -20,17 +20,17 @@ extension Queue.DoubleEnded where Element: ~Copyable {
     public typealias Error = __QueueDoubleEndedError
 }
 
-extension Queue.DoubleEndedFixed where Element: ~Copyable {
+extension Queue.DoubleEnded.Fixed where Element: ~Copyable {
     /// Errors that can occur during fixed-capacity double-ended queue operations.
     public typealias Error = __QueueDoubleEndedFixedError
 }
 
-extension Queue.DoubleEndedStatic {
+extension Queue.DoubleEnded.Static {
     /// Errors that can occur during static double-ended queue operations.
     public typealias Error = __QueueDoubleEndedStaticError
 }
 
-extension Queue.DoubleEndedSmall {
+extension Queue.DoubleEnded.Small {
     /// Errors that can occur during small double-ended queue operations.
     public typealias Error = __QueueDoubleEndedSmallError
 }
@@ -267,16 +267,16 @@ extension Queue.DoubleEnded where Element: Copyable {
 
 // MARK: - Storage Copy (Copyable)
 
-extension Queue._DoubleEndedStorage where Element: Copyable {
+extension Queue.DoubleEnded.Storage where Element: Copyable {
     /// Creates a copy of this storage with all elements duplicated.
     @usableFromInline
-    func copy() -> Queue._DoubleEndedStorage {
+    func copy() -> Queue.DoubleEnded.Storage {
         let count = header.count
         guard count > 0 else {
-            return Queue._DoubleEndedStorage.create()
+            return Queue.DoubleEnded.Storage.create()
         }
 
-        let new = Queue._DoubleEndedStorage.create(minimumCapacity: header.bufferCapacity)
+        let new = Queue.DoubleEnded.Storage.create(minimumCapacity: header.bufferCapacity)
         (new.header.count = count)
         (new.header.head = 0)
 
@@ -298,7 +298,7 @@ extension Queue._DoubleEndedStorage where Element: Copyable {
 
 // MARK: - Fixed Properties (~Copyable)
 
-extension Queue.DoubleEndedFixed where Element: ~Copyable {
+extension Queue.DoubleEnded.Fixed where Element: ~Copyable {
     /// The current number of elements in the deque.
     @inlinable
     public var count: Int { _storage.header.count }
@@ -314,7 +314,7 @@ extension Queue.DoubleEndedFixed where Element: ~Copyable {
 
 // MARK: - Fixed Core Operations (~Copyable)
 
-extension Queue.DoubleEndedFixed where Element: ~Copyable {
+extension Queue.DoubleEnded.Fixed where Element: ~Copyable {
     /// Pushes an element to the specified end.
     ///
     /// - Throws: ``Queue/DoubleEnded/Fixed/Error/overflow`` if the deque is full.
@@ -322,7 +322,7 @@ extension Queue.DoubleEndedFixed where Element: ~Copyable {
     public mutating func push(
         _ element: consuming Element,
         to position: Queue<Element>.DoubleEnded.Position
-    ) throws(Queue<Element>.DoubleEndedFixed.Error) {
+    ) throws(Queue<Element>.DoubleEnded.Fixed.Error) {
         guard !isFull else { throw .overflow }
         switch position {
         case .front:
@@ -389,7 +389,7 @@ extension Queue.DoubleEndedFixed where Element: ~Copyable {
 
 // MARK: - Fixed Copy-on-Write (Copyable)
 
-extension Queue.DoubleEndedFixed where Element: Copyable {
+extension Queue.DoubleEnded.Fixed where Element: Copyable {
     /// Ensures the storage is uniquely referenced before mutation.
     @usableFromInline
     package mutating func makeUnique() {
@@ -403,7 +403,7 @@ extension Queue.DoubleEndedFixed where Element: Copyable {
     public mutating func push(
         _ element: Element,
         to position: Queue<Element>.DoubleEnded.Position
-    ) throws(Queue<Element>.DoubleEndedFixed.Error) {
+    ) throws(Queue<Element>.DoubleEnded.Fixed.Error) {
         makeUnique()
         guard !isFull else { throw .overflow }
         switch position {
@@ -454,7 +454,7 @@ extension Queue.DoubleEndedFixed where Element: Copyable {
 
 // MARK: - Static Properties and Operations
 
-extension Queue.DoubleEndedStatic {
+extension Queue.DoubleEnded.Static {
     /// The current number of elements.
     @inlinable
     public var count: Int { _count }
@@ -499,7 +499,7 @@ extension Queue.DoubleEndedStatic {
     public mutating func push(
         _ element: consuming Element,
         to position: Queue<Element>.DoubleEnded.Position
-    ) throws(Queue<Element>.DoubleEndedStatic<capacity>.Error) {
+    ) throws(Queue<Element>.DoubleEnded.Static<capacity>.Error) {
         guard !isFull else { throw .overflow }
         switch position {
         case .back:
@@ -580,7 +580,7 @@ extension Queue.DoubleEndedStatic {
 
 // MARK: - Small Properties and Operations
 
-extension Queue.DoubleEndedSmall {
+extension Queue.DoubleEnded.Small {
     /// Whether the deque is currently using heap storage.
     @inlinable
     public var isSpilled: Bool { _heap != nil }
@@ -624,7 +624,7 @@ extension Queue.DoubleEndedSmall {
     package mutating func _spillToHeap(minimumCapacity: Int) {
         precondition(_heap == nil, "Already spilled")
         let newCapacity = Swift.max(minimumCapacity, inlineCapacity * 2, 8)
-        let newStorage = Queue._DoubleEndedStorage.create(minimumCapacity: newCapacity)
+        let newStorage = Queue.DoubleEnded.Storage.create(minimumCapacity: newCapacity)
         newStorage.header.count = _count
         newStorage.header.head = 0
 
@@ -653,7 +653,7 @@ extension Queue.DoubleEndedSmall {
         if let heap = _heap {
             if heap.header.count >= heap.header.bufferCapacity {
                 let newCapacity = heap.header.bufferCapacity * 2
-                let newStorage = Queue._DoubleEndedStorage.create(minimumCapacity: newCapacity)
+                let newStorage = Queue.DoubleEnded.Storage.create(minimumCapacity: newCapacity)
                 let count = _count
 
                 _ = unsafe heap.withUnsafeMutablePointerToElements { src in
@@ -811,7 +811,7 @@ extension Queue.DoubleEnded: Swift.Sequence where Element: Copyable {
     /// An iterator over the elements of a double-ended queue.
     public struct Iterator: IteratorProtocol {
         @usableFromInline
-        let _storage: Queue._DoubleEndedStorage
+        let _storage: Queue.DoubleEnded.Storage
 
         @usableFromInline
         var _index: Int = 0
@@ -820,7 +820,7 @@ extension Queue.DoubleEnded: Swift.Sequence where Element: Copyable {
         let _count: Int
 
         @usableFromInline
-        init(storage: Queue._DoubleEndedStorage) {
+        init(storage: Queue.DoubleEnded.Storage) {
             self._storage = storage
             self._count = storage.header.count
         }
