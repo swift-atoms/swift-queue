@@ -58,7 +58,7 @@ extension Queue.DoubleEnded where Element: ~Copyable {
 
     /// The current capacity of the deque.
     @inlinable
-    public var capacity: Int { _storage.header.bufferCapacity }
+    public var capacity: Int { _storage.capacity }
 }
 
 // MARK: - DoubleEnded Capacity Management (~Copyable)
@@ -67,7 +67,7 @@ extension Queue.DoubleEnded where Element: ~Copyable {
     /// Ensures the storage has capacity for at least the specified number of elements.
     @usableFromInline
     mutating func ensureCapacity(_ minimumCapacity: Int) {
-        let currentCapacity = _storage.header.bufferCapacity
+        let currentCapacity = _storage.capacity
         guard currentCapacity < minimumCapacity else { return }
 
         let newCapacity = Swift.max(minimumCapacity, currentCapacity * 2, 4)
@@ -181,7 +181,7 @@ extension Queue.DoubleEnded where Element: ~Copyable {
     public func forEach(_ body: (borrowing Element) -> Void) {
         let count = self.count
         guard count > 0 else { return }
-        let cap = _storage.header.bufferCapacity
+        let cap = _storage.capacity
         let head = _storage.header.head
 
         _ = unsafe _storage.withUnsafeMutablePointerToElements { elements in
@@ -265,37 +265,6 @@ extension Queue.DoubleEnded where Element: Copyable {
     }
 }
 
-// MARK: - Storage Copy (Copyable)
-
-extension Queue.DoubleEnded.Storage where Element: Copyable {
-    /// Creates a copy of this storage with all elements duplicated.
-    @usableFromInline
-    func copy() -> Queue.DoubleEnded.Storage {
-        let count = header.count
-        guard count > 0 else {
-            return Queue.DoubleEnded.Storage.create()
-        }
-
-        let new = Queue.DoubleEnded.Storage.create(minimumCapacity: header.bufferCapacity)
-        (new.header.count = count)
-        (new.header.head = 0)
-
-        let cap = header.bufferCapacity
-        let head = header.head
-
-        _ = unsafe withUnsafeMutablePointerToElements { src in
-            unsafe new.withUnsafeMutablePointerToElements { dst in
-                for i in 0..<count {
-                    let srcIndex = (head + i) % cap
-                    unsafe (dst + i).initialize(to: src[srcIndex])
-                }
-            }
-        }
-
-        return new
-    }
-}
-
 // MARK: - Fixed Properties (~Copyable)
 
 extension Queue.DoubleEnded.Fixed where Element: ~Copyable {
@@ -375,7 +344,7 @@ extension Queue.DoubleEnded.Fixed where Element: ~Copyable {
     public func forEach(_ body: (borrowing Element) -> Void) {
         let count = self.count
         guard count > 0 else { return }
-        let cap = _storage.header.bufferCapacity
+        let cap = _storage.capacity
         let head = _storage.header.head
 
         _ = unsafe _storage.withUnsafeMutablePointerToElements { elements in
@@ -651,15 +620,15 @@ extension Queue.DoubleEnded.Small {
         to position: Queue<Element>.DoubleEnded.Position
     ) {
         if let heap = _heap {
-            if heap.header.count >= heap.header.bufferCapacity {
-                let newCapacity = heap.header.bufferCapacity * 2
+            if heap.header.count >= heap.capacity {
+                let newCapacity = heap.capacity * 2
                 let newStorage = Queue.DoubleEnded.Storage.create(minimumCapacity: newCapacity)
                 let count = _count
 
                 _ = unsafe heap.withUnsafeMutablePointerToElements { src in
                     unsafe newStorage.withUnsafeMutablePointerToElements { dst in
                         let head = heap.header.head
-                        let cap = heap.header.bufferCapacity
+                        let cap = heap.capacity
                         for i in 0..<count {
                             let srcIndex = (head + i) % cap
                             unsafe (dst + i).initialize(to: (src + srcIndex).move())
@@ -789,7 +758,7 @@ extension Queue.DoubleEnded.Small {
 
         if let heap = _heap {
             let head = heap.header.head
-            let cap = heap.header.bufferCapacity
+            let cap = heap.capacity
             _ = unsafe heap.withUnsafeMutablePointerToElements { heapPtr in
                 for i in 0..<_count {
                     let physicalIndex = (head + i) % cap

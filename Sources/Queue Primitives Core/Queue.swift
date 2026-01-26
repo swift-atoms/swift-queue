@@ -176,6 +176,67 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
                 }
             }
         }
+
+        // MARK: - Double-Ended Operations
+        //
+        // These methods enable Queue.Storage to be used by Queue.DoubleEnded,
+        // eliminating the need for a separate storage class.
+
+        /// Converts a logical index (0 = front) to physical ring buffer index.
+        @usableFromInline
+        func physicalIndex(_ logicalIndex: Int) -> Int {
+            (header.head + logicalIndex) % capacity
+        }
+
+        /// Appends element at the back (tail position).
+        @usableFromInline
+        func append(_ element: consuming Element) {
+            let tail = header.tail
+            let ptr = unsafe _elementsPointer
+            unsafe (ptr + tail).initialize(to: element)
+            header.tail = (tail + 1) % capacity
+            header.count += 1
+        }
+
+        /// Prepends element at the front (before head).
+        @usableFromInline
+        func prepend(_ element: consuming Element) {
+            let cap = capacity
+            let newHead = (header.head - 1 + cap) % cap
+            let ptr = unsafe _elementsPointer
+            unsafe (ptr + newHead).initialize(to: element)
+            header.head = newHead
+            header.count += 1
+        }
+
+        /// Removes and returns the first element (at head).
+        @usableFromInline
+        func removeFirst() -> Element {
+            let oldHead = header.head
+            header.head = (oldHead + 1) % capacity
+            header.count -= 1
+            let ptr = unsafe _elementsPointer
+            return unsafe (ptr + oldHead).move()
+        }
+
+        /// Removes and returns the last element (before tail).
+        @usableFromInline
+        func removeLast() -> Element {
+            header.count -= 1
+            let newTail = (header.tail - 1 + capacity) % capacity
+            header.tail = newTail
+            let ptr = unsafe _elementsPointer
+            return unsafe (ptr + newTail).move()
+        }
+
+        /// Deinitializes all elements and resets head/tail/count.
+        @usableFromInline
+        func deinitializeAll() {
+            _deinitializeAllElements()
+            header.head = 0
+            header.tail = 0
+            header.count = 0
+        }
     }
 
     @usableFromInline
@@ -777,106 +838,15 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
     @safe
     public struct DoubleEnded {
 
-        // MARK: - Storage (nested inside DoubleEnded for API naming)
+        // MARK: - Storage (typealias to unified Queue.Storage)
 
-        /// Internal storage class for Queue.DoubleEnded and its variants.
+        /// Storage typealias for API naming as `Queue.DoubleEnded.Storage`.
         ///
-        /// Uses ring buffer with (count, head, bufferCapacity) header.
-        /// Declared inside DoubleEnded for proper `Queue.DoubleEnded.Storage` naming.
+        /// Uses the unified `Queue.Storage` which supports both single-ended
+        /// and double-ended operations. This eliminates code duplication
+        /// while preserving the expected type name.
         @usableFromInline
-        package final class Storage: ManagedBuffer<(count: Int, head: Int, bufferCapacity: Int), Element> {
-            @usableFromInline
-            package static func create() -> Storage {
-                let storage = Storage.create(minimumCapacity: 0) { _ in
-                    (count: 0, head: 0, bufferCapacity: 0)
-                }
-                return unsafe unsafeDowncast(storage, to: Storage.self)
-            }
-
-            @usableFromInline
-            package static func create(minimumCapacity: Int) -> Storage {
-                let requestedCapacity = Swift.max(minimumCapacity, 4)
-                let storage = Storage.create(minimumCapacity: requestedCapacity) { buffer in
-                    (count: 0, head: 0, bufferCapacity: buffer.capacity)
-                }
-                return unsafe unsafeDowncast(storage, to: Storage.self)
-            }
-
-            deinit {
-                let count = header.count
-                guard count > 0 else { return }
-                let cap = header.bufferCapacity
-                let head = header.head
-                _ = unsafe withUnsafeMutablePointerToElements { elements in
-                    for i in 0..<count {
-                        let index = (head + i) % cap
-                        unsafe (elements + index).deinitialize(count: 1)
-                    }
-                }
-            }
-
-            @usableFromInline
-            package var _elementsPointer: UnsafeMutablePointer<Element> {
-                unsafe withUnsafeMutablePointerToElements { unsafe $0 }
-            }
-
-            @usableFromInline
-            package func physicalIndex(_ logicalIndex: Int) -> Int {
-                (header.head + logicalIndex) % header.bufferCapacity
-            }
-
-            @usableFromInline
-            package func append(_ element: consuming Element) {
-                let tail = (header.head + header.count) % header.bufferCapacity
-                let ptr = unsafe _elementsPointer
-                unsafe (ptr + tail).initialize(to: element)
-                header.count += 1
-            }
-
-            @usableFromInline
-            package func prepend(_ element: consuming Element) {
-                let capacity = header.bufferCapacity
-                let newHead = (header.head - 1 + capacity) % capacity
-                let ptr = unsafe _elementsPointer
-                unsafe (ptr + newHead).initialize(to: element)
-                header.head = newHead
-                header.count += 1
-            }
-
-            @usableFromInline
-            package func removeLast() -> Element {
-                header.count -= 1
-                let tail = (header.head + header.count) % header.bufferCapacity
-                let ptr = unsafe _elementsPointer
-                return unsafe (ptr + tail).move()
-            }
-
-            @usableFromInline
-            package func removeFirst() -> Element {
-                let oldHead = header.head
-                let capacity = header.bufferCapacity
-                header.head = (oldHead + 1) % capacity
-                header.count -= 1
-                let ptr = unsafe _elementsPointer
-                return unsafe (ptr + oldHead).move()
-            }
-
-            @usableFromInline
-            package func deinitializeAll() {
-                let count = header.count
-                guard count > 0 else { return }
-                let cap = header.bufferCapacity
-                let head = header.head
-                _ = unsafe withUnsafeMutablePointerToElements { elements in
-                    for i in 0..<count {
-                        let index = (head + i) % cap
-                        unsafe (elements + index).deinitialize(count: 1)
-                    }
-                }
-                header.count = 0
-                header.head = 0
-            }
-        }
+        package typealias Storage = Queue<Element>.Storage
 
         @usableFromInline
         package var _storage: Storage
@@ -918,101 +888,118 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
             }
         }
 
-        // MARK: - Static (nested inside DoubleEnded)
+        // MARK: - Static (typealias to Queue-level type)
 
         /// Inline-storage double-ended queue with compile-time capacity.
         ///
         /// Accessed as `Queue<E>.DoubleEnded.Static<N>` or via the `Deque.Static` typealias.
-        /// Note: Declared inside DoubleEnded (not in extension) due to Swift
-        /// compiler bug where nested types with value generic parameters
-        /// in extensions don't inherit ~Copyable constraints.
-        public struct Static<let capacity: Int>: ~Copyable {
-            @usableFromInline
-            package static var _maxStride: Int { 64 }
+        /// Implemented at Queue level due to Swift's ~Copyable constraint propagation limitations.
+        public typealias Static<let capacity: Int> = Queue<Element>._DoubleEndedStatic<capacity>
 
-            @usableFromInline
-            package var _head: Int
-
-            @usableFromInline
-            package var _count: Int
-
-            @usableFromInline
-            package var _storage: InlineArray<capacity, (Int, Int, Int, Int, Int, Int, Int, Int)>
-
-            @usableFromInline
-            package var _deinitWorkaround: AnyObject? = nil
-
-            @inlinable
-            public init() {
-                precondition(MemoryLayout<Element>.stride <= Self._maxStride)
-                precondition(MemoryLayout<Element>.alignment <= MemoryLayout<Int>.alignment)
-                self._head = 0
-                self._count = 0
-                self._storage = InlineArray(repeating: (0, 0, 0, 0, 0, 0, 0, 0))
-            }
-
-            deinit {
-                let count = _count
-                guard count > 0 else { return }
-                let stride = MemoryLayout<Element>.stride
-                var index = _head
-                unsafe Swift.withUnsafeBytes(of: _storage) { bytes in
-                    let basePtr = unsafe UnsafeMutableRawPointer(mutating: bytes.baseAddress!)
-                    for _ in 0..<count {
-                        let elementPtr = unsafe (basePtr + index * stride).assumingMemoryBound(to: Element.self)
-                        unsafe elementPtr.deinitialize(count: 1)
-                        index = (index + 1) % capacity
-                    }
-                }
-            }
-        }
-
-        // MARK: - Small (nested inside DoubleEnded)
+        // MARK: - Small (typealias to Queue-level type)
 
         /// Small-buffer optimization double-ended queue.
         ///
         /// Accessed as `Queue<E>.DoubleEnded.Small<N>` or via the `Deque.Small` typealias.
-        @safe
-        public struct Small<let inlineCapacity: Int>: ~Copyable {
-            @usableFromInline
-            package static var _maxStride: Int { 64 }
+        /// Implemented at Queue level due to Swift's ~Copyable constraint propagation limitations.
+        public typealias Small<let inlineCapacity: Int> = Queue<Element>._DoubleEndedSmall<inlineCapacity>
+    }
 
-            @usableFromInline
-            package var _head: Int
+    // MARK: - _DoubleEndedStatic (Queue-level implementation)
 
-            @usableFromInline
-            package var _count: Int
+    /// Internal implementation for `Queue.DoubleEnded.Static`.
+    ///
+    /// Declared at Queue level (not inside DoubleEnded) because Swift's ~Copyable
+    /// constraint propagation doesn't work at deeper nesting levels.
+    /// Access via `Queue<E>.DoubleEnded.Static<N>` typealias.
+    public struct _DoubleEndedStatic<let capacity: Int>: ~Copyable {
+        @usableFromInline
+        package static var _maxStride: Int { 64 }
 
-            @usableFromInline
-            package var _inline: InlineArray<inlineCapacity, (Int, Int, Int, Int, Int, Int, Int, Int)>
+        @usableFromInline
+        package var _head: Int
 
-            @usableFromInline
-            package var _heap: Storage?
+        @usableFromInline
+        package var _count: Int
 
-            @inlinable
-            public init() {
-                precondition(MemoryLayout<Element>.stride <= Self._maxStride)
-                precondition(MemoryLayout<Element>.alignment <= MemoryLayout<Int>.alignment)
-                self._head = 0
-                self._count = 0
-                self._inline = InlineArray(repeating: (0, 0, 0, 0, 0, 0, 0, 0))
-                self._heap = nil
+        @usableFromInline
+        package var _storage: InlineArray<capacity, (Int, Int, Int, Int, Int, Int, Int, Int)>
+
+        @usableFromInline
+        package var _deinitWorkaround: AnyObject? = nil
+
+        @inlinable
+        public init() {
+            precondition(MemoryLayout<Element>.stride <= Self._maxStride)
+            precondition(MemoryLayout<Element>.alignment <= MemoryLayout<Int>.alignment)
+            self._head = 0
+            self._count = 0
+            self._storage = InlineArray(repeating: (0, 0, 0, 0, 0, 0, 0, 0))
+        }
+
+        deinit {
+            let count = _count
+            guard count > 0 else { return }
+            let stride = MemoryLayout<Element>.stride
+            var index = _head
+            unsafe Swift.withUnsafeBytes(of: _storage) { bytes in
+                let basePtr = unsafe UnsafeMutableRawPointer(mutating: bytes.baseAddress!)
+                for _ in 0..<count {
+                    let elementPtr = unsafe (basePtr + index * stride).assumingMemoryBound(to: Element.self)
+                    unsafe elementPtr.deinitialize(count: 1)
+                    index = (index + 1) % capacity
+                }
             }
+        }
+    }
 
-            deinit {
-                let count = _count
-                guard count > 0 else { return }
-                if let heap = _heap {
-                    heap.header.count = count
-                } else {
-                    let stride = MemoryLayout<Element>.stride
-                    unsafe Swift.withUnsafeBytes(of: _inline) { bytes in
-                        let basePtr = unsafe UnsafeMutableRawPointer(mutating: bytes.baseAddress!)
-                        for i in 0..<count {
-                            let physicalIndex = (_head + i) % inlineCapacity
-                            let elementPtr = unsafe (basePtr + physicalIndex * stride).assumingMemoryBound(to: Element.self)
-                            unsafe elementPtr.deinitialize(count: 1)
-                        }
+    // MARK: - _DoubleEndedSmall (Queue-level implementation)
+
+    /// Internal implementation for `Queue.DoubleEnded.Small`.
+    ///
+    /// Declared at Queue level (not inside DoubleEnded) because Swift's ~Copyable
+    /// constraint propagation doesn't work at deeper nesting levels.
+    /// Access via `Queue<E>.DoubleEnded.Small<N>` typealias.
+    @safe
+    public struct _DoubleEndedSmall<let inlineCapacity: Int>: ~Copyable {
+        @usableFromInline
+        package static var _maxStride: Int { 64 }
+
+        @usableFromInline
+        package var _head: Int
+
+        @usableFromInline
+        package var _count: Int
+
+        @usableFromInline
+        package var _inline: InlineArray<inlineCapacity, (Int, Int, Int, Int, Int, Int, Int, Int)>
+
+        @usableFromInline
+        package var _heap: Storage?
+
+        @inlinable
+        public init() {
+            precondition(MemoryLayout<Element>.stride <= Self._maxStride)
+            precondition(MemoryLayout<Element>.alignment <= MemoryLayout<Int>.alignment)
+            self._head = 0
+            self._count = 0
+            self._inline = InlineArray(repeating: (0, 0, 0, 0, 0, 0, 0, 0))
+            self._heap = nil
+        }
+
+        deinit {
+            let count = _count
+            guard count > 0 else { return }
+            if let heap = _heap {
+                heap.header.count = count
+            } else {
+                let stride = MemoryLayout<Element>.stride
+                unsafe Swift.withUnsafeBytes(of: _inline) { bytes in
+                    let basePtr = unsafe UnsafeMutableRawPointer(mutating: bytes.baseAddress!)
+                    for i in 0..<count {
+                        let physicalIndex = (_head + i) % inlineCapacity
+                        let elementPtr = unsafe (basePtr + physicalIndex * stride).assumingMemoryBound(to: Element.self)
+                        unsafe elementPtr.deinitialize(count: 1)
                     }
                 }
             }
