@@ -22,6 +22,7 @@ let package = Package(
         .package(path: "../swift-input-primitives"),
         .package(path: "../swift-collection-primitives"),
         .package(path: "../swift-list-primitives"),
+        .package(path: "../swift-property-primitives"),
     ],
     targets: [
         // Internal: Core types with ~Copyable support (no Sequence/Collection conformances)
@@ -32,6 +33,7 @@ let package = Package(
                 .product(name: "Input Primitives", package: "swift-input-primitives"),
                 .product(name: "Collection Primitives", package: "swift-collection-primitives"),
                 .product(name: "List Primitives", package: "swift-list-primitives"),
+                .product(name: "Property Primitives", package: "swift-property-primitives"),
             ]
         ),
         // Internal: Sequence/Collection/Input conformances (Element: Copyable)
