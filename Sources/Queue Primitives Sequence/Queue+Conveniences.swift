@@ -25,7 +25,7 @@ extension Queue: Swift.Collection where Element: Copyable {
 
     @inlinable
     public func index(after i: Index) -> Index {
-        Index(__unchecked: (), position: i.position.rawValue + 1)
+        Index(__unchecked: (), position: i.position + 1)
     }
 }
 
@@ -35,7 +35,7 @@ extension Queue: BidirectionalCollection where Element: Copyable {
     @inlinable
     public func index(before i: Index) -> Index {
         precondition(i > startIndex, "Cannot decrement startIndex")
-        return Index(__unchecked: (), position: i.position.rawValue - 1)
+        return Index(__unchecked: (), position: i.position - 1)
     }
 }
 
@@ -49,16 +49,16 @@ extension Queue: RandomAccessCollection where Element: Copyable {
 
     @inlinable
     public func index(_ i: Index, offsetBy distance: Int) -> Index {
-        Index(__unchecked: (), position: i.position.rawValue + distance)
+        Index(__unchecked: (), position: i.position + distance)
     }
 
     @inlinable
     public func index(_ i: Index, offsetBy distance: Int, limitedBy limit: Index) -> Index? {
-        let newPosition = i.position.rawValue + distance
+        let newPosition = i.position + distance
         if distance >= 0 {
-            guard newPosition <= limit.position.rawValue else { return nil }
+            guard newPosition <= limit.position else { return nil }
         } else {
-            guard newPosition >= limit.position.rawValue else { return nil }
+            guard newPosition >= limit.position else { return nil }
         }
         return Index(__unchecked: (), position: newPosition)
     }

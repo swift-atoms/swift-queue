@@ -145,7 +145,7 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
 
         deinit {
             guard header.count > 0 else { return }
-            var physicalIndex = header.head.position.rawValue
+            var physicalIndex = header.head.position
             _ = unsafe withUnsafeMutablePointerToElements { ptr in
                 for _ in 0..<header.count {
                     unsafe (ptr + physicalIndex).deinitialize(count: 1)

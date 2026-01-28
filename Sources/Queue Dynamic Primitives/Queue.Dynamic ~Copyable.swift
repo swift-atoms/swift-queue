@@ -22,7 +22,7 @@ extension Queue.Storage where Element: ~Copyable {
         var index = header.head
         _ = unsafe withUnsafeMutablePointerToElements { ptr in
             for _ in 0..<header.count {
-                unsafe (ptr + index.position.rawValue).deinitialize(count: 1)
+                unsafe (ptr + index.position).deinitialize(count: 1)
                 index = index.successor(wrapping: capacity)
             }
         }
@@ -37,7 +37,7 @@ extension Queue.Storage where Element: ~Copyable {
         _ = unsafe withUnsafeMutablePointerToElements { src in
             unsafe newStorage.withUnsafeMutablePointerToElements { dst in
                 for _ in 0..<header.count {
-                    unsafe (dst + dstIndex.position.rawValue).initialize(to: (src + srcIndex.position.rawValue).move())
+                    unsafe (dst + dstIndex.position).initialize(to: (src + srcIndex.position).move())
                     srcIndex = srcIndex.successor(wrapping: capacity)
                     dstIndex = dstIndex.successor()
                 }
@@ -75,14 +75,14 @@ extension Queue.Storage where Element: ~Copyable {
     /// Converts a logical index (0 = front) to physical ring buffer index.
     @usableFromInline
     package func physicalIndex(_ logicalIndex: Int) -> Int {
-        (header.head.position.rawValue + logicalIndex) % capacity
+        (header.head.position + logicalIndex) % capacity
     }
 
     /// Appends element at the back (tail position).
     @usableFromInline
     package func append(_ element: consuming Element) {
         _ = unsafe withUnsafeMutablePointerToElements { ptr in
-            unsafe (ptr + header.tail.position.rawValue).initialize(to: element)
+            unsafe (ptr + header.tail.position).initialize(to: element)
         }
         header.tail = header.tail.successor(wrapping: capacity)
         header.count += 1
@@ -93,7 +93,7 @@ extension Queue.Storage where Element: ~Copyable {
     package func prepend(_ element: consuming Element) {
         header.head = header.head.predecessor(wrapping: capacity)
         _ = unsafe withUnsafeMutablePointerToElements { ptr in
-            unsafe (ptr + header.head.position.rawValue).initialize(to: element)
+            unsafe (ptr + header.head.position).initialize(to: element)
         }
         header.count += 1
     }
@@ -105,7 +105,7 @@ extension Queue.Storage where Element: ~Copyable {
         header.head = header.head.successor(wrapping: capacity)
         header.count -= 1
         return unsafe withUnsafeMutablePointerToElements { ptr in
-            unsafe (ptr + oldHead.position.rawValue).move()
+            unsafe (ptr + oldHead.position).move()
         }
     }
 
@@ -115,7 +115,7 @@ extension Queue.Storage where Element: ~Copyable {
         header.count -= 1
         header.tail = header.tail.predecessor(wrapping: capacity)
         return unsafe withUnsafeMutablePointerToElements { ptr in
-            unsafe (ptr + header.tail.position.rawValue).move()
+            unsafe (ptr + header.tail.position).move()
         }
     }
 
