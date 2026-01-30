@@ -13,7 +13,7 @@ public import Input_Primitives
 
 // MARK: - Input.Streaming Conformance
 
-extension Queue.Bounded: Input.Streaming where Element: Copyable {
+extension Queue.Fixed: Input.Streaming where Element: Copyable {
     /// The front element, if any.
     ///
     /// Uses `_read` accessor for borrowing semantics per SE-0474 preparation.
@@ -44,7 +44,7 @@ extension Queue.Bounded: Input.Streaming where Element: Copyable {
 
 // MARK: - Input.Protocol Conformance
 
-extension Queue.Bounded: Input.`Protocol` where Element: Copyable {
+extension Queue.Fixed: Input.`Protocol` where Element: Copyable {
     /// Checkpoint for backtracking: stores head position and count.
     ///
     /// Restoring to a checkpoint "unconsumes" elements by adjusting the

@@ -42,7 +42,7 @@ extension Queue where Element: ~Copyable {
     @inlinable
     public subscript(index: Index) -> Element {
         _read {
-            precondition(index.position >= 0 && index.position < _storage.header.count, "Index out of bounds")
+            precondition(index >= .zero && index < _storage.header.count, "Index out of bounds")
             let physicalIndex = (_storage.header.head.position + index.position) % _storage.capacity
             yield unsafe _cachedPtr[physicalIndex]
         }
@@ -72,7 +72,7 @@ extension Queue where Element: Copyable {
 }
 
 // MARK: - Bounded Queue Index Operations
-// NOTE: Per [MEM-COPY-006], Queue.Bounded extensions are in Queue.swift
+// NOTE: Per [MEM-COPY-006], Queue.Fixed extensions are in Queue.swift
 // to avoid breaking ~Copyable propagation.
 
 // MARK: - Static Queue Index Operations

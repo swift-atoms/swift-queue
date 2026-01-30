@@ -37,7 +37,7 @@ struct QueueConditionalCopyableTests {
         #expect(copyCount == 3)
     }
 
-    @Test("Queue.Bounded<Int> is Copyable")
+    @Test("Queue.Fixed<Int> is Copyable")
     func boundedIntIsCopyable() throws {
         var original = try Queue<Int>.Bounded(capacity: 10)
         try original.enqueue(1)

@@ -44,7 +44,7 @@ struct QueueSendableTests {
         requireSendable(queue)
     }
 
-    @Test("Queue.Bounded<Int> is Sendable")
+    @Test("Queue.Fixed<Int> is Sendable")
     func boundedIntIsSendable() throws {
         var bounded = try Queue<Int>.Bounded(capacity: 10)
         try bounded.enqueue(1)

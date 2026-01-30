@@ -13,9 +13,9 @@ import Testing
 
 @testable import Queue_Primitives
 
-// MARK: - Queue.Bounded Tests
+// MARK: - Queue.Fixed Tests
 
-@Suite("Queue.Bounded")
+@Suite("Queue.Fixed")
 struct QueueBoundedTests {
 
     @Test("Initialize with valid capacity")

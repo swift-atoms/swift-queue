@@ -16,7 +16,7 @@ public import Queue_Primitives_Core
 
 // MARK: - Properties
 
-extension Queue.Bounded where Element: ~Copyable {
+extension Queue.Fixed where Element: ~Copyable {
     /// The current number of elements in the queue.
     @inlinable
     public var count: Int { _storage.header.count }
@@ -32,14 +32,14 @@ extension Queue.Bounded where Element: ~Copyable {
 
 // MARK: - Core Operations (Base - for ~Copyable elements)
 
-extension Queue.Bounded where Element: ~Copyable {
+extension Queue.Fixed where Element: ~Copyable {
     /// Enqueues an element at the back of the queue.
     ///
     /// - Parameter element: The element to enqueue.
     /// - Throws: ``Queue/Bounded/Error/overflow`` if the queue is full.
     /// - Complexity: O(1)
     @inlinable
-    public mutating func enqueue(_ element: consuming Element) throws(Queue<Element>.Bounded.Error) {
+    public mutating func enqueue(_ element: consuming Element) throws(Queue<Element>.Fixed.Error) {
         guard _storage.header.count < capacity else {
             throw .overflow
         }
@@ -79,7 +79,7 @@ extension Queue.Bounded where Element: ~Copyable {
 
 // MARK: - Copy-on-Write (Copyable elements only)
 
-extension Queue.Bounded where Element: Copyable {
+extension Queue.Fixed where Element: Copyable {
     /// Ensures the storage is uniquely referenced before mutation.
     @usableFromInline
     package mutating func makeUnique() {
@@ -91,7 +91,7 @@ extension Queue.Bounded where Element: Copyable {
 
     /// Enqueues an element at the back of the queue (CoW-aware).
     @inlinable
-    public mutating func enqueue(_ element: Element) throws(Queue<Element>.Bounded.Error) {
+    public mutating func enqueue(_ element: Element) throws(Queue<Element>.Fixed.Error) {
         makeUnique()
         guard _storage.header.count < capacity else {
             throw .overflow
@@ -127,7 +127,7 @@ extension Queue.Bounded where Element: Copyable {
 
 // MARK: - Peek
 
-extension Queue.Bounded where Element: ~Copyable {
+extension Queue.Fixed where Element: ~Copyable {
     /// Peeks at the front element without removing it.
     @inlinable
     public func peek<R>(_ body: (borrowing Element) -> R) -> R? {
@@ -139,7 +139,7 @@ extension Queue.Bounded where Element: ~Copyable {
     }
 }
 
-extension Queue.Bounded where Element: Copyable {
+extension Queue.Fixed where Element: Copyable {
     /// Returns the front element without removing it, or nil if empty.
     @inlinable
     public func peek() -> Element? {
@@ -152,7 +152,7 @@ extension Queue.Bounded where Element: Copyable {
 
 // MARK: - Iteration (for ~Copyable elements)
 
-extension Queue.Bounded where Element: ~Copyable {
+extension Queue.Fixed where Element: ~Copyable {
     /// Calls the given closure for each element in the queue.
     ///
     /// Elements are visited from front (oldest) to back (newest).
@@ -170,7 +170,7 @@ extension Queue.Bounded where Element: ~Copyable {
 
 // MARK: - Sendable
 
-extension Queue.Bounded: @unchecked Sendable where Element: Sendable {}
+extension Queue.Fixed: @unchecked Sendable where Element: Sendable {}
 
-// Note: Swift.Sequence conformance for Queue.Bounded is in Queue.swift
+// Note: Swift.Sequence conformance for Queue.Fixed is in Queue.swift
 // (must be in same file as declaration due to Swift compiler bug with ~Copyable)

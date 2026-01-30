@@ -15,7 +15,11 @@ let package = Package(
         .library(
             name: "Queue Primitives",
             targets: ["Queue Primitives"]
-        )
+        ),
+        .library(
+            name: "Deque Primitives",
+            targets: ["Queue DoubleEnded Primitives"]
+        ),
     ],
     dependencies: [
         .package(path: "../swift-index-primitives"),
@@ -47,7 +51,7 @@ let package = Package(
             ]
         ),
         .target(
-            name: "Queue Bounded Primitives",
+            name: "Queue Fixed Primitives",
             dependencies: [
                 "Queue Primitives Core",
                 "Queue Dynamic Primitives",
@@ -100,7 +104,7 @@ let package = Package(
             dependencies: [
                 "Queue Primitives Core",
                 "Queue Dynamic Primitives",
-                "Queue Bounded Primitives",
+                "Queue Fixed Primitives",
                 "Queue Static Primitives",
                 "Queue Small Primitives",
                 "Queue Linked Primitives",

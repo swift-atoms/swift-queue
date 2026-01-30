@@ -54,7 +54,7 @@ struct QueueDeinitOrderTests {
         #expect(order == [1, 2, 3])
     }
 
-    @Test("Queue.Bounded deinit order")
+    @Test("Queue.Fixed deinit order")
     func boundedDeinitOrder() throws {
         let tracker = Tracker()
         do {
@@ -105,7 +105,7 @@ struct QueueDeinitOrderTests {
         #expect(order == [1, 2, 3])
     }
 
-    @Test("Queue.Bounded deinit order (with wraparound)")
+    @Test("Queue.Fixed deinit order (with wraparound)")
     func boundedDeinitWraparound() throws {
         let tracker = Tracker()
         do {

@@ -144,10 +144,10 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
         }
 
         deinit {
-            guard header.count > 0 else { return }
+            guard header.count > .zero else { return }
             var physicalIndex = header.head.position
             _ = unsafe withUnsafeMutablePointerToElements { ptr in
-                for _ in 0..<header.count {
+                for _ in .zero..<header.count {
                     unsafe (ptr + physicalIndex).deinitialize(count: 1)
                     physicalIndex = (physicalIndex + 1) % capacity
                 }
@@ -287,7 +287,7 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
             if let heap = _heap {
                 // Elements are on heap - Storage handles cleanup via its deinit
                 // Set header count for proper cleanup
-                heap.header.count = Index_Primitives.Index<Element>.Count(__unchecked: _count)
+                heap.header.count = _count
             } else {
                 // Elements are inline - clean up using Storage.Inline
                 _inline.deinitialize(from: _head, count: _count)
@@ -301,7 +301,7 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
 
     /// A fixed-capacity FIFO queue supporting move-only elements.
     ///
-    /// `Queue.Bounded` allocates storage upfront and throws on overflow.
+    /// `Queue.Fixed` allocates storage upfront and throws on overflow.
     /// Uses ring buffer semantics for O(1) operations. Use this variant when
     /// capacity is known or in contexts requiring predictable memory behavior
     /// (embedded, real-time).
@@ -326,7 +326,7 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
     /// try handles.enqueue(FileHandle())
     /// ```
     @safe
-    public struct Bounded: ~Copyable {
+    public struct Fixed: ~Copyable {
         @usableFromInline
         package var _storage: Storage  // Uses unified nested storage class
 
@@ -343,7 +343,7 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
         /// - Parameter capacity: Maximum number of elements. Must be non-negative.
         /// - Throws: ``Queue/Bounded/Error/invalidCapacity`` if capacity is negative.
         @inlinable
-        public init(capacity: Int) throws(Queue<Element>.Bounded.Error) {
+        public init(capacity: Int) throws(Queue<Element>.Fixed.Error) {
             guard capacity >= 0 else {
                 throw .invalidCapacity
             }
@@ -514,7 +514,7 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
         /// queue.dequeue()  // Optional(1)
         /// ```
         @safe
-        public struct Bounded: ~Copyable {
+        public struct Fixed: ~Copyable {
             @usableFromInline
             package var _storage: Storage
 
@@ -732,11 +732,11 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
 /// copies share storage until mutation.
 extension Queue: Copyable where Element: Copyable {}
 
-/// `Queue.Bounded` is `Copyable` when its elements are `Copyable`.
+/// `Queue.Fixed` is `Copyable` when its elements are `Copyable`.
 ///
 /// This enables value semantics with copy-on-write optimization:
 /// copies share storage until mutation.
-extension Queue.Bounded: Copyable where Element: Copyable {}
+extension Queue.Fixed: Copyable where Element: Copyable {}
 
 // MARK: - Queue.DoubleEnded Copyable Conformances
 
@@ -764,7 +764,7 @@ extension Queue.Linked: Copyable where Element: Copyable {}
 ///
 /// This enables value semantics with copy-on-write optimization:
 /// copies share storage until mutation.
-extension Queue.Linked.Bounded: Copyable where Element: Copyable {}
+extension Queue.Linked.Fixed: Copyable where Element: Copyable {}
 
 // Note: Queue.Linked.Inline and Queue.Linked.Small are UNCONDITIONALLY ~Copyable due to deinit
 
@@ -870,8 +870,8 @@ extension Queue.DoubleEnded.Static: @unchecked Sendable where Element: Sendable 
 /// `Queue.DoubleEnded.Small` is `Sendable` when its elements are `Sendable`.
 extension Queue.DoubleEnded.Small: @unchecked Sendable where Element: Sendable {}
 
-/// `Queue.Bounded` is `Sendable` when its elements are `Sendable`.
-extension Queue.Bounded: @unchecked Sendable where Element: Sendable {}
+/// `Queue.Fixed` is `Sendable` when its elements are `Sendable`.
+extension Queue.Fixed: @unchecked Sendable where Element: Sendable {}
 
 /// `Queue.Static` is `Sendable` when its elements are `Sendable`.
 extension Queue.Static: @unchecked Sendable where Element: Sendable {}

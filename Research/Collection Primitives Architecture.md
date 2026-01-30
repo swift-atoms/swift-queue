@@ -158,10 +158,10 @@ This is not feature creep—each variant serves a distinct use case:
 
 ### 3.2 Bounded Variant
 
-`Deque.Bounded`, `Queue.Bounded` allocate storage upfront and throw on overflow:
+`Deque.Bounded`, `Queue.Fixed` allocate storage upfront and throw on overflow:
 
 ```swift
-public struct Bounded: ~Copyable {
+public struct Fixed: ~Copyable {
     var _storage: Storage
     var _cachedPtr: UnsafeMutablePointer<Element>
     let capacity: Int

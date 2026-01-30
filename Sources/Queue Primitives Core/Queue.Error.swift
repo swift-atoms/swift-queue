@@ -13,14 +13,14 @@
 //
 // Swift does not allow nested types inside generic types to be easily accessed.
 // These error types are hoisted to module level and exposed via typealiases to
-// provide the expected Nest.Name API (Queue.Error, Queue.Bounded.Error, etc.).
+// provide the expected Nest.Name API (Queue.Error, Queue.Fixed.Error, etc.).
 //
 // This is a documented exception per [API-EXC-001] due to Swift language
 // limitations with generic nested types.
 //
 // Use the typealias forms in your code:
 // - Queue<Element>.Error
-// - Queue<Element>.Bounded.Error
+// - Queue<Element>.Fixed.Error
 // - Queue<Element>.Static.Error
 
 /// Hoisted implementation of ``Queue/Error``.
@@ -147,7 +147,7 @@ extension Queue where Element: ~Copyable {
     public typealias Error = __QueueError
 }
 
-extension Queue.Bounded where Element: ~Copyable {
+extension Queue.Fixed where Element: ~Copyable {
     /// Errors that can occur during bounded queue operations.
     ///
     /// ## Cases

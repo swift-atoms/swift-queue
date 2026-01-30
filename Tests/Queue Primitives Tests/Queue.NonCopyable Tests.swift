@@ -74,7 +74,7 @@ struct QueueNonCopyableTests {
         #expect(ids == [1, 2, 3])
     }
 
-    @Test("Queue.Bounded with ~Copyable elements")
+    @Test("Queue.Fixed with ~Copyable elements")
     func boundedWithNonCopyable() throws {
         var bounded = try Queue<Token>.Bounded(capacity: 5)
         try bounded.enqueue(Token(10))
@@ -92,7 +92,7 @@ struct QueueNonCopyableTests {
         }
     }
 
-    @Test("Queue.Bounded with ~Copyable elements: forEach")
+    @Test("Queue.Fixed with ~Copyable elements: forEach")
     func boundedForEach() throws {
         var bounded = try Queue<Token>.Bounded(capacity: 5)
         try bounded.enqueue(Token(1))
