@@ -22,6 +22,7 @@ let package = Package(
         ),
     ],
     dependencies: [
+        .package(path: "../swift-buffer-primitives"),
         .package(path: "../swift-index-primitives"),
         .package(path: "../swift-range-primitives"),
         .package(path: "../swift-input-primitives"),
@@ -34,6 +35,7 @@ let package = Package(
         .target(
             name: "Queue Primitives Core",
             dependencies: [
+                .product(name: "Buffer Primitives", package: "swift-buffer-primitives"),
                 .product(name: "Index Primitives", package: "swift-index-primitives"),
                 .product(name: "Range Primitives", package: "swift-range-primitives"),
                 .product(name: "Input Primitives", package: "swift-input-primitives"),

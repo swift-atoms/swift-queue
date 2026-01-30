@@ -10,6 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 public import Index_Primitives
+public import Buffer_Primitives
 
 extension Queue where Element: ~Copyable {
     /// Type-safe index for queue elements.
@@ -42,13 +43,19 @@ extension Queue where Element: ~Copyable {
     @inlinable
     public subscript(index: Index) -> Element {
         _read {
-            precondition(index >= .zero && index < _storage.header.count, "Index out of bounds")
-            let physicalIndex = (_storage.header.head.position + index.position) % _storage.capacity
+            let logicalIndex = Int(index.rawValue.rawValue)
+            let count = Int(_storage.header.count.rawValue.rawValue)
+            precondition(logicalIndex >= 0 && logicalIndex < count, "Index out of bounds")
+            let head = Int(_storage.header.head.rawValue.rawValue)
+            let physicalIndex = (head + logicalIndex) % _storage.capacity
             yield unsafe _cachedPtr[physicalIndex]
         }
         _modify {
-            precondition(index.position >= 0 && index.position < _storage.header.count, "Index out of bounds")
-            let physicalIndex = (_storage.header.head.position + index.position) % _storage.capacity
+            let logicalIndex = Int(index.rawValue.rawValue)
+            let count = Int(_storage.header.count.rawValue.rawValue)
+            precondition(logicalIndex >= 0 && logicalIndex < count, "Index out of bounds")
+            let head = Int(_storage.header.head.rawValue.rawValue)
+            let physicalIndex = (head + logicalIndex) % _storage.capacity
             yield unsafe &_cachedPtr[physicalIndex]
         }
     }
@@ -65,8 +72,11 @@ extension Queue where Element: Copyable {
     /// - Returns: The element at the index, or `nil` if out of bounds.
     @inlinable
     public func element(at index: Index) -> Element? {
-        guard index.position >= 0 && index.position < _storage.header.count else { return nil }
-        let physicalIndex = (_storage.header.head.position + index.position) % _storage.capacity
+        let logicalIndex = Int(index.rawValue.rawValue)
+        let count = Int(_storage.header.count.rawValue.rawValue)
+        guard logicalIndex >= 0 && logicalIndex < count else { return nil }
+        let head = Int(_storage.header.head.rawValue.rawValue)
+        let physicalIndex = (head + logicalIndex) % _storage.capacity
         return unsafe _cachedPtr[physicalIndex]
     }
 }
