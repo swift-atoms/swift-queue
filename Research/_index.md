@@ -1,5 +1,7 @@
 # Research Index
 
-| Document | Topic | Date | Status |
-|----------|-------|------|--------|
-| Collection Primitives Architecture.md | Collection primitives architecture | 2026-01-20 | DECISION |
+## Moved to swift-storage-primitives/Research/
+
+| Document | New Location |
+|----------|-------------|
+| Collection Primitives Architecture.md | `swift-storage-primitives/Research/Collection Primitives Architecture.md` |
