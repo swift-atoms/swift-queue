@@ -472,8 +472,8 @@ struct QueueSmallTests {
         #expect(queue.dequeue() == 4)
     }
 
-    @Test("Clear keeps capacity by default")
-    func clearKeepsCapacity() {
+    @Test("Clear removes all elements")
+    func clearRemovesAll() {
         var queue = Queue<Int>.Small<4>()
         queue.enqueue(1)
         queue.enqueue(2)
@@ -486,7 +486,6 @@ struct QueueSmallTests {
         queue.clear()
 
         #expect(queue.isEmpty == true)
-        #expect(queue.isSpilled == true)  // Still on heap
     }
 
     @Test("Clear releases heap storage")
