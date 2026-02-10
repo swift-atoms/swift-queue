@@ -12,7 +12,7 @@
 public import Buffer_Primitives
 import List_Primitives
 public import Index_Primitives
-import Range_Primitives
+import Vector_Primitives
 
 /// A dynamically-growing FIFO queue supporting move-only elements.
 ///

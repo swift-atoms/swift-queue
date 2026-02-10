@@ -24,7 +24,7 @@ let package = Package(
     dependencies: [
         .package(path: "../swift-buffer-primitives"),
         .package(path: "../swift-index-primitives"),
-        .package(path: "../swift-range-primitives"),
+        .package(path: "../swift-vector-primitives"),
         .package(path: "../swift-input-primitives"),
         .package(path: "../swift-collection-primitives"),
         .package(path: "../swift-list-primitives"),
@@ -37,7 +37,7 @@ let package = Package(
             dependencies: [
                 .product(name: "Buffer Primitives", package: "swift-buffer-primitives"),
                 .product(name: "Index Primitives", package: "swift-index-primitives"),
-                .product(name: "Range Primitives", package: "swift-range-primitives"),
+                .product(name: "Vector Primitives", package: "swift-vector-primitives"),
                 .product(name: "Input Primitives", package: "swift-input-primitives"),
                 .product(name: "Collection Primitives", package: "swift-collection-primitives"),
                 .product(name: "List Primitives", package: "swift-list-primitives"),
