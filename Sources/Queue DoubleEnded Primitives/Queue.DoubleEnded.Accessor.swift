@@ -11,6 +11,8 @@
 
 public import Queue_Primitives_Core
 public import Property_Primitives
+import Index_Primitives
+import Buffer_Primitives
 
 // MARK: - Position Namespaces
 
@@ -31,11 +33,11 @@ extension Queue.DoubleEnded where Element: Copyable {
     /// a mutating context.
     public struct PeekAccessor {
         @usableFromInline
-        internal let _storage: Queue<Element>.Storage
+        internal let _buffer: Buffer<Element>.Ring
 
         @inlinable
-        internal init(storage: Queue<Element>.Storage) {
-            self._storage = storage
+        internal init(buffer: Buffer<Element>.Ring) {
+            self._buffer = buffer
         }
 
         /// The front element, or `nil` if the deque is empty.
@@ -43,11 +45,8 @@ extension Queue.DoubleEnded where Element: Copyable {
         /// - Complexity: O(1)
         @inlinable
         public var front: Element? {
-            guard _storage.header.count > 0 else { return nil }
-            let physicalIndex = _storage.physicalIndex(0)
-            return unsafe _storage.withUnsafeMutablePointerToElements { elements in
-                unsafe elements[physicalIndex]
-            }
+            guard !_buffer.isEmpty else { return nil }
+            return _buffer.peekFront
         }
 
         /// The back element, or `nil` if the deque is empty.
@@ -55,12 +54,8 @@ extension Queue.DoubleEnded where Element: Copyable {
         /// - Complexity: O(1)
         @inlinable
         public var back: Element? {
-            let count = _storage.header.count
-            guard count > 0 else { return nil }
-            let physicalIndex = _storage.physicalIndex(count - 1)
-            return unsafe _storage.withUnsafeMutablePointerToElements { elements in
-                unsafe elements[physicalIndex]
-            }
+            guard !_buffer.isEmpty else { return nil }
+            return _buffer.peekBack
         }
     }
 
@@ -76,7 +71,7 @@ extension Queue.DoubleEnded where Element: Copyable {
     /// ```
     @inlinable
     public var peek: PeekAccessor {
-        PeekAccessor(storage: _storage)
+        PeekAccessor(buffer: _buffer)
     }
 }
 
@@ -117,10 +112,7 @@ where Tag == Queue<Element>.DoubleEnded.Front,
     @inlinable
     public var peek: Element? {
         guard !(unsafe base.pointee.isEmpty) else { return nil }
-        let physicalIndex = unsafe base.pointee._storage.physicalIndex(0)
-        return unsafe base.pointee._storage.withUnsafeMutablePointerToElements { elements in
-            unsafe elements[physicalIndex]
-        }
+        return unsafe base.pointee._buffer.peekFront
     }
 
     /// Pushes an element to the front of the deque.
@@ -129,9 +121,7 @@ where Tag == Queue<Element>.DoubleEnded.Front,
     /// - Complexity: O(1) amortized
     @inlinable
     public func push(_ element: Element) {
-        unsafe base.pointee.makeUnique()
-        unsafe base.pointee.ensureCapacity(base.pointee.count + 1)
-        unsafe base.pointee._storage.prepend(element)
+        unsafe base.pointee._buffer.pushFront(element)
     }
 
     /// Removes and returns the front element.
@@ -141,11 +131,10 @@ where Tag == Queue<Element>.DoubleEnded.Front,
     /// - Complexity: O(1)
     @inlinable
     public func pop() throws(__QueueDoubleEndedError) -> Element {
-        unsafe base.pointee.makeUnique()
         guard !(unsafe base.pointee.isEmpty) else {
             throw .invalidCapacity // Using existing error case for empty
         }
-        return unsafe base.pointee._storage.removeFirst()
+        return unsafe base.pointee._buffer.popFront()
     }
 
     /// Removes and returns the front element, or nil if empty.
@@ -155,8 +144,7 @@ where Tag == Queue<Element>.DoubleEnded.Front,
     @inlinable
     public var take: Element? {
         guard !(unsafe base.pointee.isEmpty) else { return nil }
-        unsafe base.pointee.makeUnique()
-        return unsafe base.pointee._storage.removeFirst()
+        return unsafe base.pointee._buffer.popFront()
     }
 }
 
@@ -196,12 +184,8 @@ where Tag == Queue<Element>.DoubleEnded.Back,
     /// - Complexity: O(1)
     @inlinable
     public var peek: Element? {
-        let count = unsafe base.pointee._storage.header.count
-        guard count > 0 else { return nil }
-        let physicalIndex = unsafe base.pointee._storage.physicalIndex(count - 1)
-        return unsafe base.pointee._storage.withUnsafeMutablePointerToElements { elements in
-            unsafe elements[physicalIndex]
-        }
+        guard !(unsafe base.pointee.isEmpty) else { return nil }
+        return unsafe base.pointee._buffer.peekBack
     }
 
     /// Pushes an element to the back of the deque.
@@ -210,9 +194,7 @@ where Tag == Queue<Element>.DoubleEnded.Back,
     /// - Complexity: O(1) amortized
     @inlinable
     public func push(_ element: Element) {
-        unsafe base.pointee.makeUnique()
-        unsafe base.pointee.ensureCapacity(base.pointee.count + 1)
-        unsafe base.pointee._storage.append(element)
+        unsafe base.pointee._buffer.pushBack(element)
     }
 
     /// Removes and returns the back element.
@@ -222,11 +204,10 @@ where Tag == Queue<Element>.DoubleEnded.Back,
     /// - Complexity: O(1)
     @inlinable
     public func pop() throws(__QueueDoubleEndedError) -> Element {
-        unsafe base.pointee.makeUnique()
         guard !(unsafe base.pointee.isEmpty) else {
             throw .invalidCapacity // Using existing error case for empty
         }
-        return unsafe base.pointee._storage.removeLast()
+        return unsafe base.pointee._buffer.popBack()
     }
 
     /// Removes and returns the back element, or nil if empty.
@@ -236,7 +217,6 @@ where Tag == Queue<Element>.DoubleEnded.Back,
     @inlinable
     public var take: Element? {
         guard !(unsafe base.pointee.isEmpty) else { return nil }
-        unsafe base.pointee.makeUnique()
-        return unsafe base.pointee._storage.removeLast()
+        return unsafe base.pointee._buffer.popBack()
     }
 }

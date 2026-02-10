@@ -10,6 +10,8 @@
 // ===----------------------------------------------------------------------===//
 
 public import Input_Primitives
+import Index_Primitives
+import Buffer_Primitives
 
 // MARK: - Input.Streaming Conformance
 
@@ -23,12 +25,7 @@ extension Queue.Static: Input.Streaming where Element: Copyable {
     @inlinable
     public var first: Element? {
         _read {
-            if _count > 0 {
-                let ptr = unsafe _readPointerToElement(at: _head)
-                yield unsafe ptr.pointee
-            } else {
-                yield nil
-            }
+            yield peek()
         }
     }
 
@@ -49,37 +46,17 @@ extension Queue.Static: Input.Streaming where Element: Copyable {
 // MARK: - Input.Protocol Conformance
 
 extension Queue.Static: Input.`Protocol` where Element: Copyable {
-    /// Checkpoint for backtracking: stores head position and count.
+    /// Checkpoint for backtracking.
     ///
     /// Restoring to a checkpoint moves the logical head pointer back,
     /// effectively "unconsuming" elements. This only works if no elements
     /// have been enqueued since the checkpoint was created.
-    public struct Checkpoint: Sendable, Comparable {
-        /// The head position at checkpoint time.
-        @usableFromInline
-        let head: Int
-
-        /// The count at checkpoint time.
-        @usableFromInline
-        let count: Int
-
-        @usableFromInline
-        init(head: Int, count: Int) {
-            self.head = head
-            self.count = count
-        }
-
-        @inlinable
-        public static func < (lhs: Checkpoint, rhs: Checkpoint) -> Bool {
-            // Earlier checkpoints have higher counts (less consumed)
-            lhs.count > rhs.count
-        }
-    }
+    public typealias Checkpoint = Buffer<Element>.Ring.Checkpoint
 
     /// Creates a checkpoint at the current position.
     @inlinable
     public var checkpoint: Checkpoint {
-        Checkpoint(head: _head, count: _count)
+        _buffer.checkpoint
     }
 
     /// The range of valid checkpoint positions.
@@ -97,8 +74,7 @@ extension Queue.Static: Input.`Protocol` where Element: Copyable {
     ///   no elements have been enqueued since the checkpoint was taken.
     @inlinable
     public mutating func setPosition(to checkpoint: Checkpoint) {
-        _head = checkpoint.head
-        _count = checkpoint.count
+        _buffer.restore(to: checkpoint)
     }
 
     /// Advances cursor by `n` elements.

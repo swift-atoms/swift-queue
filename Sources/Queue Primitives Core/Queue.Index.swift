@@ -33,7 +33,7 @@ extension Queue where Element: ~Copyable {
     public typealias Index = Index_Primitives.Index<Element>
 }
 
-// MARK: - Typed Subscript (Queue)
+// MARK: - Typed Subscript (Queue, ~Copyable)
 
 extension Queue where Element: ~Copyable {
     /// Accesses the element at the given typed index.
@@ -43,20 +43,10 @@ extension Queue where Element: ~Copyable {
     @inlinable
     public subscript(index: Index) -> Element {
         _read {
-            let logicalIndex = Int(index.rawValue.rawValue)
-            let count = Int(_storage.header.count.rawValue.rawValue)
-            precondition(logicalIndex >= 0 && logicalIndex < count, "Index out of bounds")
-            let head = Int(_storage.header.head.rawValue.rawValue)
-            let physicalIndex = (head + logicalIndex) % _storage.capacity
-            yield unsafe _cachedPtr[physicalIndex]
+            yield _buffer[index]
         }
         _modify {
-            let logicalIndex = Int(index.rawValue.rawValue)
-            let count = Int(_storage.header.count.rawValue.rawValue)
-            precondition(logicalIndex >= 0 && logicalIndex < count, "Index out of bounds")
-            let head = Int(_storage.header.head.rawValue.rawValue)
-            let physicalIndex = (head + logicalIndex) % _storage.capacity
-            yield unsafe &_cachedPtr[physicalIndex]
+            yield &_buffer[index]
         }
     }
 }
@@ -72,12 +62,9 @@ extension Queue where Element: Copyable {
     /// - Returns: The element at the index, or `nil` if out of bounds.
     @inlinable
     public func element(at index: Index) -> Element? {
-        let logicalIndex = Int(index.rawValue.rawValue)
-        let count = Int(_storage.header.count.rawValue.rawValue)
-        guard logicalIndex >= 0 && logicalIndex < count else { return nil }
-        let head = Int(_storage.header.head.rawValue.rawValue)
-        let physicalIndex = (head + logicalIndex) % _storage.capacity
-        return unsafe _cachedPtr[physicalIndex]
+        let pos = index.position
+        guard pos >= 0 && pos < count else { return nil }
+        return _buffer[index]
     }
 }
 

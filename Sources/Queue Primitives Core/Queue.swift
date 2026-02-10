@@ -81,73 +81,8 @@ import Vector_Primitives
 @safe
 public struct Queue<Element: ~Copyable>: ~Copyable {
 
-    // MARK: - Unified Storage (nested to inherit Element's ~Copyable context)
-
-    /// Header typealias for ring buffer storage.
-    ///
-    /// Uses `Buffer.Ring.Header<Element>` from buffer-primitives which provides
-    /// typed `Index<Element>` for physical buffer positions and `Index<Element>.Count`
-    /// for element count.
     @usableFromInline
-    package typealias Header = Buffer.Ring.Header<Element>
-
-    /// Internal storage class for ring buffer-based queues.
-    ///
-    /// Uses `ManagedBuffer` for efficient single-allocation storage.
-    /// Header stores (head, tail, count) for ring buffer management.
-    /// Declared as a nested class inside `Queue` so that the `Element` generic
-    /// inherits the `~Copyable` suppression from the outer type.
-    ///
-    /// Ring buffer semantics:
-    /// - `head`: Index of next element to dequeue
-    /// - `tail`: Index where next element will be enqueued
-    /// - `count`: Number of valid elements
-    ///
-    /// - Note: This must be nested, not module-level, due to Swift's generic
-    ///   constraint propagation limitations with `~Copyable` and nested types.
-    @usableFromInline
-    package final class Storage: ManagedBuffer<Header, Element> {
-
-        /// Creates empty storage with no capacity.
-        @usableFromInline
-        static func create() -> Storage {
-            let storage = Storage.create(minimumCapacity: 0) { _ in Header() }
-            return unsafe unsafeDowncast(storage, to: Storage.self)
-        }
-
-        /// Creates storage with the specified minimum capacity.
-        @usableFromInline
-        static func create(minimumCapacity: Int) -> Storage {
-            let storage = Storage.create(minimumCapacity: minimumCapacity) { _ in Header() }
-            return unsafe unsafeDowncast(storage, to: Storage.self)
-        }
-
-        deinit {
-            guard header.count > .zero else { return }
-            _ = unsafe withUnsafeMutablePointerToElements { ptr in
-                Buffer.Ring.deinitialize(
-                    Pointer<Element>.Mutable(base: ptr),
-                    head: header.head,
-                    count: header.count,
-                    capacity: Index<Element>.Count(UInt(capacity))
-                )
-            }
-        }
-
-        /// Returns the elements pointer.
-        @usableFromInline
-        package var _elementsPointer: UnsafeMutablePointer<Element> {
-            unsafe withUnsafeMutablePointerToElements { unsafe $0 }
-        }
-    }
-
-    @usableFromInline
-    package var _storage: Storage
-
-    /// Cached pointer to element storage. Stored in struct to enable property-based Span access.
-    /// CRITICAL: Must be updated whenever _storage is replaced (reallocation, CoW copy).
-    @usableFromInline
-    package var _cachedPtr: UnsafeMutablePointer<Element>
+    package var _buffer: Buffer<Element>.Ring
 
     // MARK: - Static (declared here to fix Swift compiler bug with ~Copyable in extensions)
 
@@ -161,15 +96,8 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
     ///   Swift compiler bug where nested types with value generic parameters declared
     ///   in extensions do not properly inherit `~Copyable` constraints from the outer type.
     public struct Static<let capacity: Int>: ~Copyable {
-        /// Inline storage for ring buffer elements.
         @usableFromInline
-        package var _storage: Storage_Primitives.Storage<Element>.Inline<capacity>
-
-        /// Ring buffer header (head, tail, count).
-        /// Uses non-cyclic Header to avoid Swift constraint propagation issues
-        /// with external nested types and ~Copyable.
-        @usableFromInline
-        package var _header: Buffer.Ring.Header<Element>
+        package var _buffer: Buffer<Element>.Ring.Inline<capacity>
 
         /// Workaround for Swift compiler bug where deinit element cleanup
         /// fails for ~Copyable structs that contain only value-type properties.
@@ -181,12 +109,11 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
         /// Creates an empty inline queue.
         @inlinable
         public init() {
-            self._storage = try! Storage_Primitives.Storage<Element>.Inline<capacity>()
-            self._header = Buffer.Ring.Header<Element>()
+            self._buffer = Buffer<Element>.Ring.Inline<capacity>()
         }
 
         deinit {
-            _storage.deinitialize(head: _header.head, count: _header.count)
+            _buffer.removeAll()
         }
     }
 
@@ -220,46 +147,22 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
     ///   in extensions do not properly inherit `~Copyable` constraints from the outer type.
     @safe
     public struct Small<let inlineCapacity: Int>: ~Copyable {
-        /// Inline storage for ring buffer elements.
         @usableFromInline
-        package var _inline: Storage_Primitives.Storage<Element>.Inline<inlineCapacity>
-
-        /// Ring buffer header for inline mode (head, tail, count).
-        /// Uses non-cyclic Header to avoid Swift constraint propagation issues
-        /// with external nested types and ~Copyable.
-        @usableFromInline
-        package var _inlineHeader: Buffer.Ring.Header<Element>
-
-        /// Heap storage when spilled. Nil when using inline storage.
-        @usableFromInline
-        package var _heap: Storage?
-
-        /// Cached pointer to heap elements. Only valid when _heap is non-nil.
-        @usableFromInline
-        package var _heapPtr: UnsafeMutablePointer<Element>?
+        package var _buffer: Buffer<Element>.Ring.Small<inlineCapacity>
 
         /// Creates an empty small queue.
         @inlinable
         public init() {
-            self._inline = try! Storage_Primitives.Storage<Element>.Inline<inlineCapacity>()
-            self._inlineHeader = Buffer.Ring.Header<Element>()
-            self._heap = nil
-            unsafe (self._heapPtr = nil)
+            self._buffer = Buffer<Element>.Ring.Small<inlineCapacity>()
         }
 
         deinit {
-            if _heap != nil {
-                // Elements are on heap - Storage handles cleanup via its deinit
-                // (heap.header already has correct count)
-            } else {
-                // Elements are inline - clean up using Storage.Inline
-                _inline.deinitialize(head: _inlineHeader.head, count: _inlineHeader.count)
-            }
+            _buffer.removeAll()
         }
 
         /// Whether the queue is currently using heap storage.
         @inlinable
-        public var isSpilled: Bool { _heap != nil }
+        public var isSpilled: Bool { _buffer._heapBuffer != nil }
     }
 
     /// A fixed-capacity FIFO queue supporting move-only elements.
@@ -291,12 +194,7 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
     @safe
     public struct Fixed: ~Copyable {
         @usableFromInline
-        package var _storage: Storage  // Uses unified nested storage class
-
-        /// Cached pointer to element storage. Stored in struct to enable property-based Span access.
-        /// CRITICAL: Must be updated whenever _storage is replaced (CoW copy).
-        @usableFromInline
-        package var _cachedPtr: UnsafeMutablePointer<Element>
+        package var _buffer: Buffer<Element>.Ring.Bounded
 
         /// The maximum number of elements the queue can hold.
         public let capacity: Int
@@ -311,12 +209,13 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
                 throw .invalidCapacity
             }
 
-            self._storage = Storage.create(minimumCapacity: capacity)
-            unsafe (self._cachedPtr = _storage._elementsPointer)
+            self._buffer = Buffer<Element>.Ring.Bounded(
+                minimumCapacity: Index<Element>.Count(Cardinal(UInt(capacity)))
+            )
             self.capacity = capacity
         }
 
-        // Note: No deinit needed - Storage handles cleanup
+        // Note: No deinit needed - Storage.Heap handles cleanup
     }
 
     // MARK: - Queue.Linked
@@ -508,23 +407,11 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
     /// Double-ended queue with O(1) amortized operations at both ends.
     ///
     /// Operations and implementation details are in `Queue.DoubleEnded.swift`.
-    /// Note: Not marked `: ~Copyable` - Swift infers it from Storage which holds Element.
-    /// Conditional Copyable conformance is declared separately.
     @safe
     public struct DoubleEnded {
 
-        // MARK: - Storage (typealias to unified Queue.Storage)
-
-        /// Storage typealias for API naming as `Queue.DoubleEnded.Storage`.
-        ///
-        /// Uses the unified `Queue.Storage` which supports both single-ended
-        /// and double-ended operations. This eliminates code duplication
-        /// while preserving the expected type name.
         @usableFromInline
-        package typealias Storage = Queue<Element>.Storage
-
-        @usableFromInline
-        package var _storage: Storage
+        package var _buffer: Buffer<Element>.Ring
 
         /// Which end of the deque to operate on.
         public enum Position: Sendable, Equatable {
@@ -534,13 +421,15 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
 
         @inlinable
         public init() {
-            self._storage = Storage.create()
+            self._buffer = Buffer<Element>.Ring(minimumCapacity: .zero)
         }
 
         @inlinable
         public init(reservingCapacity capacity: Int) throws(__QueueDoubleEndedError) {
             guard capacity >= 0 else { throw .invalidCapacity }
-            self._storage = Storage.create(minimumCapacity: capacity)
+            self._buffer = Buffer<Element>.Ring(
+                minimumCapacity: Index<Element>.Count(Cardinal(UInt(capacity)))
+            )
         }
 
         // MARK: - Fixed (nested inside DoubleEnded)
@@ -551,14 +440,16 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
         @safe
         public struct Fixed {
             @usableFromInline
-            package var _storage: Storage
+            package var _buffer: Buffer<Element>.Ring.Bounded
 
             public let capacity: Int
 
             @inlinable
             public init(capacity: Int) throws(__QueueDoubleEndedFixedError) {
                 guard capacity >= 0 else { throw .invalidCapacity }
-                self._storage = Storage.create(minimumCapacity: capacity)
+                self._buffer = Buffer<Element>.Ring.Bounded(
+                    minimumCapacity: Index<Element>.Count(Cardinal(UInt(capacity)))
+                )
                 self.capacity = capacity
             }
         }
@@ -574,15 +465,8 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
         /// - Note: This type is declared inside `Queue.DoubleEnded` (not via typealias) for
         ///   proper API organization after Swift compiler improvements.
         public struct Static<let capacity: Int>: ~Copyable {
-            /// Inline storage for ring buffer elements.
             @usableFromInline
-            package var _storage: Storage_Primitives.Storage<Element>.Inline<capacity>
-
-            /// Ring buffer header (head, tail, count).
-            /// Uses non-cyclic Header to avoid Swift constraint propagation issues
-            /// with external nested types and ~Copyable.
-            @usableFromInline
-            package var _header: Buffer.Ring.Header<Element>
+            package var _buffer: Buffer<Element>.Ring.Inline<capacity>
 
             /// Workaround for Swift compiler bug where deinit element cleanup
             /// fails for ~Copyable structs that contain only value-type properties.
@@ -592,12 +476,11 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
             /// Creates an empty inline double-ended queue.
             @inlinable
             public init() {
-                self._storage = try! Storage_Primitives.Storage<Element>.Inline<capacity>()
-                self._header = Buffer.Ring.Header<Element>()
+                self._buffer = Buffer<Element>.Ring.Inline<capacity>()
             }
 
             deinit {
-                _storage.deinitialize(head: _header.head, count: _header.count)
+                _buffer.removeAll()
             }
         }
 
@@ -612,39 +495,22 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
         ///   proper API organization after Swift compiler improvements.
         @safe
         public struct Small<let inlineCapacity: Int>: ~Copyable {
-            /// Inline storage for ring buffer elements.
             @usableFromInline
-            package var _inline: Storage_Primitives.Storage<Element>.Inline<inlineCapacity>
-
-            /// Ring buffer header for inline mode (head, tail, count).
-            /// Uses non-cyclic Header to avoid Swift constraint propagation issues
-            /// with external nested types and ~Copyable.
-            @usableFromInline
-            package var _inlineHeader: Buffer.Ring.Header<Element>
-
-            /// Heap storage when spilled. Nil when using inline storage.
-            @usableFromInline
-            package var _heap: Storage?
+            package var _buffer: Buffer<Element>.Ring.Small<inlineCapacity>
 
             /// Creates an empty small double-ended queue.
             @inlinable
             public init() {
-                self._inline = try! Storage_Primitives.Storage<Element>.Inline<inlineCapacity>()
-                self._inlineHeader = Buffer.Ring.Header<Element>()
-                self._heap = nil
+                self._buffer = Buffer<Element>.Ring.Small<inlineCapacity>()
             }
 
             deinit {
-                if _heap != nil {
-                    // Elements are on heap - Storage handles cleanup via its deinit
-                } else {
-                    _inline.deinitialize(head: _inlineHeader.head, count: _inlineHeader.count)
-                }
+                _buffer.removeAll()
             }
 
             /// Whether the deque is currently using heap storage.
             @inlinable
-            public var isSpilled: Bool { _heap != nil }
+            public var isSpilled: Bool { _buffer._heapBuffer != nil }
         }
     }
 
@@ -653,8 +519,7 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
     /// No allocation occurs until the first enqueue.
     @inlinable
     public init() {
-        self._storage = Storage.create()
-        unsafe (self._cachedPtr = _storage._elementsPointer)
+        self._buffer = Buffer<Element>.Ring(minimumCapacity: .zero)
     }
 
     /// Creates a queue with reserved capacity.
@@ -670,15 +535,12 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
             throw .invalidCapacity
         }
 
-        if capacity == 0 {
-            self._storage = Storage.create()
-        } else {
-            self._storage = Storage.create(minimumCapacity: capacity)
-        }
-        unsafe (self._cachedPtr = _storage._elementsPointer)
+        self._buffer = Buffer<Element>.Ring(
+            minimumCapacity: Index<Element>.Count(Cardinal(UInt(capacity)))
+        )
     }
 
-    // Note: No deinit needed - Storage handles cleanup
+    // Note: No deinit needed - Storage.Heap handles cleanup
 }
 
 // MARK: - Conditional Copyable

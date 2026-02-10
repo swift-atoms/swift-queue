@@ -10,6 +10,8 @@
 // ===----------------------------------------------------------------------===//
 
 public import Queue_Primitives_Core
+import Index_Primitives
+import Buffer_Primitives
 
 // Note: Queue.Static is unconditionally ~Copyable due to deinit requirement
 
@@ -18,15 +20,15 @@ public import Queue_Primitives_Core
 extension Queue.Static where Element: ~Copyable {
     /// The current number of elements in the queue.
     @inlinable
-    public var count: Int { _count }
+    public var count: Int { Int(_buffer.count.rawValue.rawValue) }
 
     /// Whether the queue is empty.
     @inlinable
-    public var isEmpty: Bool { _count == 0 }
+    public var isEmpty: Bool { _buffer.isEmpty }
 
     /// Whether the queue is full.
     @inlinable
-    public var isFull: Bool { _count == capacity }
+    public var isFull: Bool { _buffer.isFull }
 }
 
 // MARK: - Core Operations
@@ -39,12 +41,10 @@ extension Queue.Static where Element: ~Copyable {
     /// - Complexity: O(1)
     @inlinable
     public mutating func enqueue(_ element: consuming Element) throws(Queue<Element>.Static.Error) {
-        guard _count < capacity else {
+        guard !_buffer.isFull else {
             throw .overflow
         }
-        _storage.initialize(to: element, at: _tail)
-        _tail = (_tail + 1) % capacity
-        _count += 1
+        _ = _buffer.pushBack(consume element)
     }
 
     /// Dequeues and returns the front element, or nil if empty.
@@ -53,13 +53,10 @@ extension Queue.Static where Element: ~Copyable {
     /// - Complexity: O(1)
     @inlinable
     public mutating func dequeue() -> Element? {
-        guard _count > 0 else {
+        guard !_buffer.isEmpty else {
             return nil
         }
-        let element = _storage.move(at: _head)
-        _head = (_head + 1) % capacity
-        _count -= 1
-        return element
+        return _buffer.popFront()
     }
 
     /// Removes all elements from the queue.
@@ -67,10 +64,7 @@ extension Queue.Static where Element: ~Copyable {
     /// - Complexity: O(n) where n is the number of elements.
     @inlinable
     public mutating func clear() {
-        _storage.deinitialize(from: _head, count: _count)
-        _head = 0
-        _tail = 0
-        _count = 0
+        _buffer.removeAll()
     }
 }
 
@@ -86,11 +80,10 @@ extension Queue.Static where Element: ~Copyable {
     /// - Complexity: O(1)
     @inlinable
     public func peek<R>(_ body: (borrowing Element) -> R) -> R? {
-        guard _count > 0 else {
+        guard !_buffer.isEmpty else {
             return nil
         }
-        let ptr = unsafe _storage.read(at: _head)
-        return body(unsafe ptr.pointee)
+        return _buffer.withFront(body)
     }
 }
 
@@ -103,11 +96,10 @@ extension Queue.Static where Element: Copyable {
     /// - Complexity: O(1)
     @inlinable
     public func peek() -> Element? {
-        guard _count > 0 else {
+        guard !_buffer.isEmpty else {
             return nil
         }
-        let ptr = unsafe _storage.read(at: _head)
-        return unsafe ptr.pointee
+        return _buffer.peekFront
     }
 }
 
@@ -122,15 +114,7 @@ extension Queue.Static where Element: ~Copyable {
     /// - Complexity: O(n) where n is the number of elements.
     @inlinable
     public func forEach(_ body: (borrowing Element) -> Void) {
-        let count = _count
-        guard count > 0 else { return }
-
-        var index = _head
-        for _ in 0..<count {
-            let ptr = unsafe _storage.read(at: index)
-            body(unsafe ptr.pointee)
-            index = (index + 1) % capacity
-        }
+        _buffer.forEach(body)
     }
 }
 

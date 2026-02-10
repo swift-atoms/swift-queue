@@ -10,7 +10,8 @@
 // ===----------------------------------------------------------------------===//
 
 public import Queue_Primitives_Core
-import Queue_Dynamic_Primitives
+import Index_Primitives
+import Buffer_Primitives
 
 // Note: Queue.DoubleEnded struct declaration is in Queue.swift
 // (must be same file due to Swift compiler bug [MEM-COPY-006])
@@ -53,55 +54,24 @@ public typealias Deque<Element: ~Copyable> = Queue<Element>.DoubleEnded
 extension Queue.DoubleEnded where Element: ~Copyable {
     /// The current number of elements in the deque.
     @inlinable
-    public var count: Int { _storage.header.count }
+    public var count: Int { Int(_buffer.count.rawValue.rawValue) }
 
     /// Whether the deque is empty.
     @inlinable
-    public var isEmpty: Bool { _storage.header.count == 0 }
+    public var isEmpty: Bool { _buffer.isEmpty }
 
     /// The current capacity of the deque.
     @inlinable
-    public var capacity: Int { _storage.capacity }
+    public var capacity: Int { Int(_buffer.capacity.rawValue.rawValue) }
 }
 
 // MARK: - DoubleEnded Capacity Management (~Copyable)
 
 extension Queue.DoubleEnded where Element: ~Copyable {
-    /// Ensures the storage has capacity for at least the specified number of elements.
-    @usableFromInline
-    mutating func ensureCapacity(_ minimumCapacity: Int) {
-        let currentCapacity = _storage.capacity
-        guard currentCapacity < minimumCapacity else { return }
-
-        let newCapacity = Swift.max(minimumCapacity, currentCapacity * 2, 4)
-        let newStorage = Storage.create(minimumCapacity: newCapacity)
-
-        let count = _storage.header.count
-        let head = _storage.header.head
-        let oldCapacity = currentCapacity
-
-        if count > 0 {
-            unsafe _storage.withUnsafeMutablePointerToElements { src in
-                unsafe newStorage.withUnsafeMutablePointerToElements { dst in
-                    for i in 0..<count {
-                        let srcIndex = (head + i) % oldCapacity
-                        unsafe (dst + i).initialize(to: (src + srcIndex).move())
-                    }
-                }
-            }
-        }
-
-        newStorage.header.count = count
-        newStorage.header.head = 0
-        _storage.header.count = 0
-
-        _storage = newStorage
-    }
-
     /// Reserves enough space to store the specified number of elements.
     @inlinable
     public mutating func reserve(_ minimumCapacity: Int) {
-        ensureCapacity(minimumCapacity)
+        _buffer.reserveCapacity(Index<Element>.Count(Cardinal(UInt(minimumCapacity))))
     }
 }
 
@@ -113,12 +83,11 @@ extension Queue.DoubleEnded where Element: ~Copyable {
     /// - Complexity: O(1) amortized
     @inlinable
     public mutating func push(_ element: consuming Element, to position: Position) {
-        ensureCapacity(count + 1)
         switch position {
         case .front:
-            _storage.prepend(element)
+            _buffer.pushFront(consume element)
         case .back:
-            _storage.append(element)
+            _buffer.pushBack(consume element)
         }
     }
 
@@ -130,9 +99,9 @@ extension Queue.DoubleEnded where Element: ~Copyable {
         guard !isEmpty else { return nil }
         switch position {
         case .front:
-            return _storage.removeFirst()
+            return _buffer.popFront()
         case .back:
-            return _storage.removeLast()
+            return _buffer.popBack()
         }
     }
 
@@ -149,10 +118,9 @@ extension Queue.DoubleEnded where Element: ~Copyable {
     /// - Complexity: O(n)
     @inlinable
     public mutating func clear(keepingCapacity: Bool = true) {
+        _buffer.removeAll()
         if !keepingCapacity {
-            _storage = Storage.create()
-        } else {
-            _storage.deinitializeAll()
+            _buffer = Buffer<Element>.Ring(minimumCapacity: .zero)
         }
     }
 }
@@ -165,11 +133,12 @@ extension Queue.DoubleEnded where Element: ~Copyable {
     /// - Complexity: O(1)
     @inlinable
     public func peek<R>(at position: Position, _ body: (borrowing Element) -> R) -> R? {
-        guard !isEmpty else { return nil }
-        let logicalIndex = position == .front ? 0 : count - 1
-        let physicalIndex = _storage.physicalIndex(logicalIndex)
-        return unsafe _storage.withUnsafeMutablePointerToElements { elements in
-            body(unsafe (elements + physicalIndex).pointee)
+        guard !_buffer.isEmpty else { return nil }
+        switch position {
+        case .front:
+            return _buffer.withFront(body)
+        case .back:
+            return _buffer.withBack(body)
         }
     }
 }
@@ -182,17 +151,7 @@ extension Queue.DoubleEnded where Element: ~Copyable {
     /// - Complexity: O(n)
     @inlinable
     public func forEach(_ body: (borrowing Element) -> Void) {
-        let count = self.count
-        guard count > 0 else { return }
-        let cap = _storage.capacity
-        let head = _storage.header.head
-
-        _ = unsafe _storage.withUnsafeMutablePointerToElements { elements in
-            for i in 0..<count {
-                let physicalIndex = (head + i) % cap
-                body(unsafe (elements + physicalIndex).pointee)
-            }
-        }
+        _buffer.forEach(body)
     }
 }
 
@@ -202,34 +161,29 @@ extension Queue.DoubleEnded where Element: Copyable {
     /// Ensures the storage is uniquely referenced before mutation.
     @usableFromInline
     package mutating func makeUnique() {
-        if !isKnownUniquelyReferenced(&_storage) {
-            _storage = _storage.copy()
-        }
+        _buffer.ensureUnique()
     }
 
     /// Pushes an element (CoW-aware).
     @inlinable
     public mutating func push(_ element: Element, to position: Position) {
-        makeUnique()
-        ensureCapacity(count + 1)
         switch position {
         case .front:
-            _storage.prepend(element)
+            _buffer.pushFront(element)
         case .back:
-            _storage.append(element)
+            _buffer.pushBack(element)
         }
     }
 
     /// Pops an element (CoW-aware).
     @inlinable
     public mutating func pop(from position: Position) -> Element? {
-        makeUnique()
         guard !isEmpty else { return nil }
         switch position {
         case .front:
-            return _storage.removeFirst()
+            return _buffer.popFront()
         case .back:
-            return _storage.removeLast()
+            return _buffer.popBack()
         }
     }
 
@@ -242,11 +196,9 @@ extension Queue.DoubleEnded where Element: Copyable {
     /// Removes all elements (CoW-aware).
     @inlinable
     public mutating func clear(keepingCapacity: Bool = true) {
-        makeUnique()
+        _buffer.removeAll()
         if !keepingCapacity {
-            _storage = Storage.create()
-        } else {
-            _storage.deinitializeAll()
+            _buffer = Buffer<Element>.Ring(minimumCapacity: .zero)
         }
     }
 
@@ -254,17 +206,19 @@ extension Queue.DoubleEnded where Element: Copyable {
     @inlinable
     public func peek(at position: Position) -> Element? {
         guard !isEmpty else { return nil }
-        let logicalIndex = position == .front ? 0 : count - 1
-        return _readElement(at: logicalIndex)
+        switch position {
+        case .front:
+            return _buffer.peekFront
+        case .back:
+            return _buffer.peekBack
+        }
     }
 
     /// Reads the element at the given logical index.
     @usableFromInline
     package func _readElement(at logicalIndex: Int) -> Element {
-        let physicalIndex = _storage.physicalIndex(logicalIndex)
-        return unsafe _storage.withUnsafeMutablePointerToElements { elements in
-            unsafe elements[physicalIndex]
-        }
+        let index = Index<Element>.Count(Cardinal(UInt(logicalIndex))).map(Ordinal.init)
+        return _buffer[index]
     }
 }
 
@@ -273,15 +227,15 @@ extension Queue.DoubleEnded where Element: Copyable {
 extension Queue.DoubleEnded.Fixed where Element: ~Copyable {
     /// The current number of elements in the deque.
     @inlinable
-    public var count: Int { _storage.header.count }
+    public var count: Int { Int(_buffer.count.rawValue.rawValue) }
 
     /// Whether the deque is empty.
     @inlinable
-    public var isEmpty: Bool { _storage.header.count == 0 }
+    public var isEmpty: Bool { _buffer.isEmpty }
 
     /// Whether the deque is full.
     @inlinable
-    public var isFull: Bool { _storage.header.count == capacity }
+    public var isFull: Bool { count >= capacity }
 }
 
 // MARK: - Fixed Core Operations (~Copyable)
@@ -298,9 +252,9 @@ extension Queue.DoubleEnded.Fixed where Element: ~Copyable {
         guard !isFull else { throw .overflow }
         switch position {
         case .front:
-            _storage.prepend(element)
+            _ = _buffer.pushFront(consume element)
         case .back:
-            _storage.append(element)
+            _ = _buffer.pushBack(consume element)
         }
     }
 
@@ -310,9 +264,9 @@ extension Queue.DoubleEnded.Fixed where Element: ~Copyable {
         guard !isEmpty else { return nil }
         switch position {
         case .front:
-            return _storage.removeFirst()
+            return _buffer.popFront()
         case .back:
-            return _storage.removeLast()
+            return _buffer.popBack()
         }
     }
 
@@ -329,33 +283,24 @@ extension Queue.DoubleEnded.Fixed where Element: ~Copyable {
         _ body: (borrowing Element) -> R
     ) -> R? {
         guard !isEmpty else { return nil }
-        let logicalIndex = position == .front ? 0 : count - 1
-        let physicalIndex = _storage.physicalIndex(logicalIndex)
-        return unsafe _storage.withUnsafeMutablePointerToElements { elements in
-            body(unsafe (elements + physicalIndex).pointee)
+        switch position {
+        case .front:
+            return _buffer.withFront(body)
+        case .back:
+            return _buffer.withBack(body)
         }
     }
 
     /// Removes all elements from the deque.
     @inlinable
     public mutating func clear() {
-        _storage.deinitializeAll()
+        _buffer.removeAll()
     }
 
     /// Calls the given closure for each element.
     @inlinable
     public func forEach(_ body: (borrowing Element) -> Void) {
-        let count = self.count
-        guard count > 0 else { return }
-        let cap = _storage.capacity
-        let head = _storage.header.head
-
-        _ = unsafe _storage.withUnsafeMutablePointerToElements { elements in
-            for i in 0..<count {
-                let physicalIndex = (head + i) % cap
-                body(unsafe (elements + physicalIndex).pointee)
-            }
-        }
+        _buffer.forEach(body)
     }
 }
 
@@ -365,9 +310,7 @@ extension Queue.DoubleEnded.Fixed where Element: Copyable {
     /// Ensures the storage is uniquely referenced before mutation.
     @usableFromInline
     package mutating func makeUnique() {
-        if !isKnownUniquelyReferenced(&_storage) {
-            _storage = _storage.copy()
-        }
+        _buffer.ensureUnique()
     }
 
     /// Pushes an element (CoW-aware).
@@ -376,26 +319,24 @@ extension Queue.DoubleEnded.Fixed where Element: Copyable {
         _ element: Element,
         to position: Queue<Element>.DoubleEnded.Position
     ) throws(Queue<Element>.DoubleEnded.Fixed.Error) {
-        makeUnique()
         guard !isFull else { throw .overflow }
         switch position {
         case .front:
-            _storage.prepend(element)
+            _ = _buffer.pushFront(element)
         case .back:
-            _storage.append(element)
+            _ = _buffer.pushBack(element)
         }
     }
 
     /// Pops an element (CoW-aware).
     @inlinable
     public mutating func pop(from position: Queue<Element>.DoubleEnded.Position) -> Element? {
-        makeUnique()
         guard !isEmpty else { return nil }
         switch position {
         case .front:
-            return _storage.removeFirst()
+            return _buffer.popFront()
         case .back:
-            return _storage.removeLast()
+            return _buffer.popBack()
         }
     }
 
@@ -408,18 +349,18 @@ extension Queue.DoubleEnded.Fixed where Element: Copyable {
     /// Clears all elements (CoW-aware).
     @inlinable
     public mutating func clear() {
-        makeUnique()
-        _storage.deinitializeAll()
+        _buffer.removeAll()
     }
 
     /// Returns the element at the specified end without removing it.
     @inlinable
     public func peek(at position: Queue<Element>.DoubleEnded.Position) -> Element? {
         guard !isEmpty else { return nil }
-        let logicalIndex = position == .front ? 0 : count - 1
-        let physicalIndex = _storage.physicalIndex(logicalIndex)
-        return unsafe _storage.withUnsafeMutablePointerToElements { elements in
-            unsafe elements[physicalIndex]
+        switch position {
+        case .front:
+            return _buffer.peekFront
+        case .back:
+            return _buffer.peekBack
         }
     }
 }
@@ -429,20 +370,15 @@ extension Queue.DoubleEnded.Fixed where Element: Copyable {
 extension Queue.DoubleEnded.Static {
     /// The current number of elements.
     @inlinable
-    public var count: Int { _count }
+    public var count: Int { Int(_buffer.count.rawValue.rawValue) }
 
     /// Whether the deque is empty.
     @inlinable
-    public var isEmpty: Bool { _count == 0 }
+    public var isEmpty: Bool { _buffer.isEmpty }
 
     /// Whether the deque is full.
     @inlinable
-    public var isFull: Bool { _count == Self.capacity }
-
-    @usableFromInline
-    package func _physicalIndex(_ logicalIndex: Int) -> Int {
-        (_head + logicalIndex) % Self.capacity
-    }
+    public var isFull: Bool { _buffer.isFull }
 
     /// Pushes an element to the specified end.
     @inlinable
@@ -452,15 +388,10 @@ extension Queue.DoubleEnded.Static {
     ) throws(Queue<Element>.DoubleEnded.Static<capacity>.Error) {
         guard !isFull else { throw .overflow }
         switch position {
-        case .back:
-            let tail = _physicalIndex(_count)
-            _storage.initialize(to: element, at: tail)
-            _count += 1
         case .front:
-            let newHead = (_head - 1 + Self.capacity) % Self.capacity
-            _storage.initialize(to: element, at: newHead)
-            _head = newHead
-            _count += 1
+            _ = _buffer.pushFront(consume element)
+        case .back:
+            _ = _buffer.pushBack(consume element)
         }
     }
 
@@ -470,14 +401,9 @@ extension Queue.DoubleEnded.Static {
         guard !isEmpty else { return nil }
         switch position {
         case .front:
-            let element = _storage.move(at: _head)
-            _head = (_head + 1) % Self.capacity
-            _count -= 1
-            return element
+            return _buffer.popFront()
         case .back:
-            _count -= 1
-            let tail = _physicalIndex(_count)
-            return _storage.move(at: tail)
+            return _buffer.popBack()
         }
     }
 
@@ -494,29 +420,24 @@ extension Queue.DoubleEnded.Static {
         _ body: (borrowing Element) -> R
     ) -> R? {
         guard !isEmpty else { return nil }
-        let logicalIndex = position == .front ? 0 : _count - 1
-        let physicalIndex = _physicalIndex(logicalIndex)
-        let ptr = unsafe _storage.read(at: physicalIndex)
-        return body(unsafe ptr.pointee)
+        switch position {
+        case .front:
+            return _buffer.withFront(body)
+        case .back:
+            return _buffer.withBack(body)
+        }
     }
 
     /// Removes all elements.
     @inlinable
     public mutating func clear() {
-        _storage.deinitialize(from: _head, count: _count)
-        _count = 0
-        _head = 0
+        _buffer.removeAll()
     }
 
     /// Calls the given closure for each element.
     @inlinable
     public func forEach(_ body: (borrowing Element) -> Void) {
-        guard _count > 0 else { return }
-        for i in 0..<_count {
-            let physicalIndex = _physicalIndex(i)
-            let ptr = unsafe _storage.read(at: physicalIndex)
-            body(unsafe ptr.pointee)
-        }
+        _buffer.forEach(body)
     }
 }
 
@@ -525,31 +446,11 @@ extension Queue.DoubleEnded.Static {
 extension Queue.DoubleEnded.Small {
     /// The current number of elements.
     @inlinable
-    public var count: Int { _count }
+    public var count: Int { Int(_buffer.count.rawValue.rawValue) }
 
     /// Whether the deque is empty.
     @inlinable
-    public var isEmpty: Bool { _count == 0 }
-
-    @usableFromInline
-    package func _inlinePhysicalIndex(_ logicalIndex: Int) -> Int {
-        (_head + logicalIndex) % inlineCapacity
-    }
-
-    @usableFromInline
-    package mutating func _spillToHeap(minimumCapacity: Int) {
-        precondition(_heap == nil, "Already spilled")
-        let newCapacity = Swift.max(minimumCapacity, inlineCapacity * 2, 8)
-        let newStorage = Queue<Element>.DoubleEnded.Storage.create(minimumCapacity: newCapacity)
-        newStorage.header.count = _count
-        newStorage.header.head = 0
-
-        // Move elements from inline (ring buffer) to heap (linear)
-        _inline.linearize(to: newStorage, from: _head, count: _count)
-
-        _head = 0
-        _heap = newStorage
-    }
+    public var isEmpty: Bool { _buffer.isEmpty }
 
     /// Pushes an element to the specified end.
     @inlinable
@@ -557,57 +458,11 @@ extension Queue.DoubleEnded.Small {
         _ element: consuming Element,
         to position: Queue<Element>.DoubleEnded.Position
     ) {
-        if let heap = _heap {
-            if heap.header.count >= heap.capacity {
-                let newCapacity = heap.capacity * 2
-                let newStorage = Queue<Element>.DoubleEnded.Storage.create(minimumCapacity: newCapacity)
-                let count = _count
-
-                _ = unsafe heap.withUnsafeMutablePointerToElements { src in
-                    unsafe newStorage.withUnsafeMutablePointerToElements { dst in
-                        let head = heap.header.head
-                        let cap = heap.capacity
-                        for i in 0..<count {
-                            let srcIndex = (head + i) % cap
-                            unsafe (dst + i).initialize(to: (src + srcIndex).move())
-                        }
-                    }
-                }
-
-                newStorage.header.count = count
-                newStorage.header.head = 0
-                heap.header.count = 0
-                _heap = newStorage
-            }
-
-            switch position {
-            case .back:
-                _heap!.append(element)
-            case .front:
-                _heap!.prepend(element)
-            }
-            _count += 1
-        } else if _count < inlineCapacity {
-            switch position {
-            case .back:
-                let tail = _inlinePhysicalIndex(_count)
-                _inline.initialize(to: element, at: tail)
-                _count += 1
-            case .front:
-                let newHead = (_head - 1 + inlineCapacity) % inlineCapacity
-                _inline.initialize(to: element, at: newHead)
-                _head = newHead
-                _count += 1
-            }
-        } else {
-            _spillToHeap(minimumCapacity: inlineCapacity + 1)
-            switch position {
-            case .back:
-                _heap!.append(element)
-            case .front:
-                _heap!.prepend(element)
-            }
-            _count += 1
+        switch position {
+        case .front:
+            _buffer.pushFront(consume element)
+        case .back:
+            _buffer.pushBack(consume element)
         }
     }
 
@@ -615,27 +470,11 @@ extension Queue.DoubleEnded.Small {
     @inlinable
     public mutating func pop(from position: Queue<Element>.DoubleEnded.Position) -> Element? {
         guard !isEmpty else { return nil }
-
-        if let heap = _heap {
-            _count -= 1
-            switch position {
-            case .front:
-                return heap.removeFirst()
-            case .back:
-                return heap.removeLast()
-            }
-        } else {
-            switch position {
-            case .front:
-                let element = _inline.move(at: _head)
-                _head = (_head + 1) % inlineCapacity
-                _count -= 1
-                return element
-            case .back:
-                _count -= 1
-                let tail = _inlinePhysicalIndex(_count)
-                return _inline.move(at: tail)
-            }
+        switch position {
+        case .front:
+            return _buffer.popFront()
+        case .back:
+            return _buffer.popBack()
         }
     }
 
@@ -652,55 +491,24 @@ extension Queue.DoubleEnded.Small {
         _ body: (borrowing Element) -> R
     ) -> R? {
         guard !isEmpty else { return nil }
-
-        if let heap = _heap {
-            let logicalIndex = position == .front ? 0 : _count - 1
-            let physicalIndex = heap.physicalIndex(logicalIndex)
-            return unsafe heap.withUnsafeMutablePointerToElements { heapPtr in
-                body(unsafe (heapPtr + physicalIndex).pointee)
-            }
-        } else {
-            let logicalIndex = position == .front ? 0 : _count - 1
-            let physicalIndex = _inlinePhysicalIndex(logicalIndex)
-            let ptr = unsafe _inline.read(at: physicalIndex)
-            return body(unsafe ptr.pointee)
+        switch position {
+        case .front:
+            return _buffer.withFront(body)
+        case .back:
+            return _buffer.withBack(body)
         }
     }
 
     /// Removes all elements.
     @inlinable
     public mutating func clear() {
-        if let heap = _heap {
-            heap.deinitializeAll()
-            _count = 0
-        } else {
-            _inline.deinitialize(from: _head, count: _count)
-            _count = 0
-            _head = 0
-        }
+        _buffer.removeAll()
     }
 
     /// Calls the given closure for each element.
     @inlinable
     public func forEach(_ body: (borrowing Element) -> Void) {
-        guard _count > 0 else { return }
-
-        if let heap = _heap {
-            let head = heap.header.head
-            let cap = heap.capacity
-            _ = unsafe heap.withUnsafeMutablePointerToElements { heapPtr in
-                for i in 0..<_count {
-                    let physicalIndex = (head + i) % cap
-                    body(unsafe (heapPtr + physicalIndex).pointee)
-                }
-            }
-        } else {
-            for i in 0..<_count {
-                let physicalIndex = _inlinePhysicalIndex(i)
-                let ptr = unsafe _inline.read(at: physicalIndex)
-                body(unsafe ptr.pointee)
-            }
-        }
+        _buffer.forEach(body)
     }
 }
 
@@ -710,34 +518,33 @@ extension Queue.DoubleEnded: Swift.Sequence where Element: Copyable {
     /// An iterator over the elements of a double-ended queue.
     public struct Iterator: IteratorProtocol {
         @usableFromInline
-        let _storage: Queue.DoubleEnded.Storage
+        let _buffer: Buffer<Element>.Ring
 
         @usableFromInline
-        var _index: Int = 0
+        var _logicalIndex: Index<Element>.Count
 
         @usableFromInline
-        let _count: Int
+        let _count: Index<Element>.Count
 
         @usableFromInline
-        init(storage: Queue.DoubleEnded.Storage) {
-            self._storage = storage
-            self._count = storage.header.count
+        init(buffer: Buffer<Element>.Ring) {
+            self._buffer = buffer
+            self._logicalIndex = .zero
+            self._count = buffer.count
         }
 
         @inlinable
         public mutating func next() -> Element? {
-            guard _index < _count else { return nil }
-            defer { _index += 1 }
-            let physicalIndex = _storage.physicalIndex(_index)
-            return unsafe _storage.withUnsafeMutablePointerToElements { elements in
-                unsafe elements[physicalIndex]
-            }
+            guard _logicalIndex < _count else { return nil }
+            let index = _logicalIndex.map(Ordinal.init)
+            _logicalIndex += .one
+            return _buffer[index]
         }
     }
 
     @inlinable
     public func makeIterator() -> Iterator {
-        Iterator(storage: _storage)
+        Iterator(buffer: _buffer)
     }
 }
 
@@ -819,6 +626,6 @@ extension Queue.DoubleEnded where Element: Copyable {
     /// Buffer identity for CoW testing.
     @usableFromInline
     internal var _identity: ObjectIdentifier {
-        ObjectIdentifier(_storage)
+        _buffer.bufferIdentity
     }
 }

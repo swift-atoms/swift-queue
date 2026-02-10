@@ -11,50 +11,24 @@
 
 public import Queue_Primitives_Core
 import Index_Primitives
-import Queue_Dynamic_Primitives
+import Buffer_Primitives
 
 // Note: Queue.Small is unconditionally ~Copyable due to deinit requirement
-
-// MARK: - Internal Helpers
-
-extension Queue.Small where Element: ~Copyable {
-    /// Spills inline storage to heap, linearizing the ring buffer.
-    @usableFromInline
-    package mutating func _spillToHeap(minimumCapacity: Int) {
-        precondition(_heap == nil, "Already spilled")
-
-        // Create heap storage with growth factor
-        let newCapacity = Swift.max(minimumCapacity, inlineCapacity * 2, 8)
-        let newStorage = Queue<Element>.Storage.create(minimumCapacity: newCapacity)
-        newStorage.header = (head: Index(position: 0), tail: Index(position: _count), count: Index<Element>.Count(__unchecked: _count))
-
-        // Move elements from inline (ring buffer) to heap (linear)
-        _inline.linearize(to: newStorage, from: _head, count: _count)
-
-        _heap = newStorage
-        unsafe (_heapPtr = newStorage._elementsPointer)
-    }
-}
 
 // MARK: - Properties
 
 extension Queue.Small where Element: ~Copyable {
     /// The current number of elements in the queue.
     @inlinable
-    public var count: Int { _count }
+    public var count: Int { Int(_buffer.count.rawValue.rawValue) }
 
     /// Whether the queue is empty.
     @inlinable
-    public var isEmpty: Bool { _count == 0 }
+    public var isEmpty: Bool { _buffer.isEmpty }
 
     /// The current capacity of the queue.
     @inlinable
-    public var capacity: Int {
-        if let heap = _heap {
-            return heap.capacity
-        }
-        return inlineCapacity
-    }
+    public var capacity: Int { Int(_buffer.capacity.rawValue.rawValue) }
 }
 
 // MARK: - Core Operations
@@ -66,45 +40,7 @@ extension Queue.Small where Element: ~Copyable {
     /// - Complexity: O(1) amortized. O(n) when spilling from inline to heap.
     @inlinable
     public mutating func enqueue(_ element: consuming Element) {
-        if _heap != nil {
-            // Already on heap - check capacity and grow if needed
-            _enqueueToHeap(element)
-        } else {
-            // Using inline storage
-            if _count >= inlineCapacity {
-                // Spill to heap then enqueue
-                _spillToHeap(minimumCapacity: inlineCapacity + 1)
-                _enqueueToHeap(element)
-            } else {
-                // Enqueue inline
-                _enqueueInline(element)
-            }
-        }
-    }
-
-    /// Internal: enqueue to heap storage.
-    @usableFromInline
-    mutating func _enqueueToHeap(_ element: consuming Element) {
-        guard let heap = _heap else {
-            preconditionFailure("_enqueueToHeap called without heap storage")
-        }
-        if _count >= heap.capacity {
-            _growHeapStorage()
-        }
-        let updatedHeap = _heap!
-        let tail = updatedHeap.header.tail
-        updatedHeap._initializeElement(at: tail, to: element)
-        updatedHeap.header.tail = (tail + 1) % updatedHeap.capacity
-        updatedHeap.header.count += 1
-        _count += 1
-    }
-
-    /// Internal: enqueue to inline storage.
-    @usableFromInline
-    mutating func _enqueueInline(_ element: consuming Element) {
-        _inline.initialize(to: element, at: _tail)
-        _tail = (_tail + 1) % inlineCapacity
-        _count += 1
+        _buffer.pushBack(consume element)
     }
 
     /// Dequeues and returns the front element, or nil if empty.
@@ -113,25 +49,10 @@ extension Queue.Small where Element: ~Copyable {
     /// - Complexity: O(1)
     @inlinable
     public mutating func dequeue() -> Element? {
-        guard _count > 0 else {
+        guard !_buffer.isEmpty else {
             return nil
         }
-
-        if let heap = _heap {
-            // Dequeue from heap
-            let head = heap.header.head
-            let element = heap._moveElement(at: head)
-            heap.header.head = (head + 1) % heap.capacity
-            heap.header.count -= 1
-            _count -= 1
-            return element
-        } else {
-            // Dequeue from inline
-            let element = _inline.move(at: _head)
-            _head = (_head + 1) % inlineCapacity
-            _count -= 1
-            return element
-        }
+        return _buffer.popFront()
     }
 
     /// Removes all elements from the queue.
@@ -141,46 +62,10 @@ extension Queue.Small where Element: ~Copyable {
     /// - Complexity: O(n) where n is the number of elements.
     @inlinable
     public mutating func clear(keepingCapacity: Bool = true) {
-        guard _count > 0 else {
-            if !keepingCapacity && _heap != nil {
-                _heap = nil
-                unsafe (_heapPtr = nil)
-            }
-            return
+        _buffer.removeAll()
+        if !keepingCapacity {
+            _buffer = Buffer<Element>.Ring.Small<inlineCapacity>()
         }
-
-        if let heap = _heap {
-            // Clear heap storage
-            heap._deinitializeAllElements()
-            heap.header = (head: 0, tail: 0, count: 0)
-            if !keepingCapacity {
-                _heap = nil
-                unsafe (_heapPtr = nil)
-            }
-        } else {
-            // Clear inline storage
-            _inline.deinitialize(from: _head, count: _count)
-        }
-
-        _head = 0
-        _tail = 0
-        _count = 0
-    }
-
-    /// Grows heap storage when capacity is exceeded.
-    @usableFromInline
-    mutating func _growHeapStorage() {
-        guard let heap = _heap else {
-            preconditionFailure("_growHeapStorage called without heap storage")
-        }
-
-        let newCapacity = Swift.max(heap.capacity * 2, 8)
-        let newStorage = Queue<Element>.Storage.create(minimumCapacity: newCapacity)
-        heap._moveAllElements(to: newStorage)
-        newStorage.header = (head: 0, tail: _count, count: _count)
-
-        _heap = newStorage
-        unsafe (_heapPtr = newStorage._elementsPointer)
     }
 }
 
@@ -196,19 +81,10 @@ extension Queue.Small where Element: ~Copyable {
     /// - Complexity: O(1)
     @inlinable
     public func peek<R>(_ body: (borrowing Element) -> R) -> R? {
-        guard _count > 0 else {
+        guard !_buffer.isEmpty else {
             return nil
         }
-
-        if let heap = _heap {
-            let head = heap.header.head
-            return unsafe heap.withUnsafeMutablePointerToElements { elements in
-                body(unsafe (elements + head).pointee)
-            }
-        } else {
-            let ptr = unsafe _inline.read(at: _head)
-            return body(unsafe ptr.pointee)
-        }
+        return _buffer.withFront(body)
     }
 }
 
@@ -219,16 +95,10 @@ extension Queue.Small where Element: Copyable {
     /// - Complexity: O(1)
     @inlinable
     public func peek() -> Element? {
-        guard _count > 0 else {
+        guard !_buffer.isEmpty else {
             return nil
         }
-
-        if let heap = _heap {
-            return heap._readElement(at: heap.header.head)
-        } else {
-            let ptr = unsafe _inline.read(at: _head)
-            return unsafe ptr.pointee
-        }
+        return _buffer.peekFront
     }
 }
 
@@ -243,26 +113,7 @@ extension Queue.Small where Element: ~Copyable {
     /// - Complexity: O(n) where n is the number of elements.
     @inlinable
     public func forEach(_ body: (borrowing Element) -> Void) {
-        let count = _count
-        guard count > 0 else { return }
-
-        if let heap = _heap {
-            let cap = heap.capacity
-            var index = heap.header.head
-            _ = unsafe heap.withUnsafeMutablePointerToElements { elements in
-                for _ in 0..<count {
-                    body(unsafe (elements + index).pointee)
-                    index = (index + 1) % cap
-                }
-            }
-        } else {
-            var index = _head
-            for _ in 0..<count {
-                let ptr = unsafe _inline.read(at: index)
-                body(unsafe ptr.pointee)
-                index = (index + 1) % inlineCapacity
-            }
-        }
+        _buffer.forEach(body)
     }
 }
 
