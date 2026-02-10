@@ -11,6 +11,7 @@
 
 import Testing
 @testable import Queue_Primitives
+import Queue_Primitives_Test_Support
 
 /// Comprehensive tests verifying ~Copyable element support across all Queue variants.
 @Suite("Queue - NonCopyable Elements")
@@ -75,17 +76,17 @@ struct QueueNonCopyableTests {
     }
 
     @Test("Queue.Fixed with ~Copyable elements")
-    func boundedWithNonCopyable() throws {
-        var bounded = try Queue<Token>.Bounded(capacity: 5)
-        try bounded.enqueue(Token(10))
-        try bounded.enqueue(Token(20))
+    func fixedWithNonCopyable() throws {
+        var fixed = Queue<Token>.Fixed(capacity: 5)
+        try fixed.enqueue(Token(10))
+        try fixed.enqueue(Token(20))
 
-        let count = bounded.count
-        let capacity = bounded.capacity
+        let count = fixed.count
+        let capacity = fixed.capacity
         #expect(count == 2)
         #expect(capacity == 5)
 
-        if let token = bounded.dequeue() {
+        if let token = fixed.dequeue() {
             #expect(token.id == 10)
         } else {
             Issue.record("Expected to dequeue token")
@@ -93,14 +94,14 @@ struct QueueNonCopyableTests {
     }
 
     @Test("Queue.Fixed with ~Copyable elements: forEach")
-    func boundedForEach() throws {
-        var bounded = try Queue<Token>.Bounded(capacity: 5)
-        try bounded.enqueue(Token(1))
-        try bounded.enqueue(Token(2))
-        try bounded.enqueue(Token(3))
+    func fixedForEach() throws {
+        var fixed = Queue<Token>.Fixed(capacity: 5)
+        try fixed.enqueue(Token(1))
+        try fixed.enqueue(Token(2))
+        try fixed.enqueue(Token(3))
 
         var ids: [Int] = []
-        bounded.forEach { token in
+        fixed.forEach { token in
             ids.append(token.id)
         }
 

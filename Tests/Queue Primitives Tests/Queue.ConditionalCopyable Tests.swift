@@ -11,6 +11,7 @@
 
 import Testing
 @testable import Queue_Primitives
+import Queue_Primitives_Test_Support
 
 /// Tests verifying conditional Copyable conformance.
 /// - Queue<Copyable> is Copyable
@@ -38,8 +39,8 @@ struct QueueConditionalCopyableTests {
     }
 
     @Test("Queue.Fixed<Int> is Copyable")
-    func boundedIntIsCopyable() throws {
-        var original = try Queue<Int>.Bounded(capacity: 10)
+    func fixedIntIsCopyable() throws {
+        var original = Queue<Int>.Fixed(capacity: 10)
         try original.enqueue(1)
         try original.enqueue(2)
 

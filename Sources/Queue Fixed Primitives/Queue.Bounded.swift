@@ -140,9 +140,6 @@ extension Queue.Fixed where Element: ~Copyable {
     }
 }
 
-// MARK: - Sendable
-
-extension Queue.Fixed: @unchecked Sendable where Element: Sendable {}
-
+// Note: Sendable conformance declared in Queue.swift (Queue_Primitives_Core)
 // Note: Swift.Sequence conformance for Queue.Fixed is in Queue.swift
 // (must be in same file as declaration due to Swift compiler bug with ~Copyable)

@@ -11,6 +11,7 @@
 
 import Testing
 @testable import Queue_Primitives
+import Queue_Primitives_Test_Support
 
 /// Tests verifying deinit order (FIFO: front-to-back) for all Queue variants.
 @Suite("Queue - Deinit Order")
@@ -55,13 +56,13 @@ struct QueueDeinitOrderTests {
     }
 
     @Test("Queue.Fixed deinit order")
-    func boundedDeinitOrder() throws {
+    func fixedDeinitOrder() throws {
         let tracker = Tracker()
         do {
-            var bounded = try Queue<TrackedElement>.Bounded(capacity: 5)
-            try bounded.enqueue(TrackedElement(1, tracker: tracker))
-            try bounded.enqueue(TrackedElement(2, tracker: tracker))
-            try bounded.enqueue(TrackedElement(3, tracker: tracker))
+            var fixed = Queue<TrackedElement>.Fixed(capacity: 5)
+            try fixed.enqueue(TrackedElement(1, tracker: tracker))
+            try fixed.enqueue(TrackedElement(2, tracker: tracker))
+            try fixed.enqueue(TrackedElement(3, tracker: tracker))
         }
         let order = tracker.deinitOrder
         #expect(order == [1, 2, 3])
@@ -106,15 +107,15 @@ struct QueueDeinitOrderTests {
     }
 
     @Test("Queue.Fixed deinit order (with wraparound)")
-    func boundedDeinitWraparound() throws {
+    func fixedDeinitWraparound() throws {
         let tracker = Tracker()
         do {
-            var bounded = try Queue<TrackedElement>.Bounded(capacity: 4)
-            try bounded.enqueue(TrackedElement(1, tracker: tracker))
-            try bounded.enqueue(TrackedElement(2, tracker: tracker))
-            _ = bounded.dequeue()  // Remove and deinit 1
-            try bounded.enqueue(TrackedElement(3, tracker: tracker))
-            try bounded.enqueue(TrackedElement(4, tracker: tracker))
+            var fixed = Queue<TrackedElement>.Fixed(capacity: 4)
+            try fixed.enqueue(TrackedElement(1, tracker: tracker))
+            try fixed.enqueue(TrackedElement(2, tracker: tracker))
+            _ = fixed.dequeue()  // Remove and deinit 1
+            try fixed.enqueue(TrackedElement(3, tracker: tracker))
+            try fixed.enqueue(TrackedElement(4, tracker: tracker))
             // When do block ends, elements 2, 3, 4 should be deinitialized in order
         }
         // Full order: [1, 2, 3, 4] (1 from dequeue, then 2,3,4 from deinit)
@@ -140,11 +141,11 @@ struct QueueDeinitOrderTests {
     }
 
     @Test("Empty queue deinit (no crash)")
-    func emptyDeinitNoCrash() throws {
+    func emptyDeinitNoCrash() {
         let tracker = Tracker()
         do {
             let _: Queue<TrackedElement> = Queue()
-            let _: Queue<TrackedElement>.Bounded = try Queue<TrackedElement>.Bounded(capacity: 5)
+            let _: Queue<TrackedElement>.Fixed = Queue<TrackedElement>.Fixed(capacity: 5)
             let _: Queue<TrackedElement>.Static<4> = Queue<TrackedElement>.Static<4>()
             let _: Queue<TrackedElement>.Small<4> = Queue<TrackedElement>.Small<4>()
         }

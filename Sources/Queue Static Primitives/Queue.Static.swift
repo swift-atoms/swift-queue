@@ -117,6 +117,4 @@ extension Queue.Static where Element: ~Copyable {
     }
 }
 
-// MARK: - Sendable
-
-extension Queue.Static: @unchecked Sendable where Element: Sendable {}
+// Note: Sendable conformance declared in Queue.swift (Queue_Primitives_Core)

@@ -11,6 +11,7 @@
 
 import Testing
 @testable import Queue_Primitives
+import Queue_Primitives_Test_Support
 
 /// Tests verifying Sendable conformance when Element: Sendable.
 @Suite("Queue - Sendable Conformance")
@@ -45,10 +46,10 @@ struct QueueSendableTests {
     }
 
     @Test("Queue.Fixed<Int> is Sendable")
-    func boundedIntIsSendable() throws {
-        var bounded = try Queue<Int>.Bounded(capacity: 10)
-        try bounded.enqueue(1)
-        requireSendable(bounded)
+    func fixedIntIsSendable() throws {
+        var fixed = Queue<Int>.Fixed(capacity: 10)
+        try fixed.enqueue(1)
+        requireSendable(fixed)
     }
 
     @Test("Queue.Static<Int> is Sendable")

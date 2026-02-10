@@ -20,6 +20,10 @@ let package = Package(
             name: "Deque Primitives",
             targets: ["Queue DoubleEnded Primitives"]
         ),
+        .library(
+            name: "Queue Primitives Test Support",
+            targets: ["Queue Primitives Test Support"]
+        ),
     ],
     dependencies: [
         .package(path: "../swift-buffer-primitives"),
@@ -106,9 +110,20 @@ let package = Package(
                 "Queue DoubleEnded Primitives",
             ]
         ),
+        .target(
+            name: "Queue Primitives Test Support",
+            dependencies: [
+                "Queue Primitives",
+                .product(name: "Index Primitives Test Support", package: "swift-index-primitives"),
+            ],
+            path: "Tests/Support"
+        ),
         .testTarget(
             name: "Queue Primitives Tests",
-            dependencies: ["Queue Primitives"]
+            dependencies: [
+                "Queue Primitives",
+                "Queue Primitives Test Support",
+            ]
         )
     ],
     swiftLanguageModes: [.v6]

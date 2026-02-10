@@ -12,15 +12,16 @@
 import Testing
 
 @testable import Queue_Primitives
+import Queue_Primitives_Test_Support
 
 // MARK: - Queue.Fixed Tests
 
 @Suite("Queue.Fixed")
-struct QueueBoundedTests {
+struct QueueFixedTests {
 
     @Test("Initialize with valid capacity")
-    func initializeWithValidCapacity() throws {
-        let queue = try Queue<Int>.Bounded(capacity: 10)
+    func initializeWithValidCapacity() {
+        let queue = Queue<Int>.Fixed(capacity: 10)
         #expect(queue.capacity == 10)
         #expect(queue.count == 0)
         #expect(queue.isEmpty)
@@ -28,24 +29,17 @@ struct QueueBoundedTests {
     }
 
     @Test("Initialize with zero capacity")
-    func initializeWithZeroCapacity() throws {
-        let queue = try Queue<Int>.Bounded(capacity: 0)
+    func initializeWithZeroCapacity() {
+        let queue = Queue<Int>.Fixed(capacity: 0)
         #expect(queue.capacity == 0)
         #expect(queue.count == 0)
         #expect(queue.isEmpty)
         #expect(queue.isFull)
     }
 
-    @Test("Initialize with negative capacity throws")
-    func initializeWithNegativeCapacityThrows() {
-        #expect(throws: __QueueBoundedError.invalidCapacity) {
-            _ = try Queue<Int>.Bounded(capacity: -1)
-        }
-    }
-
     @Test("Enqueue and dequeue FIFO order")
     func enqueueAndDequeueFIFO() throws {
-        var queue = try Queue<Int>.Bounded(capacity: 5)
+        var queue = Queue<Int>.Fixed(capacity: 5)
         try queue.enqueue(1)
         try queue.enqueue(2)
         try queue.enqueue(3)
@@ -60,7 +54,7 @@ struct QueueBoundedTests {
 
     @Test("Overflow throws error")
     func overflowThrows() throws {
-        var queue = try Queue<Int>.Bounded(capacity: 2)
+        var queue = Queue<Int>.Fixed(capacity: 2)
         try queue.enqueue(1)
         try queue.enqueue(2)
 
@@ -72,7 +66,7 @@ struct QueueBoundedTests {
 
     @Test("Peek returns front element")
     func peekReturnsFront() throws {
-        var queue = try Queue<Int>.Bounded(capacity: 3)
+        var queue = Queue<Int>.Fixed(capacity: 3)
         try queue.enqueue(1)
         try queue.enqueue(2)
 
@@ -82,7 +76,7 @@ struct QueueBoundedTests {
 
     @Test("Ring buffer wrap-around")
     func ringBufferWrapAround() throws {
-        var queue = try Queue<Int>.Bounded(capacity: 3)
+        var queue = Queue<Int>.Fixed(capacity: 3)
 
         // Fill queue
         try queue.enqueue(1)
@@ -106,7 +100,7 @@ struct QueueBoundedTests {
 
     @Test("Clear empties queue")
     func clearEmptiesQueue() throws {
-        var queue = try Queue<Int>.Bounded(capacity: 5)
+        var queue = Queue<Int>.Fixed(capacity: 5)
         try queue.enqueue(1)
         try queue.enqueue(2)
         try queue.enqueue(3)
@@ -120,7 +114,7 @@ struct QueueBoundedTests {
 
     @Test("ForEach iterates in FIFO order")
     func forEachIteratesInFIFOOrder() throws {
-        var queue = try Queue<Int>.Bounded(capacity: 5)
+        var queue = Queue<Int>.Fixed(capacity: 5)
         try queue.enqueue(1)
         try queue.enqueue(2)
         try queue.enqueue(3)
@@ -131,15 +125,15 @@ struct QueueBoundedTests {
         #expect(result == [1, 2, 3])
     }
 
-    @Test("Sequence iteration")
-    func sequenceIteration() throws {
-        var queue = try Queue<Int>.Bounded(capacity: 5)
+    @Test("ForEach iteration (via forEach)")
+    func forEachIteration() throws {
+        var queue = Queue<Int>.Fixed(capacity: 5)
         try queue.enqueue(10)
         try queue.enqueue(20)
         try queue.enqueue(30)
 
         var result: [Int] = []
-        for element in queue {
+        queue.forEach { element in
             result.append(element)
         }
 
@@ -161,13 +155,13 @@ struct QueueUnboundedTests {
 
     @Test("Initialize from sequence")
     func initializeFromSequence() {
-        let queue = Queue<Int>([1, 2, 3])
+        let queue: Queue<Int> = [1, 2, 3]
         #expect(queue.count == 3)
     }
 
     @Test("Initialize with reserved capacity")
-    func initializeWithReservedCapacity() throws {
-        let queue = try Queue<Int>(reservingCapacity: 100)
+    func initializeWithReservedCapacity() {
+        let queue = Queue<Int>(reservingCapacity: 100)
         #expect(queue.capacity >= 100)
         #expect(queue.count == 0)
     }
@@ -283,9 +277,9 @@ struct MoveOnlyElementTests {
         }
     }
 
-    @Test("Bounded queue with move-only elements")
-    func boundedWithMoveOnly() throws {
-        var queue = try Queue<MoveOnlyValue>.Bounded(capacity: 5)
+    @Test("Fixed queue with move-only elements")
+    func fixedWithMoveOnly() throws {
+        var queue = Queue<MoveOnlyValue>.Fixed(capacity: 5)
         try queue.enqueue(MoveOnlyValue(1))
         try queue.enqueue(MoveOnlyValue(2))
 
@@ -321,7 +315,7 @@ struct MoveOnlyElementTests {
 
     @Test("Peek with closure for move-only")
     func peekWithClosureForMoveOnly() throws {
-        var queue = try Queue<MoveOnlyValue>.Bounded(capacity: 5)
+        var queue = Queue<MoveOnlyValue>.Fixed(capacity: 5)
         try queue.enqueue(MoveOnlyValue(42))
 
         let result = queue.peek { $0.value }
