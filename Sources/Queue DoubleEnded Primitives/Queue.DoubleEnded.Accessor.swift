@@ -11,8 +11,7 @@
 
 public import Queue_Primitives_Core
 public import Property_Primitives
-import Index_Primitives
-import Buffer_Primitives
+public import Buffer_Primitives
 
 // MARK: - Position Namespaces
 

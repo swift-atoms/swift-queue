@@ -10,7 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 public import Queue_Primitives_Core
-import Buffer_Primitives
+public import Buffer_Primitives
 
 // Note: Conditional Copyable conformance and Sequence conformance are in Queue.swift
 // (must be same file as declaration due to Swift compiler bug)
@@ -20,7 +20,7 @@ import Buffer_Primitives
 extension Queue.Fixed where Element: ~Copyable {
     /// The current number of elements in the queue.
     @inlinable
-    public var count: Int { Int(_buffer.count.rawValue.rawValue) }
+    public var count: Index_Primitives.Index<Element>.Count { _buffer.count }
 
     /// Whether the queue is empty.
     @inlinable

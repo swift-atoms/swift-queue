@@ -10,7 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 public import Queue_Primitives_Core
-import Buffer_Primitives
+public import Buffer_Primitives
 
 // MARK: - Typed Subscript (Copyable, with CoW)
 
@@ -106,10 +106,10 @@ extension Queue: Swift.Sequence where Element: Copyable {
         let _buffer: Buffer<Element>.Ring
 
         @usableFromInline
-        var _logicalIndex: Index<Element>.Count
+        var _logicalIndex: Index_Primitives.Index<Element>.Count
 
         @usableFromInline
-        let _count: Index<Element>.Count
+        let _count: Index_Primitives.Index<Element>.Count
 
         @usableFromInline
         init(buffer: Buffer<Element>.Ring) {

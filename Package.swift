@@ -50,6 +50,7 @@ let package = Package(
             dependencies: [
                 "Queue Primitives Core",
                 .product(name: "Collection Primitives", package: "swift-collection-primitives"),
+                .product(name: "Input Primitives", package: "swift-input-primitives"),
             ]
         ),
         .target(
@@ -58,6 +59,7 @@ let package = Package(
                 "Queue Primitives Core",
                 "Queue Dynamic Primitives",
                 .product(name: "Collection Primitives", package: "swift-collection-primitives"),
+                .product(name: "Input Primitives", package: "swift-input-primitives"),
             ]
         ),
         .target(
@@ -65,6 +67,7 @@ let package = Package(
             dependencies: [
                 "Queue Primitives Core",
                 .product(name: "Collection Primitives", package: "swift-collection-primitives"),
+                .product(name: "Input Primitives", package: "swift-input-primitives"),
             ]
         ),
         .target(
@@ -73,6 +76,7 @@ let package = Package(
                 "Queue Primitives Core",
                 "Queue Dynamic Primitives",
                 .product(name: "Collection Primitives", package: "swift-collection-primitives"),
+                .product(name: "Input Primitives", package: "swift-input-primitives"),
             ]
         ),
         .target(
@@ -89,17 +93,6 @@ let package = Package(
                 .product(name: "Collection Primitives", package: "swift-collection-primitives"),
             ]
         ),
-        // Internal: Sequence/Collection/Input conformances (Element: Copyable)
-        // Separate module to avoid constraint poisoning on Core types
-        .target(
-            name: "Queue Primitives Sequence",
-            dependencies: [
-                "Queue Primitives Core",
-                "Queue Dynamic Primitives",
-                .product(name: "Collection Primitives", package: "swift-collection-primitives"),
-                .product(name: "Input Primitives", package: "swift-input-primitives"),
-            ]
-        ),
         // Public: Re-exports Core and all variant modules for users
         .target(
             name: "Queue Primitives",
@@ -111,7 +104,6 @@ let package = Package(
                 "Queue Small Primitives",
                 "Queue Linked Primitives",
                 "Queue DoubleEnded Primitives",
-                "Queue Primitives Sequence",
             ]
         ),
         .testTarget(

@@ -10,8 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 public import Queue_Primitives_Core
-import Index_Primitives
-import Buffer_Primitives
+public import Buffer_Primitives
 
 // Note: Queue.Small is unconditionally ~Copyable due to deinit requirement
 
@@ -20,7 +19,7 @@ import Buffer_Primitives
 extension Queue.Small where Element: ~Copyable {
     /// The current number of elements in the queue.
     @inlinable
-    public var count: Int { Int(_buffer.count.rawValue.rawValue) }
+    public var count: Index_Primitives.Index<Element>.Count { _buffer.count }
 
     /// Whether the queue is empty.
     @inlinable
@@ -28,7 +27,7 @@ extension Queue.Small where Element: ~Copyable {
 
     /// The current capacity of the queue.
     @inlinable
-    public var capacity: Int { Int(_buffer.capacity.rawValue.rawValue) }
+    public var capacity: Index_Primitives.Index<Element>.Count { _buffer.capacity }
 }
 
 // MARK: - Core Operations

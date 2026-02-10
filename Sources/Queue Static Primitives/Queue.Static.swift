@@ -10,8 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 public import Queue_Primitives_Core
-import Index_Primitives
-import Buffer_Primitives
+public import Buffer_Primitives
 
 // Note: Queue.Static is unconditionally ~Copyable due to deinit requirement
 
@@ -20,7 +19,7 @@ import Buffer_Primitives
 extension Queue.Static where Element: ~Copyable {
     /// The current number of elements in the queue.
     @inlinable
-    public var count: Int { Int(_buffer.count.rawValue.rawValue) }
+    public var count: Index_Primitives.Index<Element>.Count { _buffer.count }
 
     /// Whether the queue is empty.
     @inlinable

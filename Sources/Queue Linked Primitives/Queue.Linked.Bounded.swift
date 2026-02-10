@@ -12,12 +12,12 @@
 public import Queue_Primitives_Core
 
 // ============================================================================
-// MARK: - Queue.Linked.Bounded Extensions
+// MARK: - Queue.Linked.Fixed Extensions
 // ============================================================================
 
-// MARK: - Queue.Linked.Bounded Properties
+// MARK: - Queue.Linked.Fixed Properties
 
-extension Queue.Linked.Bounded where Element: ~Copyable {
+extension Queue.Linked.Fixed where Element: ~Copyable {
     /// The current number of elements in the queue.
     @inlinable
     public var count: Int { _storage.header.count }
@@ -31,9 +31,9 @@ extension Queue.Linked.Bounded where Element: ~Copyable {
     public var isFull: Bool { _storage.header.count >= capacity }
 }
 
-// MARK: - Queue.Linked.Bounded Core Operations (~Copyable)
+// MARK: - Queue.Linked.Fixed Core Operations (~Copyable)
 
-extension Queue.Linked.Bounded where Element: ~Copyable {
+extension Queue.Linked.Fixed where Element: ~Copyable {
     /// Allocates a node slot, returning its index.
     @usableFromInline
     mutating func _allocateSlot() -> Int {
@@ -126,9 +126,9 @@ extension Queue.Linked.Bounded where Element: ~Copyable {
     }
 }
 
-// MARK: - Queue.Linked.Bounded Copy-on-Write (Copyable elements only)
+// MARK: - Queue.Linked.Fixed Copy-on-Write (Copyable elements only)
 
-extension Queue.Linked.Bounded where Element: Copyable {
+extension Queue.Linked.Fixed where Element: Copyable {
     /// Ensures the storage is uniquely referenced before mutation.
     @usableFromInline
     mutating func _makeUnique() {
@@ -224,9 +224,9 @@ extension Queue.Linked.Bounded where Element: Copyable {
     }
 }
 
-// MARK: - Queue.Linked.Bounded Peek
+// MARK: - Queue.Linked.Fixed Peek
 
-extension Queue.Linked.Bounded where Element: ~Copyable {
+extension Queue.Linked.Fixed where Element: ~Copyable {
     /// Peeks at the front element without removing it.
     ///
     /// Uses a closure to support `~Copyable` elements via borrowing.
@@ -244,7 +244,7 @@ extension Queue.Linked.Bounded where Element: ~Copyable {
     }
 }
 
-extension Queue.Linked.Bounded {
+extension Queue.Linked.Fixed {
     /// Returns the front element without removing it, or nil if empty.
     ///
     /// This is a convenience method for `Copyable` elements. For `~Copyable`
@@ -262,9 +262,9 @@ extension Queue.Linked.Bounded {
     }
 }
 
-// MARK: - Queue.Linked.Bounded ForEach
+// MARK: - Queue.Linked.Fixed ForEach
 
-extension Queue.Linked.Bounded where Element: ~Copyable {
+extension Queue.Linked.Fixed where Element: ~Copyable {
     /// Calls the given closure for each element in the queue.
     ///
     /// Elements are visited from front (oldest) to back (newest).
@@ -283,13 +283,13 @@ extension Queue.Linked.Bounded where Element: ~Copyable {
     }
 }
 
-// MARK: - Queue.Linked.Bounded Sequence (Copyable elements only)
+// MARK: - Queue.Linked.Fixed Sequence (Copyable elements only)
 
-/// `Queue.Linked.Bounded` conforms to `Sequence` when `Element` is `Copyable`.
+/// `Queue.Linked.Fixed` conforms to `Sequence` when `Element` is `Copyable`.
 ///
 /// This enables `for-in` loops, `map`, `filter`, and other sequence operations.
 /// For `~Copyable` elements, use ``forEach(_:)`` instead.
-extension Queue.Linked.Bounded: Swift.Sequence where Element: Copyable {
+extension Queue.Linked.Fixed: Swift.Sequence where Element: Copyable {
 
     /// An iterator over the elements of a bounded linked queue.
     public struct Iterator: IteratorProtocol {
@@ -326,9 +326,9 @@ extension Queue.Linked.Bounded: Swift.Sequence where Element: Copyable {
     }
 }
 
-// MARK: - Queue.Linked.Bounded Equatable
+// MARK: - Queue.Linked.Fixed Equatable
 
-extension Queue.Linked.Bounded: Equatable where Element: Equatable {
+extension Queue.Linked.Fixed: Equatable where Element: Equatable {
     @inlinable
     public static func == (lhs: Self, rhs: Self) -> Bool {
         guard lhs.count == rhs.count else { return false }
@@ -358,9 +358,9 @@ extension Queue.Linked.Bounded: Equatable where Element: Equatable {
     }
 }
 
-// MARK: - Queue.Linked.Bounded Hashable
+// MARK: - Queue.Linked.Fixed Hashable
 
-extension Queue.Linked.Bounded: Hashable where Element: Hashable {
+extension Queue.Linked.Fixed: Hashable where Element: Hashable {
     @inlinable
     public func hash(into hasher: inout Hasher) {
         hasher.combine(_storage.header.count)
@@ -368,9 +368,9 @@ extension Queue.Linked.Bounded: Hashable where Element: Hashable {
     }
 }
 
-// MARK: - Queue.Linked.Bounded Sendable
+// MARK: - Queue.Linked.Fixed Sendable
 
-extension Queue.Linked.Bounded: @unchecked Sendable where Element: Sendable {}
+extension Queue.Linked.Fixed: @unchecked Sendable where Element: Sendable {}
 
 // MARK: - Queue.Linked Error Types
 
@@ -384,7 +384,7 @@ extension Queue.Linked where Element: ~Copyable {
     public typealias Error = __QueueLinkedError
 }
 
-extension Queue.Linked.Bounded where Element: ~Copyable {
+extension Queue.Linked.Fixed where Element: ~Copyable {
     /// Errors that can occur during bounded linked queue operations.
     ///
     /// ## Cases

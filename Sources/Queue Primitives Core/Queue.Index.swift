@@ -62,8 +62,7 @@ extension Queue where Element: Copyable {
     /// - Returns: The element at the index, or `nil` if out of bounds.
     @inlinable
     public func element(at index: Index) -> Element? {
-        let pos = index.position
-        guard pos >= 0 && pos < count else { return nil }
+        guard index < _buffer.count.map(Ordinal.init) else { return nil }
         return _buffer[index]
     }
 }

@@ -10,15 +10,14 @@
 // ===----------------------------------------------------------------------===//
 
 public import Queue_Primitives_Core
-import Index_Primitives
-import Buffer_Primitives
+public import Buffer_Primitives
 
 // MARK: - Properties
 
 extension Queue where Element: ~Copyable {
     /// The current number of elements in the queue.
     @inlinable
-    public var count: Int { Int(_buffer.count.rawValue.rawValue) }
+    public var count: Index_Primitives.Index<Element>.Count { _buffer.count }
 
     /// Whether the queue is empty.
     @inlinable
@@ -26,7 +25,7 @@ extension Queue where Element: ~Copyable {
 
     /// The current capacity of the queue.
     @inlinable
-    public var capacity: Int { Int(_buffer.capacity.rawValue.rawValue) }
+    public var capacity: Index_Primitives.Index<Element>.Count { _buffer.capacity }
 }
 
 // MARK: - Core Operations (Base - for ~Copyable elements)
@@ -116,8 +115,8 @@ extension Queue where Element: ~Copyable {
     ///
     /// - Parameter minimumCapacity: The minimum total capacity to reserve.
     @inlinable
-    public mutating func reserve(_ minimumCapacity: Int) {
-        _buffer.reserveCapacity(Index<Element>.Count(Cardinal(UInt(minimumCapacity))))
+    public mutating func reserve(_ minimumCapacity: Index_Primitives.Index<Element>.Count) {
+        _buffer.reserveCapacity(minimumCapacity)
     }
 
     /// Reduces capacity to match the current count, releasing unused memory.

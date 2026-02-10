@@ -10,8 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 public import Queue_Primitives_Core
-import Index_Primitives
-import Buffer_Primitives
+public import Buffer_Primitives
 
 // Note: Queue.DoubleEnded struct declaration is in Queue.swift
 // (must be same file due to Swift compiler bug [MEM-COPY-006])
@@ -54,7 +53,7 @@ public typealias Deque<Element: ~Copyable> = Queue<Element>.DoubleEnded
 extension Queue.DoubleEnded where Element: ~Copyable {
     /// The current number of elements in the deque.
     @inlinable
-    public var count: Int { Int(_buffer.count.rawValue.rawValue) }
+    public var count: Index_Primitives.Index<Element>.Count { _buffer.count }
 
     /// Whether the deque is empty.
     @inlinable
@@ -62,7 +61,7 @@ extension Queue.DoubleEnded where Element: ~Copyable {
 
     /// The current capacity of the deque.
     @inlinable
-    public var capacity: Int { Int(_buffer.capacity.rawValue.rawValue) }
+    public var capacity: Index_Primitives.Index<Element>.Count { _buffer.capacity }
 }
 
 // MARK: - DoubleEnded Capacity Management (~Copyable)
@@ -70,8 +69,8 @@ extension Queue.DoubleEnded where Element: ~Copyable {
 extension Queue.DoubleEnded where Element: ~Copyable {
     /// Reserves enough space to store the specified number of elements.
     @inlinable
-    public mutating func reserve(_ minimumCapacity: Int) {
-        _buffer.reserveCapacity(Index<Element>.Count(Cardinal(UInt(minimumCapacity))))
+    public mutating func reserve(_ minimumCapacity: Index_Primitives.Index<Element>.Count) {
+        _buffer.reserveCapacity(minimumCapacity)
     }
 }
 
@@ -216,9 +215,8 @@ extension Queue.DoubleEnded where Element: Copyable {
 
     /// Reads the element at the given logical index.
     @usableFromInline
-    package func _readElement(at logicalIndex: Int) -> Element {
-        let index = Index<Element>.Count(Cardinal(UInt(logicalIndex))).map(Ordinal.init)
-        return _buffer[index]
+    package func _readElement(at logicalIndex: Index_Primitives.Index<Element>.Count) -> Element {
+        return _buffer[logicalIndex.map(Ordinal.init)]
     }
 }
 
@@ -227,7 +225,7 @@ extension Queue.DoubleEnded where Element: Copyable {
 extension Queue.DoubleEnded.Fixed where Element: ~Copyable {
     /// The current number of elements in the deque.
     @inlinable
-    public var count: Int { Int(_buffer.count.rawValue.rawValue) }
+    public var count: Index_Primitives.Index<Element>.Count { _buffer.count }
 
     /// Whether the deque is empty.
     @inlinable
@@ -370,7 +368,7 @@ extension Queue.DoubleEnded.Fixed where Element: Copyable {
 extension Queue.DoubleEnded.Static {
     /// The current number of elements.
     @inlinable
-    public var count: Int { Int(_buffer.count.rawValue.rawValue) }
+    public var count: Index_Primitives.Index<Element>.Count { _buffer.count }
 
     /// Whether the deque is empty.
     @inlinable
@@ -446,7 +444,7 @@ extension Queue.DoubleEnded.Static {
 extension Queue.DoubleEnded.Small {
     /// The current number of elements.
     @inlinable
-    public var count: Int { Int(_buffer.count.rawValue.rawValue) }
+    public var count: Index_Primitives.Index<Element>.Count { _buffer.count }
 
     /// Whether the deque is empty.
     @inlinable
@@ -521,10 +519,10 @@ extension Queue.DoubleEnded: Swift.Sequence where Element: Copyable {
         let _buffer: Buffer<Element>.Ring
 
         @usableFromInline
-        var _logicalIndex: Index<Element>.Count
+        var _logicalIndex: Index_Primitives.Index<Element>.Count
 
         @usableFromInline
-        let _count: Index<Element>.Count
+        let _count: Index_Primitives.Index<Element>.Count
 
         @usableFromInline
         init(buffer: Buffer<Element>.Ring) {
@@ -556,10 +554,12 @@ extension Queue.DoubleEnded: Equatable where Element: Equatable & Copyable {
     @inlinable
     public static func == (lhs: Self, rhs: Self) -> Bool {
         guard lhs.count == rhs.count else { return false }
-        for i in 0..<lhs.count {
+        var i: Index_Primitives.Index<Element>.Count = .zero
+        while i < lhs.count {
             if lhs._readElement(at: i) != rhs._readElement(at: i) {
                 return false
             }
+            i += .one
         }
         return true
     }
@@ -571,8 +571,10 @@ extension Queue.DoubleEnded: Hashable where Element: Hashable & Copyable {
     @inlinable
     public func hash(into hasher: inout Hasher) {
         hasher.combine(count)
-        for i in 0..<count {
+        var i: Index_Primitives.Index<Element>.Count = .zero
+        while i < count {
             hasher.combine(_readElement(at: i))
+            i += .one
         }
     }
 }
@@ -608,11 +610,11 @@ extension Queue.DoubleEnded where Element: Copyable {
 extension Queue.DoubleEnded: CustomStringConvertible where Element: Copyable {
     public var description: String {
         var result = "Queue.DoubleEnded(["
-        var first = true
-        for i in 0..<count {
-            if !first { result += ", " }
+        var i: Index_Primitives.Index<Element>.Count = .zero
+        while i < count {
+            if i > .zero { result += ", " }
             result += String(describing: _readElement(at: i))
-            first = false
+            i += .one
         }
         result += "])"
         return result

@@ -10,8 +10,8 @@
 // ===----------------------------------------------------------------------===//
 
 public import Input_Primitives
-import Index_Primitives
-import Buffer_Primitives
+public import Queue_Fixed_Primitives
+public import Buffer_Primitives
 
 // MARK: - Input.Streaming Conformance
 
@@ -78,12 +78,14 @@ extension Queue.Fixed: Input.`Protocol` where Element: Copyable {
     /// Advances cursor by `n` elements.
     ///
     /// - Parameter n: The number of elements to skip.
-    /// - Precondition: `n >= 0` and `n <= count`.
+    /// - Precondition: `n <= count`.
     @inlinable
-    public mutating func advance(by n: Int) {
-        precondition(n >= 0 && n <= count, "Cannot advance by more elements than available")
-        for _ in 0..<n {
+    public mutating func advance(by n: Index_Primitives.Index<Element>.Count) {
+        precondition(n <= count, "Cannot advance by more elements than available")
+        var i: Index_Primitives.Index<Element>.Count = .zero
+        while i < n {
             _ = dequeue()
+            i += .one
         }
     }
 }

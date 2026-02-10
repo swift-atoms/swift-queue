@@ -112,9 +112,7 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
             self._buffer = Buffer<Element>.Ring.Inline<capacity>()
         }
 
-        deinit {
-            _buffer.removeAll()
-        }
+        // No deinit needed — Storage.Inline.deinit handles element cleanup
     }
 
     // MARK: - Small (SmallVec-style: inline then spill to heap)
@@ -156,13 +154,11 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
             self._buffer = Buffer<Element>.Ring.Small<inlineCapacity>()
         }
 
-        deinit {
-            _buffer.removeAll()
-        }
+        // No deinit needed — Storage.Inline.deinit handles element cleanup
 
         /// Whether the queue is currently using heap storage.
         @inlinable
-        public var isSpilled: Bool { _buffer._heapBuffer != nil }
+        public var isSpilled: Bool { _buffer.isSpilled }
     }
 
     /// A fixed-capacity FIFO queue supporting move-only elements.
@@ -197,21 +193,14 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
         package var _buffer: Buffer<Element>.Ring.Bounded
 
         /// The maximum number of elements the queue can hold.
-        public let capacity: Int
+        public let capacity: Index.Count
 
         /// Creates a queue with the specified capacity.
         ///
-        /// - Parameter capacity: Maximum number of elements. Must be non-negative.
-        /// - Throws: ``Queue/Bounded/Error/invalidCapacity`` if capacity is negative.
+        /// - Parameter capacity: Maximum number of elements.
         @inlinable
-        public init(capacity: Int) throws(Queue<Element>.Fixed.Error) {
-            guard capacity >= 0 else {
-                throw .invalidCapacity
-            }
-
-            self._buffer = Buffer<Element>.Ring.Bounded(
-                minimumCapacity: Index<Element>.Count(Cardinal(UInt(capacity)))
-            )
+        public init(capacity: Index.Count) {
+            self._buffer = Buffer<Element>.Ring.Bounded(minimumCapacity: capacity)
             self.capacity = capacity
         }
 
@@ -425,11 +414,8 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
         }
 
         @inlinable
-        public init(reservingCapacity capacity: Int) throws(__QueueDoubleEndedError) {
-            guard capacity >= 0 else { throw .invalidCapacity }
-            self._buffer = Buffer<Element>.Ring(
-                minimumCapacity: Index<Element>.Count(Cardinal(UInt(capacity)))
-            )
+        public init(reservingCapacity capacity: Index.Count) {
+            self._buffer = Buffer<Element>.Ring(minimumCapacity: capacity)
         }
 
         // MARK: - Fixed (nested inside DoubleEnded)
@@ -442,14 +428,11 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
             @usableFromInline
             package var _buffer: Buffer<Element>.Ring.Bounded
 
-            public let capacity: Int
+            public let capacity: Index.Count
 
             @inlinable
-            public init(capacity: Int) throws(__QueueDoubleEndedFixedError) {
-                guard capacity >= 0 else { throw .invalidCapacity }
-                self._buffer = Buffer<Element>.Ring.Bounded(
-                    minimumCapacity: Index<Element>.Count(Cardinal(UInt(capacity)))
-                )
+            public init(capacity: Index.Count) {
+                self._buffer = Buffer<Element>.Ring.Bounded(minimumCapacity: capacity)
                 self.capacity = capacity
             }
         }
@@ -479,9 +462,7 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
                 self._buffer = Buffer<Element>.Ring.Inline<capacity>()
             }
 
-            deinit {
-                _buffer.removeAll()
-            }
+            // No deinit needed — Storage.Inline.deinit handles element cleanup
         }
 
         // MARK: - Small (small-buffer optimization double-ended queue)
@@ -504,13 +485,11 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
                 self._buffer = Buffer<Element>.Ring.Small<inlineCapacity>()
             }
 
-            deinit {
-                _buffer.removeAll()
-            }
+            // No deinit needed — Storage.Inline/Heap handle element cleanup
 
             /// Whether the deque is currently using heap storage.
             @inlinable
-            public var isSpilled: Bool { _buffer._heapBuffer != nil }
+            public var isSpilled: Bool { _buffer.isSpilled }
         }
     }
 
@@ -527,17 +506,10 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
     /// Pre-allocates storage for the specified number of elements.
     /// Useful when the approximate number of elements is known.
     ///
-    /// - Parameter capacity: Number of elements to reserve space for. Must be non-negative.
-    /// - Throws: ``Queue/Error/invalidCapacity`` if capacity is negative.
+    /// - Parameter capacity: Number of elements to reserve space for.
     @inlinable
-    public init(reservingCapacity capacity: Int) throws(Queue<Element>.Error) {
-        guard capacity >= 0 else {
-            throw .invalidCapacity
-        }
-
-        self._buffer = Buffer<Element>.Ring(
-            minimumCapacity: Index<Element>.Count(Cardinal(UInt(capacity)))
-        )
+    public init(reservingCapacity capacity: Index.Count) {
+        self._buffer = Buffer<Element>.Ring(minimumCapacity: capacity)
     }
 
     // Note: No deinit needed - Storage.Heap handles cleanup
