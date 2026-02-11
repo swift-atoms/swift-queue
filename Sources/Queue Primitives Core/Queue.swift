@@ -10,6 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 public import Buffer_Primitives
+public import Buffer_Linked_Primitives
 import List_Primitives
 public import Index_Primitives
 import Vector_Primitives
@@ -247,89 +248,13 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
     @safe
     public struct Linked: ~Copyable {
 
-        // ============================================================================
-        // MARK: - Nested Storage Types
-        // ============================================================================
-        // These types MUST be nested inside Queue.Linked to inherit the ~Copyable
-        // constraint suppression from Element. Moving them outside fails due to
-        // [MEM-COPY-006] Category 3.
-
-        /// Header for arena-based linked list storage.
         @usableFromInline
-        package struct Header {
-            @usableFromInline package var head: Int
-            @usableFromInline package var tail: Int
-            @usableFromInline package var freeHead: Int
-            @usableFromInline package var count: Int
-            @usableFromInline package var capacity: Int
-
-            @usableFromInline
-            package init() {
-                self.head = -1
-                self.tail = -1
-                self.freeHead = -1
-                self.count = 0
-                self.capacity = 0
-            }
-        }
-
-        /// A node in the arena-based linked list.
-        @frozen
-        @usableFromInline
-        package struct Node: ~Copyable {
-            @usableFromInline package var element: Element
-            @usableFromInline package var nextIndex: Int
-
-            @usableFromInline
-            package init(element: consuming Element, nextIndex: Int) {
-                self.element = element
-                self.nextIndex = nextIndex
-            }
-        }
-
-        /// Internal storage class for arena-based linked list.
-        @usableFromInline
-        package final class Storage: ManagedBuffer<Header, Node> {
-
-            @usableFromInline
-            package static func create() -> Storage {
-                let storage = Storage.create(minimumCapacity: 0) { _ in Header() }
-                return unsafe unsafeDowncast(storage, to: Storage.self)
-            }
-
-            @usableFromInline
-            package static func create(minimumCapacity: Int) -> Storage {
-                var header = Header()
-                header.capacity = minimumCapacity
-                let storage = Storage.create(minimumCapacity: minimumCapacity) { _ in header }
-                return unsafe unsafeDowncast(storage, to: Storage.self)
-            }
-
-            deinit {
-                let count = header.count
-                guard count > 0 else { return }
-                var index = header.head
-                _ = unsafe withUnsafeMutablePointerToElements { nodes in
-                    while index >= 0 {
-                        let nextIndex = unsafe nodes[index].nextIndex
-                        unsafe (nodes + index).deinitialize(count: 1)
-                        index = nextIndex
-                    }
-                }
-            }
-        }
-
-        // ============================================================================
-        // MARK: - Properties
-        // ============================================================================
-
-        @usableFromInline
-        package var _storage: Storage
+        package var _buffer: Buffer<Element>.Linked<1>
 
         /// Creates an empty linked queue.
         @inlinable
         public init() {
-            self._storage = Storage.create()
+            self._buffer = try! .create(capacity: 4)
         }
 
         /// Creates a queue with reserved capacity.
@@ -341,25 +266,21 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
             guard capacity >= 0 else {
                 throw .invalidCapacity
             }
-            if capacity == 0 {
-                self._storage = Storage.create()
-            } else {
-                self._storage = Storage.create(minimumCapacity: capacity)
-            }
+            self._buffer = try! .create(capacity: Swift.max(capacity, 4))
         }
 
         // MARK: - Bounded Variant
 
         /// A fixed-capacity linked-list FIFO queue.
         ///
-        /// `Queue.Linked.Bounded` allocates storage upfront and throws on overflow.
+        /// `Queue.Linked.Fixed` allocates storage upfront and throws on overflow.
         /// Use this variant when capacity is known or in contexts requiring
         /// predictable memory behavior (embedded, real-time).
         ///
         /// ## Example
         ///
         /// ```swift
-        /// var queue = try Queue<Int>.Linked.Bounded(capacity: 10)
+        /// var queue = try Queue<Int>.Linked.Fixed(capacity: 10)
         /// try queue.enqueue(1)
         /// try queue.enqueue(2)
         /// queue.dequeue()  // Optional(1)
@@ -367,21 +288,21 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
         @safe
         public struct Fixed: ~Copyable {
             @usableFromInline
-            package var _storage: Storage
+            package var _buffer: Buffer<Element>.Linked<1>
 
             /// The maximum number of elements the queue can hold.
             public let capacity: Int
 
             /// Creates a queue with the specified capacity.
             ///
-            /// - Parameter capacity: Maximum number of elements. Must be non-negative.
-            /// - Throws: ``Bounded/Error/invalidCapacity`` if capacity is negative.
+            /// - Parameter capacity: Maximum number of elements. Must be positive.
+            /// - Throws: ``Bounded/Error/invalidCapacity`` if capacity is not positive.
             @inlinable
             public init(capacity: Int) throws(__QueueLinkedBoundedError) {
-                guard capacity >= 0 else {
+                guard capacity > 0 else {
                     throw .invalidCapacity
                 }
-                self._storage = Storage.create(minimumCapacity: capacity)
+                self._buffer = try! .create(capacity: capacity)
                 self.capacity = capacity
             }
         }

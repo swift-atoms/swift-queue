@@ -10,41 +10,27 @@
 // ===----------------------------------------------------------------------===//
 
 public import Queue_Primitives_Core
+public import Buffer_Linked_Primitives
 
-// ============================================================================
-// MARK: - Queue.Linked.Fixed Extensions
-// ============================================================================
-
-// MARK: - Queue.Linked.Fixed Properties
+// MARK: - Properties
 
 extension Queue.Linked.Fixed where Element: ~Copyable {
     /// The current number of elements in the queue.
     @inlinable
-    public var count: Int { _storage.header.count }
+    public var count: Int { Int(bitPattern: _buffer.count) }
 
     /// Whether the queue is empty.
     @inlinable
-    public var isEmpty: Bool { _storage.header.count == 0 }
+    public var isEmpty: Bool { _buffer.isEmpty }
 
     /// Whether the queue is at capacity.
     @inlinable
-    public var isFull: Bool { _storage.header.count >= capacity }
+    public var isFull: Bool { _buffer.isFull }
 }
 
-// MARK: - Queue.Linked.Fixed Core Operations (~Copyable)
+// MARK: - Core Operations (~Copyable)
 
 extension Queue.Linked.Fixed where Element: ~Copyable {
-    /// Allocates a node slot, returning its index.
-    @usableFromInline
-    mutating func _allocateSlot() -> Int {
-        if _storage.header.freeHead >= 0 {
-            let index = _storage.header.freeHead
-            _storage.header.freeHead = _storage._loadFreeNext(at: index)
-            return index
-        }
-        return _storage.header.count
-    }
-
     /// Enqueues an element at the back of the queue.
     ///
     /// - Parameter element: The element to enqueue.
@@ -52,25 +38,8 @@ extension Queue.Linked.Fixed where Element: ~Copyable {
     /// - Complexity: O(1)
     @inlinable
     public mutating func enqueue(_ element: consuming Element) throws(__QueueLinkedBoundedError) {
-        guard _storage.header.count < capacity else {
-            throw .overflow
-        }
-
-        let newIndex = _allocateSlot()
-
-        _storage._initializeNode(at: newIndex, element: element, nextIndex: -1)
-
-        if _storage.header.tail >= 0 {
-            let nodes = unsafe _storage._nodesPointer
-            unsafe (nodes[_storage.header.tail].nextIndex = newIndex)
-        }
-
-        if _storage.header.head < 0 {
-            _storage.header.head = newIndex
-        }
-
-        _storage.header.tail = newIndex
-        _storage.header.count += 1
+        guard !isFull else { throw .overflow }
+        try! _buffer.insertBack(element)
     }
 
     /// Dequeues and returns the front element, or nil if empty.
@@ -79,28 +48,7 @@ extension Queue.Linked.Fixed where Element: ~Copyable {
     /// - Complexity: O(1)
     @inlinable
     public mutating func dequeue() -> Element? {
-        guard _storage.header.count > 0 else { return nil }
-
-        let headIndex = _storage.header.head
-
-        let nextIndex: Int = unsafe _storage.withUnsafeMutablePointerToElements { nodes in
-            unsafe nodes[headIndex].nextIndex
-        }
-
-        _storage.header.head = nextIndex
-        if nextIndex < 0 {
-            _storage.header.tail = -1
-        }
-
-        let element: Element = unsafe _storage.withUnsafeMutablePointerToElements { nodes in
-            unsafe (nodes + headIndex).move().element
-        }
-
-        _storage._storeFreeNext(at: headIndex, next: _storage.header.freeHead)
-        _storage.header.freeHead = headIndex
-
-        _storage.header.count -= 1
-        return element
+        _buffer.removeFront()
     }
 
     /// Removes all elements from the queue.
@@ -108,33 +56,17 @@ extension Queue.Linked.Fixed where Element: ~Copyable {
     /// - Complexity: O(n) where n is the number of elements.
     @inlinable
     public mutating func clear() {
-        guard _storage.header.count > 0 else { return }
-
-        var index = _storage.header.head
-        _ = unsafe _storage.withUnsafeMutablePointerToElements { nodes in
-            while index >= 0 {
-                let nextIndex = unsafe nodes[index].nextIndex
-                unsafe (nodes + index).deinitialize(count: 1)
-                index = nextIndex
-            }
-        }
-
-        _storage.header.head = -1
-        _storage.header.tail = -1
-        _storage.header.freeHead = -1
-        _storage.header.count = 0
+        _buffer.removeAll()
     }
 }
 
-// MARK: - Queue.Linked.Fixed Copy-on-Write (Copyable elements only)
+// MARK: - Copy-on-Write (Copyable elements only)
 
 extension Queue.Linked.Fixed where Element: Copyable {
     /// Ensures the storage is uniquely referenced before mutation.
     @usableFromInline
     mutating func _makeUnique() {
-        if !isKnownUniquelyReferenced(&_storage) {
-            _storage = _storage.copy()
-        }
+        _buffer.makeUnique()
     }
 
     /// Enqueues an element at the back of the queue (CoW-aware).
@@ -144,26 +76,9 @@ extension Queue.Linked.Fixed where Element: Copyable {
     /// - Complexity: O(1), O(n) if copy triggered
     @inlinable
     public mutating func enqueue(_ element: Element) throws(__QueueLinkedBoundedError) {
+        guard !isFull else { throw .overflow }
         _makeUnique()
-        guard _storage.header.count < capacity else {
-            throw .overflow
-        }
-
-        let newIndex = _allocateSlot()
-
-        _storage._initializeNode(at: newIndex, element: element, nextIndex: -1)
-
-        if _storage.header.tail >= 0 {
-            let nodes = unsafe _storage._nodesPointer
-            unsafe (nodes[_storage.header.tail].nextIndex = newIndex)
-        }
-
-        if _storage.header.head < 0 {
-            _storage.header.head = newIndex
-        }
-
-        _storage.header.tail = newIndex
-        _storage.header.count += 1
+        try! _buffer.insertBack(element)
     }
 
     /// Dequeues and returns the front element, or nil if empty (CoW-aware).
@@ -173,31 +88,7 @@ extension Queue.Linked.Fixed where Element: Copyable {
     @inlinable
     public mutating func dequeue() -> Element? {
         _makeUnique()
-        guard _storage.header.count > 0 else { return nil }
-
-        let headIndex = _storage.header.head
-
-        var element: Element?
-        var nextIndex: Int = -1
-        _ = unsafe _storage.withUnsafeMutablePointerToElements { nodes in
-            element = unsafe nodes[headIndex].element
-            nextIndex = unsafe nodes[headIndex].nextIndex
-        }
-
-        _storage.header.head = nextIndex
-        if nextIndex < 0 {
-            _storage.header.tail = -1
-        }
-
-        _ = unsafe _storage.withUnsafeMutablePointerToElements { nodes in
-            unsafe (nodes + headIndex).deinitialize(count: 1)
-        }
-
-        _storage._storeFreeNext(at: headIndex, next: _storage.header.freeHead)
-        _storage.header.freeHead = headIndex
-
-        _storage.header.count -= 1
-        return element
+        return _buffer.removeFront()
     }
 
     /// Removes all elements from the queue (CoW-aware).
@@ -206,25 +97,11 @@ extension Queue.Linked.Fixed where Element: Copyable {
     @inlinable
     public mutating func clear() {
         _makeUnique()
-        guard _storage.header.count > 0 else { return }
-
-        var index = _storage.header.head
-        _ = unsafe _storage.withUnsafeMutablePointerToElements { nodes in
-            while index >= 0 {
-                let nextIndex = unsafe nodes[index].nextIndex
-                unsafe (nodes + index).deinitialize(count: 1)
-                index = nextIndex
-            }
-        }
-
-        _storage.header.head = -1
-        _storage.header.tail = -1
-        _storage.header.freeHead = -1
-        _storage.header.count = 0
+        _buffer.removeAll()
     }
 }
 
-// MARK: - Queue.Linked.Fixed Peek
+// MARK: - Peek
 
 extension Queue.Linked.Fixed where Element: ~Copyable {
     /// Peeks at the front element without removing it.
@@ -236,11 +113,7 @@ extension Queue.Linked.Fixed where Element: ~Copyable {
     /// - Complexity: O(1)
     @inlinable
     public func peek<R>(_ body: (borrowing Element) -> R) -> R? {
-        guard _storage.header.count > 0 else { return nil }
-        let headIndex = _storage.header.head
-        return unsafe _storage.withUnsafeMutablePointerToElements { nodes in
-            body(unsafe nodes[headIndex].element)
-        }
+        _buffer.peekFront(body)
     }
 }
 
@@ -254,15 +127,11 @@ extension Queue.Linked.Fixed {
     /// - Complexity: O(1)
     @inlinable
     public func peek() -> Element? {
-        guard _storage.header.count > 0 else { return nil }
-        let headIndex = _storage.header.head
-        return unsafe _storage.withUnsafeMutablePointerToElements { nodes in
-            unsafe nodes[headIndex].element
-        }
+        _buffer.first
     }
 }
 
-// MARK: - Queue.Linked.Fixed ForEach
+// MARK: - ForEach
 
 extension Queue.Linked.Fixed where Element: ~Copyable {
     /// Calls the given closure for each element in the queue.
@@ -273,17 +142,11 @@ extension Queue.Linked.Fixed where Element: ~Copyable {
     /// - Complexity: O(n) where n is the number of elements.
     @inlinable
     public func forEach(_ body: (borrowing Element) -> Void) {
-        var index = _storage.header.head
-        _ = unsafe _storage.withUnsafeMutablePointerToElements { nodes in
-            while index >= 0 {
-                body(unsafe nodes[index].element)
-                index = unsafe nodes[index].nextIndex
-            }
-        }
+        _buffer.forEach(body)
     }
 }
 
-// MARK: - Queue.Linked.Fixed Sequence (Copyable elements only)
+// MARK: - Sequence (Copyable elements only)
 
 /// `Queue.Linked.Fixed` conforms to `Sequence` when `Element` is `Copyable`.
 ///
@@ -294,26 +157,17 @@ extension Queue.Linked.Fixed: Swift.Sequence where Element: Copyable {
     /// An iterator over the elements of a bounded linked queue.
     public struct Iterator: IteratorProtocol {
         @usableFromInline
-        let _storage: Queue<Element>.Linked.Storage
+        var _inner: Buffer<Element>.Linked<1>.Iterator
 
         @usableFromInline
-        var _current: Int
-
-        @usableFromInline
-        init(storage: Queue<Element>.Linked.Storage) {
-            self._storage = storage
-            self._current = storage.header.head
+        init(inner: Buffer<Element>.Linked<1>.Iterator) {
+            self._inner = inner
         }
 
         /// Advances to the next element and returns it, or nil if no next element exists.
         @inlinable
         public mutating func next() -> Element? {
-            guard _current >= 0 else { return nil }
-            return unsafe _storage.withUnsafeMutablePointerToElements { nodes in
-                let element = unsafe nodes[_current].element
-                _current = unsafe nodes[_current].nextIndex
-                return element
-            }
+            _inner.next()
         }
     }
 
@@ -322,75 +176,40 @@ extension Queue.Linked.Fixed: Swift.Sequence where Element: Copyable {
     /// Elements are yielded from front (oldest) to back (newest).
     @inlinable
     public func makeIterator() -> Iterator {
-        Iterator(storage: _storage)
+        Iterator(inner: _buffer.makeIterator())
     }
 }
 
-// MARK: - Queue.Linked.Fixed Equatable
+// MARK: - Equatable
 
 extension Queue.Linked.Fixed: Equatable where Element: Equatable {
     @inlinable
     public static func == (lhs: Self, rhs: Self) -> Bool {
-        guard lhs.count == rhs.count else { return false }
-
-        var lhsIndex = lhs._storage.header.head
-        var rhsIndex = rhs._storage.header.head
-
-        while lhsIndex >= 0 && rhsIndex >= 0 {
-            let lhsElement = unsafe lhs._storage.withUnsafeMutablePointerToElements { nodes in
-                unsafe nodes[lhsIndex].element
-            }
-            let rhsElement = unsafe rhs._storage.withUnsafeMutablePointerToElements { nodes in
-                unsafe nodes[rhsIndex].element
-            }
-
-            if lhsElement != rhsElement { return false }
-
-            lhsIndex = unsafe lhs._storage.withUnsafeMutablePointerToElements { nodes in
-                unsafe nodes[lhsIndex].nextIndex
-            }
-            rhsIndex = unsafe rhs._storage.withUnsafeMutablePointerToElements { nodes in
-                unsafe nodes[rhsIndex].nextIndex
-            }
-        }
-
-        return true
+        lhs._buffer == rhs._buffer
     }
 }
 
-// MARK: - Queue.Linked.Fixed Hashable
+// MARK: - Hashable
 
 extension Queue.Linked.Fixed: Hashable where Element: Hashable {
     @inlinable
     public func hash(into hasher: inout Hasher) {
-        hasher.combine(_storage.header.count)
-        forEach { hasher.combine($0) }
+        _buffer.hash(into: &hasher)
     }
 }
 
-// MARK: - Queue.Linked.Fixed Sendable
+// MARK: - Sendable
 
 extension Queue.Linked.Fixed: @unchecked Sendable where Element: Sendable {}
 
-// MARK: - Queue.Linked Error Types
+// MARK: - Error Types
 
 extension Queue.Linked where Element: ~Copyable {
     /// Errors that can occur during linked queue operations.
-    ///
-    /// ## Cases
-    ///
-    /// - ``Queue/Linked/Error/empty``: The queue is empty and the operation requires elements.
-    /// - ``Queue/Linked/Error/invalidCapacity``: The requested capacity is invalid (negative).
     public typealias Error = __QueueLinkedError
 }
 
 extension Queue.Linked.Fixed where Element: ~Copyable {
     /// Errors that can occur during bounded linked queue operations.
-    ///
-    /// ## Cases
-    ///
-    /// - ``Queue/Linked/Bounded/Error/empty``: The queue is empty and the operation requires elements.
-    /// - ``Queue/Linked/Bounded/Error/invalidCapacity``: The requested capacity is invalid (negative).
-    /// - ``Queue/Linked/Bounded/Error/overflow``: The queue is full and cannot accept more elements.
     public typealias Error = __QueueLinkedBoundedError
 }
