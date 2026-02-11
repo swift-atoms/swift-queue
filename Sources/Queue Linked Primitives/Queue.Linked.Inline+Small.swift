@@ -119,7 +119,7 @@ extension Queue.Linked.Small where Element: Copyable {
     public var isEmpty: Bool { _storage.isEmpty }
 
     /// The current capacity of the queue.
-    public var capacity: Int { _storage.capacity }
+    public var capacity: Index<Element>.Count { _storage.capacity }
 }
 
 // MARK: - Queue.Linked.Small Core Operations
