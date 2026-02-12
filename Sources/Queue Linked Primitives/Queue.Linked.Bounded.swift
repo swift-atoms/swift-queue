@@ -17,7 +17,7 @@ public import Buffer_Linked_Primitives
 extension Queue.Linked.Fixed where Element: ~Copyable {
     /// The current number of elements in the queue.
     @inlinable
-    public var count: Int { Int(bitPattern: _buffer.count) }
+    public var count: Index<Element>.Count { _buffer.count }
 
     /// Whether the queue is empty.
     @inlinable

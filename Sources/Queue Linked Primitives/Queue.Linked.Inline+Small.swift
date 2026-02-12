@@ -19,7 +19,7 @@ public import Queue_Primitives_Core
 
 extension Queue.Linked.Inline where Element: Copyable {
     /// The current number of elements in the queue.
-    public var count: Int { _storage.count }
+    public var count: Index<Element>.Count { _storage.count }
 
     /// Whether the queue is empty.
     public var isEmpty: Bool { _storage.isEmpty }
@@ -113,7 +113,7 @@ extension Queue.Linked.Inline where Element: Copyable {
 
 extension Queue.Linked.Small where Element: Copyable {
     /// The current number of elements in the queue.
-    public var count: Int { _storage.count }
+    public var count: Index<Element>.Count { _storage.count }
 
     /// Whether the queue is empty.
     public var isEmpty: Bool { _storage.isEmpty }

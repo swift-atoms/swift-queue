@@ -17,7 +17,7 @@ public import Buffer_Linked_Primitives
 extension Queue.Linked where Element: ~Copyable {
     /// The current number of elements in the queue.
     @inlinable
-    public var count: Int { Int(bitPattern: _buffer.count) }
+    public var count: Index<Element>.Count { _buffer.count }
 
     /// Whether the queue is empty.
     @inlinable
@@ -31,10 +31,10 @@ extension Queue.Linked where Element: ~Copyable {
 // MARK: - Capacity Management
 
 extension Queue.Linked where Element: ~Copyable {
-    /// Ensures the queue has capacity for at least the specified number of elements.
+    /// Ensures the queue has capacity for one additional element.
     @usableFromInline
-    mutating func _ensureCapacity(_ minimumCapacity: Int) {
-        try! _buffer.ensureCapacity(minimumCapacity)
+    mutating func _ensureCapacityForOneMore() {
+        try! _buffer.ensureCapacity(Int(bitPattern: _buffer.count) + 1)
     }
 
     /// Reserves capacity for at least the specified number of elements.
@@ -45,7 +45,7 @@ extension Queue.Linked where Element: ~Copyable {
     /// - Parameter minimumCapacity: The minimum total capacity to reserve.
     @inlinable
     public mutating func reserve(_ minimumCapacity: Int) {
-        _ensureCapacity(minimumCapacity)
+        try! _buffer.ensureCapacity(minimumCapacity)
     }
 }
 
@@ -58,7 +58,7 @@ extension Queue.Linked where Element: ~Copyable {
     /// - Complexity: O(1) amortized
     @inlinable
     public mutating func enqueue(_ element: consuming Element) {
-        _ensureCapacity(count + 1)
+        _ensureCapacityForOneMore()
         try! _buffer.insertBack(element)
     }
 

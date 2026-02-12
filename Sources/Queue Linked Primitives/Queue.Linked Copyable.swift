@@ -28,7 +28,7 @@ extension Queue.Linked where Element: Copyable {
     @inlinable
     public mutating func enqueue(_ element: Element) {
         _makeUnique()
-        _ensureCapacity(count + 1)
+        _ensureCapacityForOneMore()
         try! _buffer.insertBack(element)
     }
 
