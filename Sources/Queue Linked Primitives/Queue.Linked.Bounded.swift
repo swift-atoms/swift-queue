@@ -66,7 +66,7 @@ extension Queue.Linked.Fixed where Element: Copyable {
     /// Ensures the storage is uniquely referenced before mutation.
     @usableFromInline
     mutating func _makeUnique() {
-        _buffer.makeUnique()
+        _buffer.ensureUnique()
     }
 
     /// Enqueues an element at the back of the queue (CoW-aware).
