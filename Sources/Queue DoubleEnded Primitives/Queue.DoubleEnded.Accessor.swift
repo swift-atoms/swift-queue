@@ -131,7 +131,7 @@ where Tag == Queue<Element>.DoubleEnded.Front,
     @inlinable
     public func pop() throws(__QueueDoubleEndedError) -> Element {
         guard !(unsafe base.pointee.isEmpty) else {
-            throw .invalidCapacity // Using existing error case for empty
+            throw .empty
         }
         return unsafe base.pointee._buffer.popFront()
     }
@@ -204,7 +204,7 @@ where Tag == Queue<Element>.DoubleEnded.Back,
     @inlinable
     public func pop() throws(__QueueDoubleEndedError) -> Element {
         guard !(unsafe base.pointee.isEmpty) else {
-            throw .invalidCapacity // Using existing error case for empty
+            throw .empty
         }
         return unsafe base.pointee._buffer.popBack()
     }

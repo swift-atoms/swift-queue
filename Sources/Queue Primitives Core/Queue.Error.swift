@@ -98,6 +98,9 @@ public enum __QueueLinkedSmallError: Swift.Error, Sendable, Equatable {
 ///
 /// - Note: Use ``Queue/DoubleEnded/Error`` in your code, not this type directly.
 public enum __QueueDoubleEndedError: Swift.Error, Sendable, Equatable {
+    /// The deque is empty and the operation requires elements.
+    case empty
+
     /// The requested capacity is invalid (negative).
     case invalidCapacity
 }
