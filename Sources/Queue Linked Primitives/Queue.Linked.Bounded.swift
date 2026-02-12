@@ -39,7 +39,7 @@ extension Queue.Linked.Fixed where Element: ~Copyable {
     @inlinable
     public mutating func enqueue(_ element: consuming Element) throws(__QueueLinkedBoundedError) {
         guard !isFull else { throw .overflow }
-        try! _buffer.insertBack(element)
+        try! _buffer.insert.back(element)
     }
 
     /// Dequeues and returns the front element, or nil if empty.
@@ -48,7 +48,7 @@ extension Queue.Linked.Fixed where Element: ~Copyable {
     /// - Complexity: O(1)
     @inlinable
     public mutating func dequeue() -> Element? {
-        _buffer.removeFront()
+        _buffer.remove.front()
     }
 
     /// Removes all elements from the queue.
@@ -78,7 +78,7 @@ extension Queue.Linked.Fixed where Element: Copyable {
     public mutating func enqueue(_ element: Element) throws(__QueueLinkedBoundedError) {
         guard !isFull else { throw .overflow }
         _makeUnique()
-        try! _buffer.insertBack(element)
+        try! _buffer.insert.back(element)
     }
 
     /// Dequeues and returns the front element, or nil if empty (CoW-aware).
@@ -88,7 +88,7 @@ extension Queue.Linked.Fixed where Element: Copyable {
     @inlinable
     public mutating func dequeue() -> Element? {
         _makeUnique()
-        return _buffer.removeFront()
+        return _buffer.remove.front()
     }
 
     /// Removes all elements from the queue (CoW-aware).

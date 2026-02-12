@@ -29,7 +29,7 @@ extension Queue.Linked where Element: Copyable {
     public mutating func enqueue(_ element: Element) {
         _makeUnique()
         _ensureCapacityForOneMore()
-        try! _buffer.insertBack(element)
+        try! _buffer.insert.back(element)
     }
 
     /// Dequeues and returns the front element, or nil if empty (CoW-aware).
@@ -39,7 +39,7 @@ extension Queue.Linked where Element: Copyable {
     @inlinable
     public mutating func dequeue() -> Element? {
         _makeUnique()
-        return _buffer.removeFront()
+        return _buffer.remove.front()
     }
 
     /// Removes all elements from the queue (CoW-aware).

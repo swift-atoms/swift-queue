@@ -25,7 +25,7 @@ extension Queue.Linked where Element: ~Copyable {
 
     /// The current capacity of the queue.
     @inlinable
-    public var capacity: Int { Int(bitPattern: _buffer.capacity) }
+    public var capacity: Index<Element>.Count { _buffer.capacity.retag(Element.self) }
 }
 
 // MARK: - Capacity Management
@@ -59,7 +59,7 @@ extension Queue.Linked where Element: ~Copyable {
     @inlinable
     public mutating func enqueue(_ element: consuming Element) {
         _ensureCapacityForOneMore()
-        try! _buffer.insertBack(element)
+        try! _buffer.insert.back(element)
     }
 
     /// Dequeues and returns the front element, or nil if empty.
@@ -68,7 +68,7 @@ extension Queue.Linked where Element: ~Copyable {
     /// - Complexity: O(1)
     @inlinable
     public mutating func dequeue() -> Element? {
-        _buffer.removeFront()
+        _buffer.remove.front()
     }
 
     /// Removes all elements from the queue.

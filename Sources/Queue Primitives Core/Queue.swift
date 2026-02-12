@@ -291,18 +291,18 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
             package var _buffer: Buffer<Element>.Linked<1>
 
             /// The maximum number of elements the queue can hold.
-            public let capacity: Int
+            public let capacity: Index_Primitives.Index<Element>.Count
 
             /// Creates a queue with the specified capacity.
             ///
             /// - Parameter capacity: Maximum number of elements. Must be positive.
             /// - Throws: ``Bounded/Error/invalidCapacity`` if capacity is not positive.
             @inlinable
-            public init(capacity: Int) throws(__QueueLinkedBoundedError) {
-                guard capacity > 0 else {
+            public init(capacity: Index_Primitives.Index<Element>.Count) throws(__QueueLinkedBoundedError) {
+                guard capacity > .zero else {
                     throw .invalidCapacity
                 }
-                self._buffer = try! .create(capacity: capacity)
+                self._buffer = try! .create(capacity: capacity.retag())
                 self.capacity = capacity
             }
         }
