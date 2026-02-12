@@ -17,10 +17,14 @@ public import Buffer_Primitives
 
 extension Queue.DoubleEnded where Element: ~Copyable {
     /// Namespace for front position operations.
-    public enum Front {}
+    public enum Front {
+        public typealias View = Property<Queue<Element>.DoubleEnded.Front, Queue<Element>.DoubleEnded>.View.Typed<Element>
+    }
 
     /// Namespace for back position operations.
-    public enum Back {}
+    public enum Back {
+        public typealias View = Property<Queue<Element>.DoubleEnded.Back, Queue<Element>.DoubleEnded>.View.Typed<Element>
+    }
 }
 
 // MARK: - Peek Accessor (Non-Mutating)
@@ -88,12 +92,12 @@ extension Queue.DoubleEnded where Element: Copyable {
     /// let removed = try deque.front.pop()  // 0, deque is [1, 2, 3]
     /// let taken = deque.front.take     // 1 or nil
     /// ```
-    public var front: Property<Front, Self>.View.Typed<Element> {
+    public var front: Front.View {
         mutating _read {
-            yield unsafe Property<Front, Self>.View.Typed(&self)
+            yield unsafe .init(&self)
         }
         mutating _modify {
-            var view = unsafe Property<Front, Self>.View.Typed<Element>(&self)
+            var view: Front.View = unsafe .init(&self)
             yield &view
         }
     }
@@ -161,12 +165,12 @@ extension Queue.DoubleEnded where Element: Copyable {
     /// let removed = try deque.back.pop()   // 4, deque is [1, 2, 3]
     /// let taken = deque.back.take      // 3 or nil
     /// ```
-    public var back: Property<Back, Self>.View.Typed<Element> {
+    public var back: Back.View {
         mutating _read {
-            yield unsafe Property<Back, Self>.View.Typed(&self)
+            yield unsafe .init(&self)
         }
         mutating _modify {
-            var view = unsafe Property<Back, Self>.View.Typed<Element>(&self)
+            var view: Back.View = unsafe .init(&self)
             yield &view
         }
     }
