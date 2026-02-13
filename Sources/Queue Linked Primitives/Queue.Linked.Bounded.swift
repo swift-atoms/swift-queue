@@ -155,7 +155,7 @@ extension Queue.Linked.Fixed where Element: ~Copyable {
 extension Queue.Linked.Fixed: Swift.Sequence where Element: Copyable {
 
     /// An iterator over the elements of a bounded linked queue.
-    public struct Iterator: IteratorProtocol {
+    public struct Iterator: Sequence.Iterator.`Protocol`, IteratorProtocol {
         @usableFromInline
         var _inner: Buffer<Element>.Linked<1>.Iterator
 

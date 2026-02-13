@@ -514,7 +514,7 @@ extension Queue.DoubleEnded.Small {
 
 extension Queue.DoubleEnded: Swift.Sequence where Element: Copyable {
     /// An iterator over the elements of a double-ended queue.
-    public struct Iterator: IteratorProtocol {
+    public struct Iterator: Sequence.Iterator.`Protocol`, IteratorProtocol {
         @usableFromInline
         let _buffer: Buffer<Element>.Ring
 

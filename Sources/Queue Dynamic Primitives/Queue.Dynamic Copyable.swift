@@ -101,7 +101,7 @@ extension Queue {
 extension Queue: Swift.Sequence where Element: Copyable {
 
     /// An iterator over the elements of a queue.
-    public struct Iterator: IteratorProtocol {
+    public struct Iterator: Sequence.Iterator.`Protocol`, IteratorProtocol {
         @usableFromInline
         let _buffer: Buffer<Element>.Ring
 

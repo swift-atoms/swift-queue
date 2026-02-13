@@ -80,7 +80,7 @@ extension Queue.Linked {
 extension Queue.Linked: Swift.Sequence where Element: Copyable {
 
     /// An iterator over the elements of a linked queue.
-    public struct Iterator: IteratorProtocol {
+    public struct Iterator: Sequence.Iterator.`Protocol`, IteratorProtocol {
         @usableFromInline
         var _inner: Buffer<Element>.Linked<1>.Iterator
 
