@@ -137,7 +137,73 @@ extension Queue: Swift.Sequence where Element: Copyable {
     }
 }
 
+// ============================================================================
+// MARK: - Sequence.Protocol Conformance
+// ============================================================================
+
+extension Queue: Sequence.`Protocol` where Element: Copyable {
+    /// Returns the count as the underestimated count since we know the exact size.
+    ///
+    /// This explicit implementation resolves ambiguity between Swift.Sequence
+    /// and Sequence.Protocol+Swift.Sequence default implementation.
+    @inlinable
+    public var underestimatedCount: Int { Int(bitPattern: count) }
+}
+
+// ============================================================================
+// MARK: - Sequence.Clearable Conformance
+// ============================================================================
+
+extension Queue: Sequence.Clearable where Element: Copyable {
+    /// Removes all elements from the queue.
+    ///
+    /// This enables `.forEach.consuming { }` pattern via `Property.View` extension.
+    @inlinable
+    public mutating func removeAll() {
+        clear(keepingCapacity: false)
+    }
+}
+
+// ============================================================================
+// MARK: - Sequence.Drain.Protocol Conformance
+// ============================================================================
+
+extension Queue: Sequence.Drain.`Protocol` where Element: Copyable {
+    /// Drains all elements in FIFO order, passing each to the closure with ownership.
+    ///
+    /// After this method returns, the queue is empty but still usable.
+    ///
+    /// - Parameter body: A closure that receives each drained element with ownership.
+    /// - Complexity: O(n) where n is the number of elements.
+    @inlinable
+    public mutating func drain(_ body: (consuming Element) -> Void) {
+        makeUnique()
+        while let element = dequeue() {
+            body(element)
+        }
+    }
+}
+
+// ============================================================================
+// MARK: - Drain Property Accessor
+// ============================================================================
+
+extension Queue where Element: Copyable {
+    /// Accessor for drain operations.
+    public var drain: Property<Sequence.Drain, Self>.View {
+        mutating _read {
+            yield unsafe Property<Sequence.Drain, Self>.View(&self)
+        }
+        mutating _modify {
+            var view = unsafe Property<Sequence.Drain, Self>.View(&self)
+            yield &view
+        }
+    }
+}
+
+// ============================================================================
 // MARK: - CoW-aware Capacity Management (Copyable elements)
+// ============================================================================
 
 extension Queue where Element: Copyable {
     /// Reduces capacity to match the current count, releasing unused memory (CoW-aware).
