@@ -116,79 +116,18 @@ extension Queue.Small: Sequence.Drain.`Protocol` where Element: Copyable {
 }
 
 // ============================================================================
-// MARK: - Sequence Tag Enums
-// ============================================================================
-
-extension Queue.Small where Element: Copyable {
-    public enum Drain {
-        public typealias View = Property<Sequence.Drain, Queue<Element>.Small<inlineCapacity>>.View.Typed<Element>.Valued<inlineCapacity>
-    }
-    public enum ForEach {
-        public typealias View = Property<Sequence.ForEach, Queue<Element>.Small<inlineCapacity>>.View.Typed<Element>.Valued<inlineCapacity>
-    }
-    public enum Satisfies {
-        public typealias View = Property<Sequence.Satisfies, Queue<Element>.Small<inlineCapacity>>.View.Typed<Element>.Valued<inlineCapacity>
-    }
-
-    public enum Reduce {
-        public typealias View = Property<Sequence.Reduce, Queue<Element>.Small<inlineCapacity>>.View.Typed<Element>.Valued<inlineCapacity>
-    }
-    public enum Contains {
-        public typealias View = Property<Sequence.Contains, Queue<Element>.Small<inlineCapacity>>.View.Typed<Element>.Valued<inlineCapacity>
-    }
-    public enum Drop {
-        public typealias View = Property<Sequence.Drop, Queue<Element>.Small<inlineCapacity>>.View.Typed<Element>.Valued<inlineCapacity>
-    }
-    public enum Prefix {
-        public typealias View = Property<Sequence.Prefix, Queue<Element>.Small<inlineCapacity>>.View.Typed<Element>.Valued<inlineCapacity>
-    }
-}
-
-// ============================================================================
-// MARK: - Property Accessors
+// MARK: - Drain Property Accessor
 // ============================================================================
 
 extension Queue.Small where Element: Copyable {
     /// Accessor for drain operations.
-    public var drain: Drain.View {
-        mutating _read { yield unsafe .init(&self) }
-        mutating _modify { var view: Drain.View = unsafe .init(&self); yield &view }
-    }
-
-    /// Accessor for forEach operations.
-    public var forEach: ForEach.View {
-        mutating _read { yield unsafe .init(&self) }
-        mutating _modify { var view: ForEach.View = unsafe .init(&self); yield &view }
-    }
-
-    /// Accessor for predicate satisfaction checks.
-    public var satisfies: Satisfies.View {
-        mutating _read { yield unsafe .init(&self) }
-        mutating _modify { var view: Satisfies.View = unsafe .init(&self); yield &view }
-    }
-
-
-    /// Accessor for reduce operations.
-    public var reduce: Reduce.View {
-        mutating _read { yield unsafe .init(&self) }
-        mutating _modify { var view: Reduce.View = unsafe .init(&self); yield &view }
-    }
-
-    /// Accessor for containment checks.
-    public var contains: Contains.View {
-        mutating _read { yield unsafe .init(&self) }
-        mutating _modify { var view: Contains.View = unsafe .init(&self); yield &view }
-    }
-
-    /// Accessor for drop operations.
-    public var drop: Drop.View {
-        mutating _read { yield unsafe .init(&self) }
-        mutating _modify { var view: Drop.View = unsafe .init(&self); yield &view }
-    }
-
-    /// Accessor for prefix operations.
-    public var prefix: Prefix.View {
-        mutating _read { yield unsafe .init(&self) }
-        mutating _modify { var view: Prefix.View = unsafe .init(&self); yield &view }
+    public var drain: Property<Sequence.Drain, Self>.View {
+        mutating _read {
+            yield unsafe Property<Sequence.Drain, Self>.View(&self)
+        }
+        mutating _modify {
+            var view = unsafe Property<Sequence.Drain, Self>.View(&self)
+            yield &view
+        }
     }
 }
