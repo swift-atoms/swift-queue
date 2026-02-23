@@ -100,20 +100,13 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
         @usableFromInline
         package var _buffer: Buffer<Element>.Ring.Inline<capacity>
 
-        /// Workaround for Swift compiler bug where deinit element cleanup
-        /// fails for ~Copyable structs that contain only value-type properties.
-        /// Adding a reference type property (`AnyObject?`) fixes the bug.
-        /// See: https://github.com/swiftlang/swift/issues/86652
-        @usableFromInline
-        var _deinitWorkaround: AnyObject? = nil
-
         /// Creates an empty inline queue.
         @inlinable
         public init() {
             self._buffer = Buffer<Element>.Ring.Inline<capacity>()
         }
 
-        // No deinit needed — Storage.Inline.deinit handles element cleanup
+        // deinit: Buffer.Ring.Inline handles element cleanup
     }
 
     // MARK: - Small (SmallVec-style: inline then spill to heap)
@@ -155,7 +148,8 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
             self._buffer = Buffer<Element>.Ring.Small<inlineCapacity>()
         }
 
-        // No deinit needed — Storage.Inline.deinit handles element cleanup
+        // deinit: Buffer.Ring.Small delegates to Ring.Inline (inline case)
+        // or Storage.Heap (heap case) for element cleanup
 
         /// Whether the queue is currently using heap storage.
         @inlinable
@@ -372,18 +366,13 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
             @usableFromInline
             package var _buffer: Buffer<Element>.Ring.Inline<capacity>
 
-            /// Workaround for Swift compiler bug where deinit element cleanup
-            /// fails for ~Copyable structs that contain only value-type properties.
-            @usableFromInline
-            package var _deinitWorkaround: AnyObject? = nil
-
             /// Creates an empty inline double-ended queue.
             @inlinable
             public init() {
                 self._buffer = Buffer<Element>.Ring.Inline<capacity>()
             }
 
-            // No deinit needed — Storage.Inline.deinit handles element cleanup
+            // deinit: Buffer.Ring.Inline handles element cleanup
         }
 
         // MARK: - Small (small-buffer optimization double-ended queue)
@@ -406,7 +395,8 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
                 self._buffer = Buffer<Element>.Ring.Small<inlineCapacity>()
             }
 
-            // No deinit needed — Storage.Inline/Heap handle element cleanup
+            // deinit: Buffer.Ring.Small delegates to Ring.Inline (inline case)
+            // or Storage.Heap (heap case) for element cleanup
 
             /// Whether the deque is currently using heap storage.
             @inlinable
