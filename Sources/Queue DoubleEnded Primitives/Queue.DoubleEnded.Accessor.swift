@@ -49,7 +49,7 @@ extension Queue.DoubleEnded where Element: Copyable {
         @inlinable
         public var front: Element? {
             guard !_buffer.isEmpty else { return nil }
-            return _buffer.peekFront
+            return _buffer.peek.front
         }
 
         /// The back element, or `nil` if the deque is empty.
@@ -58,7 +58,7 @@ extension Queue.DoubleEnded where Element: Copyable {
         @inlinable
         public var back: Element? {
             guard !_buffer.isEmpty else { return nil }
-            return _buffer.peekBack
+            return _buffer.peek.back
         }
     }
 
@@ -115,7 +115,7 @@ where Tag == Queue<Element>.DoubleEnded.Front,
     @inlinable
     public var peek: Element? {
         guard !(unsafe base.pointee.isEmpty) else { return nil }
-        return unsafe base.pointee._buffer.peekFront
+        return unsafe base.pointee._buffer.peek.front
     }
 
     /// Pushes an element to the front of the deque.
@@ -124,7 +124,7 @@ where Tag == Queue<Element>.DoubleEnded.Front,
     /// - Complexity: O(1) amortized
     @inlinable
     public func push(_ element: Element) {
-        unsafe base.pointee._buffer.pushFront(element)
+        unsafe base.pointee._buffer.push.front(element)
     }
 
     /// Removes and returns the front element.
@@ -137,7 +137,7 @@ where Tag == Queue<Element>.DoubleEnded.Front,
         guard !(unsafe base.pointee.isEmpty) else {
             throw .empty
         }
-        return unsafe base.pointee._buffer.popFront()
+        return unsafe base.pointee._buffer.pop.front()
     }
 
     /// Removes and returns the front element, or nil if empty.
@@ -147,7 +147,7 @@ where Tag == Queue<Element>.DoubleEnded.Front,
     @inlinable
     public var take: Element? {
         guard !(unsafe base.pointee.isEmpty) else { return nil }
-        return unsafe base.pointee._buffer.popFront()
+        return unsafe base.pointee._buffer.pop.front()
     }
 }
 
@@ -188,7 +188,7 @@ where Tag == Queue<Element>.DoubleEnded.Back,
     @inlinable
     public var peek: Element? {
         guard !(unsafe base.pointee.isEmpty) else { return nil }
-        return unsafe base.pointee._buffer.peekBack
+        return unsafe base.pointee._buffer.peek.back
     }
 
     /// Pushes an element to the back of the deque.
@@ -197,7 +197,7 @@ where Tag == Queue<Element>.DoubleEnded.Back,
     /// - Complexity: O(1) amortized
     @inlinable
     public func push(_ element: Element) {
-        unsafe base.pointee._buffer.pushBack(element)
+        unsafe base.pointee._buffer.push.back(element)
     }
 
     /// Removes and returns the back element.
@@ -210,7 +210,7 @@ where Tag == Queue<Element>.DoubleEnded.Back,
         guard !(unsafe base.pointee.isEmpty) else {
             throw .empty
         }
-        return unsafe base.pointee._buffer.popBack()
+        return unsafe base.pointee._buffer.pop.back()
     }
 
     /// Removes and returns the back element, or nil if empty.
@@ -220,6 +220,6 @@ where Tag == Queue<Element>.DoubleEnded.Back,
     @inlinable
     public var take: Element? {
         guard !(unsafe base.pointee.isEmpty) else { return nil }
-        return unsafe base.pointee._buffer.popBack()
+        return unsafe base.pointee._buffer.pop.back()
     }
 }

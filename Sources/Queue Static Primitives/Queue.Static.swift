@@ -43,7 +43,7 @@ extension Queue.Static where Element: ~Copyable {
         guard !_buffer.isFull else {
             throw .overflow
         }
-        _ = _buffer.pushBack(consume element)
+        _buffer.push.back(consume element)
     }
 
     /// Dequeues and returns the front element, or nil if empty.
@@ -55,7 +55,7 @@ extension Queue.Static where Element: ~Copyable {
         guard !_buffer.isEmpty else {
             return nil
         }
-        return _buffer.popFront()
+        return _buffer.pop.front()
     }
 
     /// Removes all elements from the queue.
@@ -63,7 +63,7 @@ extension Queue.Static where Element: ~Copyable {
     /// - Complexity: O(n) where n is the number of elements.
     @inlinable
     public mutating func clear() {
-        _buffer.removeAll()
+        _buffer.remove.all()
     }
 }
 
@@ -98,7 +98,7 @@ extension Queue.Static where Element: Copyable {
         guard !_buffer.isEmpty else {
             return nil
         }
-        return _buffer.peekFront
+        return _buffer.peek.front
     }
 }
 

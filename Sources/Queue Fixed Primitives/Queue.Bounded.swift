@@ -44,7 +44,7 @@ extension Queue.Fixed where Element: ~Copyable {
         guard count < capacity else {
             throw .overflow
         }
-        _ = _buffer.pushBack(consume element)
+        _buffer.push.back(consume element)
     }
 
     /// Dequeues and returns the front element, or nil if empty.
@@ -56,7 +56,7 @@ extension Queue.Fixed where Element: ~Copyable {
         guard !_buffer.isEmpty else {
             return nil
         }
-        return _buffer.popFront()
+        return _buffer.pop.front()
     }
 
     /// Removes all elements from the queue.
@@ -66,7 +66,7 @@ extension Queue.Fixed where Element: ~Copyable {
     /// - Complexity: O(n) where n is the number of elements.
     @inlinable
     public mutating func clear() {
-        _buffer.removeAll()
+        _buffer.remove.all()
     }
 }
 
@@ -85,7 +85,7 @@ extension Queue.Fixed where Element: Copyable {
         guard count < capacity else {
             throw .overflow
         }
-        _ = _buffer.pushBack(element)
+        _buffer.push.back(element)
     }
 
     /// Dequeues and returns the front element, or nil if empty (CoW-aware).
@@ -94,13 +94,13 @@ extension Queue.Fixed where Element: Copyable {
         guard !_buffer.isEmpty else {
             return nil
         }
-        return _buffer.popFront()
+        return _buffer.pop.front()
     }
 
     /// Removes all elements from the queue (CoW-aware).
     @inlinable
     public mutating func clear() {
-        _buffer.removeAll()
+        _buffer.remove.all()
     }
 }
 
@@ -124,7 +124,7 @@ extension Queue.Fixed where Element: Copyable {
         guard !_buffer.isEmpty else {
             return nil
         }
-        return _buffer.peekFront
+        return _buffer.peek.front
     }
 }
 

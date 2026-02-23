@@ -84,9 +84,9 @@ extension Queue.DoubleEnded where Element: ~Copyable {
     public mutating func push(_ element: consuming Element, to position: Position) {
         switch position {
         case .front:
-            _buffer.pushFront(consume element)
+            _buffer.push.front(consume element)
         case .back:
-            _buffer.pushBack(consume element)
+            _buffer.push.back(consume element)
         }
     }
 
@@ -98,9 +98,9 @@ extension Queue.DoubleEnded where Element: ~Copyable {
         guard !isEmpty else { return nil }
         switch position {
         case .front:
-            return _buffer.popFront()
+            return _buffer.pop.front()
         case .back:
-            return _buffer.popBack()
+            return _buffer.pop.back()
         }
     }
 
@@ -117,7 +117,7 @@ extension Queue.DoubleEnded where Element: ~Copyable {
     /// - Complexity: O(n)
     @inlinable
     public mutating func clear(keepingCapacity: Bool = true) {
-        _buffer.removeAll()
+        _buffer.remove.all()
         if !keepingCapacity {
             _buffer = Buffer<Element>.Ring(minimumCapacity: .zero)
         }
@@ -168,9 +168,9 @@ extension Queue.DoubleEnded where Element: Copyable {
     public mutating func push(_ element: Element, to position: Position) {
         switch position {
         case .front:
-            _buffer.pushFront(element)
+            _buffer.push.front(element)
         case .back:
-            _buffer.pushBack(element)
+            _buffer.push.back(element)
         }
     }
 
@@ -180,9 +180,9 @@ extension Queue.DoubleEnded where Element: Copyable {
         guard !isEmpty else { return nil }
         switch position {
         case .front:
-            return _buffer.popFront()
+            return _buffer.pop.front()
         case .back:
-            return _buffer.popBack()
+            return _buffer.pop.back()
         }
     }
 
@@ -195,7 +195,7 @@ extension Queue.DoubleEnded where Element: Copyable {
     /// Removes all elements (CoW-aware).
     @inlinable
     public mutating func clear(keepingCapacity: Bool = true) {
-        _buffer.removeAll()
+        _buffer.remove.all()
         if !keepingCapacity {
             _buffer = Buffer<Element>.Ring(minimumCapacity: .zero)
         }
@@ -207,9 +207,9 @@ extension Queue.DoubleEnded where Element: Copyable {
         guard !isEmpty else { return nil }
         switch position {
         case .front:
-            return _buffer.peekFront
+            return _buffer.peek.front
         case .back:
-            return _buffer.peekBack
+            return _buffer.peek.back
         }
     }
 
@@ -250,9 +250,9 @@ extension Queue.DoubleEnded.Fixed where Element: ~Copyable {
         guard !isFull else { throw .overflow }
         switch position {
         case .front:
-            _ = _buffer.pushFront(consume element)
+            _buffer.push.front(consume element)
         case .back:
-            _ = _buffer.pushBack(consume element)
+            _buffer.push.back(consume element)
         }
     }
 
@@ -262,9 +262,9 @@ extension Queue.DoubleEnded.Fixed where Element: ~Copyable {
         guard !isEmpty else { return nil }
         switch position {
         case .front:
-            return _buffer.popFront()
+            return _buffer.pop.front()
         case .back:
-            return _buffer.popBack()
+            return _buffer.pop.back()
         }
     }
 
@@ -292,7 +292,7 @@ extension Queue.DoubleEnded.Fixed where Element: ~Copyable {
     /// Removes all elements from the deque.
     @inlinable
     public mutating func clear() {
-        _buffer.removeAll()
+        _buffer.remove.all()
     }
 
     /// Calls the given closure for each element.
@@ -320,9 +320,9 @@ extension Queue.DoubleEnded.Fixed where Element: Copyable {
         guard !isFull else { throw .overflow }
         switch position {
         case .front:
-            _ = _buffer.pushFront(element)
+            _buffer.push.front(element)
         case .back:
-            _ = _buffer.pushBack(element)
+            _buffer.push.back(element)
         }
     }
 
@@ -332,9 +332,9 @@ extension Queue.DoubleEnded.Fixed where Element: Copyable {
         guard !isEmpty else { return nil }
         switch position {
         case .front:
-            return _buffer.popFront()
+            return _buffer.pop.front()
         case .back:
-            return _buffer.popBack()
+            return _buffer.pop.back()
         }
     }
 
@@ -347,7 +347,7 @@ extension Queue.DoubleEnded.Fixed where Element: Copyable {
     /// Clears all elements (CoW-aware).
     @inlinable
     public mutating func clear() {
-        _buffer.removeAll()
+        _buffer.remove.all()
     }
 
     /// Returns the element at the specified end without removing it.
@@ -356,9 +356,9 @@ extension Queue.DoubleEnded.Fixed where Element: Copyable {
         guard !isEmpty else { return nil }
         switch position {
         case .front:
-            return _buffer.peekFront
+            return _buffer.peek.front
         case .back:
-            return _buffer.peekBack
+            return _buffer.peek.back
         }
     }
 }
@@ -387,9 +387,9 @@ extension Queue.DoubleEnded.Static {
         guard !isFull else { throw .overflow }
         switch position {
         case .front:
-            _ = _buffer.pushFront(consume element)
+            _buffer.push.front(consume element)
         case .back:
-            _ = _buffer.pushBack(consume element)
+            _buffer.push.back(consume element)
         }
     }
 
@@ -399,9 +399,9 @@ extension Queue.DoubleEnded.Static {
         guard !isEmpty else { return nil }
         switch position {
         case .front:
-            return _buffer.popFront()
+            return _buffer.pop.front()
         case .back:
-            return _buffer.popBack()
+            return _buffer.pop.back()
         }
     }
 
@@ -429,7 +429,7 @@ extension Queue.DoubleEnded.Static {
     /// Removes all elements.
     @inlinable
     public mutating func clear() {
-        _buffer.removeAll()
+        _buffer.remove.all()
     }
 
     /// Calls the given closure for each element.
@@ -458,9 +458,9 @@ extension Queue.DoubleEnded.Small {
     ) {
         switch position {
         case .front:
-            _buffer.pushFront(consume element)
+            _buffer.push.front(consume element)
         case .back:
-            _buffer.pushBack(consume element)
+            _buffer.push.back(consume element)
         }
     }
 
@@ -470,9 +470,9 @@ extension Queue.DoubleEnded.Small {
         guard !isEmpty else { return nil }
         switch position {
         case .front:
-            return _buffer.popFront()
+            return _buffer.pop.front()
         case .back:
-            return _buffer.popBack()
+            return _buffer.pop.back()
         }
     }
 
@@ -500,7 +500,7 @@ extension Queue.DoubleEnded.Small {
     /// Removes all elements.
     @inlinable
     public mutating func clear() {
-        _buffer.removeAll()
+        _buffer.remove.all()
     }
 
     /// Calls the given closure for each element.

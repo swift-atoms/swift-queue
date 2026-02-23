@@ -39,7 +39,7 @@ extension Queue.Small where Element: ~Copyable {
     /// - Complexity: O(1) amortized. O(n) when spilling from inline to heap.
     @inlinable
     public mutating func enqueue(_ element: consuming Element) {
-        _buffer.pushBack(consume element)
+        _buffer.push.back(consume element)
     }
 
     /// Dequeues and returns the front element, or nil if empty.
@@ -51,7 +51,7 @@ extension Queue.Small where Element: ~Copyable {
         guard !_buffer.isEmpty else {
             return nil
         }
-        return _buffer.popFront()
+        return _buffer.pop.front()
     }
 
     /// Removes all elements from the queue.
@@ -61,7 +61,7 @@ extension Queue.Small where Element: ~Copyable {
     /// - Complexity: O(n) where n is the number of elements.
     @inlinable
     public mutating func clear(keepingCapacity: Bool = true) {
-        _buffer.removeAll()
+        _buffer.remove.all()
         if !keepingCapacity {
             _buffer = Buffer<Element>.Ring.Small<inlineCapacity>()
         }
@@ -97,7 +97,7 @@ extension Queue.Small where Element: Copyable {
         guard !_buffer.isEmpty else {
             return nil
         }
-        return _buffer.peekFront
+        return _buffer.peek.front
     }
 }
 

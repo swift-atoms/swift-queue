@@ -37,7 +37,7 @@ extension Queue where Element: ~Copyable {
     /// - Complexity: O(1) amortized
     @inlinable
     public mutating func enqueue(_ element: consuming Element) {
-        _buffer.pushBack(consume element)
+        _buffer.push.back(consume element)
     }
 
     /// Dequeues and returns the front element, or nil if empty.
@@ -49,7 +49,7 @@ extension Queue where Element: ~Copyable {
         guard !_buffer.isEmpty else {
             return nil
         }
-        return _buffer.popFront()
+        return _buffer.pop.front()
     }
 
     /// Removes all elements from the queue.
@@ -59,7 +59,7 @@ extension Queue where Element: ~Copyable {
     /// - Complexity: O(n) where n is the number of elements.
     @inlinable
     public mutating func clear(keepingCapacity: Bool = true) {
-        _buffer.removeAll()
+        _buffer.remove.all()
 
         if !keepingCapacity {
             _buffer = Buffer<Element>.Ring(minimumCapacity: .zero)
