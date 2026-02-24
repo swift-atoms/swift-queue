@@ -320,6 +320,21 @@ extension Queue.DoubleEnded.Fixed: Sequence.Drain.`Protocol` where Element: ~Cop
     }
 }
 
+// MARK: - Fixed Conditional Drain (~Copyable)
+
+extension Queue.DoubleEnded.Fixed where Element: ~Copyable {
+    /// Drains elements front-to-back while the predicate returns true.
+    @inlinable
+    public mutating func drain(
+        while predicate: (borrowing Element) -> Bool,
+        _ body: (consuming Element) -> Void
+    ) {
+        while peek(at: .front, predicate) ?? false {
+            body(pop(from: .front)!)
+        }
+    }
+}
+
 // MARK: - Fixed Copy-on-Write (Copyable)
 
 extension Queue.DoubleEnded.Fixed where Element: Copyable {

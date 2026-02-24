@@ -75,6 +75,21 @@ extension Queue.Linked.Inline where Element: Copyable {
     }
 }
 
+// MARK: - Queue.Linked.Inline Conditional Drain
+
+extension Queue.Linked.Inline where Element: Copyable {
+    /// Drains elements in FIFO order while the predicate returns true.
+    @inlinable
+    public mutating func drain(
+        while predicate: (borrowing Element) -> Bool,
+        _ body: (consuming Element) -> Void
+    ) {
+        while let element = peek(), predicate(element) {
+            body(dequeue()!)
+        }
+    }
+}
+
 // MARK: - Queue.Linked.Inline ForEach
 
 extension Queue.Linked.Inline where Element: Copyable {
@@ -158,6 +173,21 @@ extension Queue.Linked.Small where Element: Copyable {
     /// - Complexity: O(1)
     public func peek() -> Element? {
         _storage.first
+    }
+}
+
+// MARK: - Queue.Linked.Small Conditional Drain
+
+extension Queue.Linked.Small where Element: Copyable {
+    /// Drains elements in FIFO order while the predicate returns true.
+    @inlinable
+    public mutating func drain(
+        while predicate: (borrowing Element) -> Bool,
+        _ body: (consuming Element) -> Void
+    ) {
+        while let element = peek(), predicate(element) {
+            body(dequeue()!)
+        }
     }
 }
 

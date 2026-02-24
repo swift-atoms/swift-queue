@@ -107,6 +107,22 @@ extension Queue.Fixed: Sequence.Drain.`Protocol` where Element: Copyable {
     }
 }
 
+// MARK: - Conditional Drain
+
+extension Queue.Fixed where Element: Copyable {
+    /// Drains elements in FIFO order while the predicate returns true.
+    @inlinable
+    public mutating func drain(
+        while predicate: (borrowing Element) -> Bool,
+        _ body: (consuming Element) -> Void
+    ) {
+        makeUnique()
+        while let element = peek(), predicate(element) {
+            body(dequeue()!)
+        }
+    }
+}
+
 // ============================================================================
 // MARK: - Drain Property Accessor
 // ============================================================================

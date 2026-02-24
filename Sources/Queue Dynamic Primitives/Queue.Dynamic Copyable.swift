@@ -184,6 +184,32 @@ extension Queue: Sequence.Drain.`Protocol` where Element: Copyable {
     }
 }
 
+// MARK: - Conditional Drain
+
+extension Queue where Element: Copyable {
+    /// Drains elements in FIFO order while the predicate returns true.
+    ///
+    /// Repeatedly peeks at the front element; if the predicate returns true,
+    /// dequeues (consumes) the element and passes it to body; if false, stops.
+    /// The queue survives with remaining elements intact.
+    ///
+    /// - Parameters:
+    ///   - predicate: A closure that receives a borrowed reference to the front element.
+    ///     Return `true` to drain it, `false` to stop.
+    ///   - body: A closure that receives each drained element with ownership.
+    /// - Complexity: O(k) where k is the number of elements drained.
+    @inlinable
+    public mutating func drain(
+        while predicate: (borrowing Element) -> Bool,
+        _ body: (consuming Element) -> Void
+    ) {
+        makeUnique()
+        while let element = peek(), predicate(element) {
+            body(dequeue()!)
+        }
+    }
+}
+
 // ============================================================================
 // MARK: - Drain Property Accessor
 // ============================================================================

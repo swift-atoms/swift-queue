@@ -75,6 +75,22 @@ extension Queue.DoubleEnded: Sequence.Drain.`Protocol` where Element: Copyable {
     }
 }
 
+// MARK: Conditional Drain
+
+extension Queue.DoubleEnded where Element: Copyable {
+    /// Drains elements front-to-back while the predicate returns true.
+    @inlinable
+    public mutating func drain(
+        while predicate: (borrowing Element) -> Bool,
+        _ body: (consuming Element) -> Void
+    ) {
+        makeUnique()
+        while let element = peek(at: .front), predicate(element) {
+            body(pop(from: .front)!)
+        }
+    }
+}
+
 // MARK: Drain Property Accessor
 
 extension Queue.DoubleEnded where Element: Copyable {
@@ -208,6 +224,22 @@ extension Queue.DoubleEnded.Fixed where Element: Copyable {
         makeUnique()
         while let element = pop(from: .front) {
             body(element)
+        }
+    }
+}
+
+// MARK: Fixed Conditional Drain (Copyable)
+
+extension Queue.DoubleEnded.Fixed where Element: Copyable {
+    /// Drains elements front-to-back while the predicate returns true (CoW-aware).
+    @inlinable
+    public mutating func drain(
+        while predicate: (borrowing Element) -> Bool,
+        _ body: (consuming Element) -> Void
+    ) {
+        makeUnique()
+        while let element = peek(at: .front), predicate(element) {
+            body(pop(from: .front)!)
         }
     }
 }
@@ -376,6 +408,21 @@ extension Queue.DoubleEnded.Static: Sequence.Drain.`Protocol` where Element: Cop
     }
 }
 
+// MARK: Static Conditional Drain
+
+extension Queue.DoubleEnded.Static where Element: Copyable {
+    /// Drains elements front-to-back while the predicate returns true.
+    @inlinable
+    public mutating func drain(
+        while predicate: (borrowing Element) -> Bool,
+        _ body: (consuming Element) -> Void
+    ) {
+        while peek(at: .front, predicate) ?? false {
+            body(pop(from: .front)!)
+        }
+    }
+}
+
 // MARK: Drain Property Accessor
 
 extension Queue.DoubleEnded.Static where Element: Copyable {
@@ -486,6 +533,21 @@ extension Queue.DoubleEnded.Small: Sequence.Drain.`Protocol` where Element: Copy
     public mutating func drain(_ body: (consuming Element) -> Void) {
         while let element = pop(from: .front) {
             body(element)
+        }
+    }
+}
+
+// MARK: Small Conditional Drain
+
+extension Queue.DoubleEnded.Small where Element: Copyable {
+    /// Drains elements front-to-back while the predicate returns true.
+    @inlinable
+    public mutating func drain(
+        while predicate: (borrowing Element) -> Bool,
+        _ body: (consuming Element) -> Void
+    ) {
+        while peek(at: .front, predicate) ?? false {
+            body(pop(from: .front)!)
         }
     }
 }

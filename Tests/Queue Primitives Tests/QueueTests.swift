@@ -542,6 +542,61 @@ struct QueueSmallTests {
     }
 }
 
+// MARK: - drain(while:_:) Tests
+
+@Suite("drain(while:_:)")
+struct DrainWhileTests {
+    @Test("Queue drains some elements in FIFO order")
+    func queueDrainWhileSome() {
+        var q = Queue<Int>()
+        for e in [1, 2, 3, 4, 5] { q.enqueue(e) }
+        var drained: [Int] = []
+        q.drain(while: { $0 < 4 }) { drained.append($0) }
+        #expect(drained == [1, 2, 3])
+        #expect(Int(bitPattern: q.count) == 2)
+    }
+
+    @Test("Queue drains zero elements")
+    func queueDrainWhileNone() {
+        var q = Queue<Int>()
+        for e in [1, 2, 3] { q.enqueue(e) }
+        var drained: [Int] = []
+        q.drain(while: { $0 > 100 }) { drained.append($0) }
+        #expect(drained.isEmpty)
+        #expect(Int(bitPattern: q.count) == 3)
+    }
+
+    @Test("Queue drains all elements")
+    func queueDrainWhileAll() {
+        var q = Queue<Int>()
+        for e in [1, 2, 3] { q.enqueue(e) }
+        var drained: [Int] = []
+        q.drain(while: { _ in true }) { drained.append($0) }
+        #expect(drained == [1, 2, 3])
+        #expect(q.isEmpty)
+    }
+
+    @Test("DoubleEnded drains some elements front-to-back")
+    func dequeDrainWhileSome() {
+        var q = Queue<Int>.DoubleEnded()
+        for e in [1, 2, 3, 4, 5] { q.push(e, to: .back) }
+        var drained: [Int] = []
+        q.drain(while: { $0 < 4 }) { drained.append($0) }
+        #expect(drained == [1, 2, 3])
+        #expect(Int(bitPattern: q.count) == 2)
+    }
+
+    @Test("DoubleEnded.Fixed drains some elements")
+    func dequeFixedDrainWhileSome() throws {
+        var q = Queue<Int>.DoubleEnded.Fixed(capacity: 10)
+        for e in [1, 2, 3, 4, 5] { try q.push(e, to: .back) }
+        var drained: [Int] = []
+        q.drain(while: { $0 < 4 }) { drained.append($0) }
+        #expect(drained == [1, 2, 3])
+        #expect(Int(bitPattern: q.count) == 2)
+    }
+}
+
 // MARK: - Queue.Small Move-Only Tests
 
 @Suite("Queue.Small Move-Only")
