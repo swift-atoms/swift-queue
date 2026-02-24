@@ -195,11 +195,11 @@ extension Queue.DoubleEnded.Fixed: Sequence.Clearable where Element: Copyable {
 
 // MARK: Sequence.Drain.Protocol
 
-extension Queue.DoubleEnded.Fixed: Sequence.Drain.`Protocol` where Element: Copyable {
-    /// Drains all elements in front-to-back order, passing each to the closure with ownership.
+extension Queue.DoubleEnded.Fixed where Element: Copyable {
+    /// Drains all elements in front-to-back order (CoW-aware).
     ///
-    /// After this method returns, the deque is empty but still usable.
-    /// The capacity remains unchanged.
+    /// Ensures unique storage before draining. Overrides the base (~Copyable)
+    /// drain with copy-on-write preparation per [IMPL-025].
     ///
     /// - Parameter body: A closure that receives each drained element with ownership.
     /// - Complexity: O(n) where n is the number of elements.

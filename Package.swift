@@ -21,6 +21,10 @@ let package = Package(
             targets: ["Queue DoubleEnded Primitives"]
         ),
         .library(
+            name: "Queue DoubleEnded Primitives",
+            targets: ["Queue DoubleEnded Primitives"]
+        ),
+        .library(
             name: "Queue Primitives Test Support",
             targets: ["Queue Primitives Test Support"]
         ),
