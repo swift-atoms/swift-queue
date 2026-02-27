@@ -20,45 +20,23 @@ extension Queue.Fixed where Element: Copyable {
     /// An iterator over the elements of a fixed-capacity queue.
     public struct Iterator: Sequence.Iterator.`Protocol`, IteratorProtocol {
         @usableFromInline
-        let _buffer: Buffer<Element>.Ring.Bounded
+        var _inner: Buffer<Element>.Ring.Bounded.Iterator
 
         @usableFromInline
-        var _logicalIndex: Index_Primitives.Index<Element>.Count
-
-        @usableFromInline
-        let _count: Index_Primitives.Index<Element>.Count
-
-        @usableFromInline
-        var _spanBuffer: [Element] = []
-
-        @usableFromInline
-        init(buffer: Buffer<Element>.Ring.Bounded) {
-            self._buffer = buffer
-            self._logicalIndex = .zero
-            self._count = buffer.count
+        init(_inner: Buffer<Element>.Ring.Bounded.Iterator) {
+            self._inner = _inner
         }
 
         @_lifetime(&self)
         @inlinable
         public mutating func nextSpan(maximumCount: Cardinal) -> Span<Element> {
-            _spanBuffer.removeAll(keepingCapacity: true)
-            var remaining = Int(maximumCount.rawValue)
-            while remaining > 0, _logicalIndex < _count {
-                let index = _logicalIndex.map(Ordinal.init)
-                _logicalIndex += .one
-                _spanBuffer.append(_buffer[index])
-                remaining -= 1
-            }
-            return _spanBuffer.span
+            _inner.nextSpan(maximumCount: maximumCount)
         }
 
         @_lifetime(self: immortal)
         @inlinable
         public mutating func next() -> Element? {
-            guard _logicalIndex < _count else { return nil }
-            let index = _logicalIndex.map(Ordinal.init)
-            _logicalIndex += .one
-            return _buffer[index]
+            _inner.next()
         }
     }
 }
@@ -75,7 +53,7 @@ extension Queue.Fixed: Sequence.`Protocol` where Element: Copyable {
     /// Elements are yielded from front (oldest) to back (newest).
     @inlinable
     public borrowing func makeIterator() -> Iterator {
-        Iterator(buffer: _buffer)
+        Iterator(_inner: _buffer.makeIterator())
     }
 
     /// Returns the count as the underestimated count since we know the exact size.

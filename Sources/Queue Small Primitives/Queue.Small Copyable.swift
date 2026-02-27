@@ -23,47 +23,27 @@ public import Buffer_Primitives
 extension Queue.Small where Element: Copyable {
     /// Iterator for Queue.Small elements.
     ///
-    /// Copies elements to a `Buffer.Linear` snapshot for safe iteration,
+    /// Delegates to `Buffer.Linear.Iterator` over a snapshot for safe iteration,
     /// avoiding pointer escape issues with inline storage.
     public struct Iterator: Sequence.Iterator.`Protocol`, IteratorProtocol {
         @usableFromInline
-        let _buffer: Buffer<Element>.Linear
+        var _inner: Buffer<Element>.Linear.Iterator
 
         @usableFromInline
-        let _end: Index_Primitives.Index<Element>.Count
-
-        @usableFromInline
-        var _position: Index_Primitives.Index<Element> = .zero
-
-        @usableFromInline
-        var _spanBuffer: [Element] = []
-
-        @usableFromInline
-        init(_buffer: Buffer<Element>.Linear) {
-            self._buffer = _buffer
-            self._end = _buffer.count
+        init(_inner: Buffer<Element>.Linear.Iterator) {
+            self._inner = _inner
         }
 
         @_lifetime(&self)
         @inlinable
         public mutating func nextSpan(maximumCount: Cardinal) -> Span<Element> {
-            _spanBuffer.removeAll(keepingCapacity: true)
-            var remaining = Int(maximumCount.rawValue)
-            while remaining > 0, _position < _end {
-                _spanBuffer.append(_buffer[_position])
-                _position += .one
-                remaining -= 1
-            }
-            return _spanBuffer.span
+            _inner.nextSpan(maximumCount: maximumCount)
         }
 
         @_lifetime(self: immortal)
         @inlinable
         public mutating func next() -> Element? {
-            guard _position < _end else { return nil }
-            let element = _buffer[_position]
-            _position += .one
-            return element
+            _inner.next()
         }
     }
 }
@@ -89,7 +69,7 @@ extension Queue.Small: Sequence.`Protocol` where Element: Copyable {
         _buffer.forEach { element in
             snapshot.append(element)
         }
-        return Iterator(_buffer: snapshot)
+        return Iterator(_inner: snapshot.makeIterator())
     }
 
     /// Returns the count as the underestimated count since we know the exact size.
