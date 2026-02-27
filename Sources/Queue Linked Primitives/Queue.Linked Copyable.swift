@@ -89,7 +89,13 @@ extension Queue.Linked: Swift.Sequence where Element: Copyable {
             self._inner = inner
         }
 
-        /// Advances to the next element and returns it, or nil if no next element exists.
+        @_lifetime(&self)
+        @inlinable
+        public mutating func nextSpan(maximumCount: Cardinal) -> Span<Element> {
+            _inner.nextSpan(maximumCount: maximumCount)
+        }
+
+        @_lifetime(self: immortal)
         @inlinable
         public mutating func next() -> Element? {
             _inner.next()

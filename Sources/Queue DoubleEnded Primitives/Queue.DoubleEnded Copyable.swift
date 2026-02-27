@@ -159,12 +159,30 @@ extension Queue.DoubleEnded.Fixed where Element: Copyable {
         let _count: Index_Primitives.Index<Element>.Count
 
         @usableFromInline
+        var _spanBuffer: [Element] = []
+
+        @usableFromInline
         init(buffer: Buffer<Element>.Ring.Bounded) {
             self._buffer = buffer
             self._logicalIndex = .zero
             self._count = buffer.count
         }
 
+        @_lifetime(&self)
+        @inlinable
+        public mutating func nextSpan(maximumCount: Cardinal) -> Span<Element> {
+            _spanBuffer.removeAll(keepingCapacity: true)
+            var remaining = Int(maximumCount.rawValue)
+            while remaining > 0, _logicalIndex < _count {
+                let index = _logicalIndex.map(Ordinal.init)
+                _logicalIndex += .one
+                _spanBuffer.append(_buffer[index])
+                remaining -= 1
+            }
+            return _spanBuffer.span
+        }
+
+        @_lifetime(self: immortal)
         @inlinable
         public mutating func next() -> Element? {
             guard _logicalIndex < _count else { return nil }
@@ -337,11 +355,28 @@ extension Queue.DoubleEnded.Static where Element: Copyable {
         var _position: Index_Primitives.Index<Element> = .zero
 
         @usableFromInline
+        var _spanBuffer: [Element] = []
+
+        @usableFromInline
         init(_buffer: Buffer<Element>.Linear) {
             self._buffer = _buffer
             self._end = _buffer.count
         }
 
+        @_lifetime(&self)
+        @inlinable
+        public mutating func nextSpan(maximumCount: Cardinal) -> Span<Element> {
+            _spanBuffer.removeAll(keepingCapacity: true)
+            var remaining = Int(maximumCount.rawValue)
+            while remaining > 0, _position < _end {
+                _spanBuffer.append(_buffer[_position])
+                _position += .one
+                remaining -= 1
+            }
+            return _spanBuffer.span
+        }
+
+        @_lifetime(self: immortal)
         @inlinable
         public mutating func next() -> Element? {
             guard _position < _end else { return nil }
@@ -464,11 +499,28 @@ extension Queue.DoubleEnded.Small where Element: Copyable {
         var _position: Index_Primitives.Index<Element> = .zero
 
         @usableFromInline
+        var _spanBuffer: [Element] = []
+
+        @usableFromInline
         init(_buffer: Buffer<Element>.Linear) {
             self._buffer = _buffer
             self._end = _buffer.count
         }
 
+        @_lifetime(&self)
+        @inlinable
+        public mutating func nextSpan(maximumCount: Cardinal) -> Span<Element> {
+            _spanBuffer.removeAll(keepingCapacity: true)
+            var remaining = Int(maximumCount.rawValue)
+            while remaining > 0, _position < _end {
+                _spanBuffer.append(_buffer[_position])
+                _position += .one
+                remaining -= 1
+            }
+            return _spanBuffer.span
+        }
+
+        @_lifetime(self: immortal)
         @inlinable
         public mutating func next() -> Element? {
             guard _position < _end else { return nil }
