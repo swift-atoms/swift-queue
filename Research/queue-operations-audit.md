@@ -356,7 +356,7 @@ Does swift-queue-primitives provide the canonical operations expected of the Que
 | removeAll | `mutating func removeAll()` (Copyable) | O(n) | `Queue.DoubleEnded Copyable.swift:55` |
 | subscript | `subscript(index: Queue.Index) -> Element` (Copyable) | O(1) | `Queue.DoubleEnded Copyable.swift:27` |
 | init(reservingCapacity:) | `init(reservingCapacity capacity: Index.Count)` | O(1) | `Queue.swift:338` |
-| init(_ elements:) | `init<S: Sequence>(_ elements: S)` (Copyable) | O(n) | `Queue.DoubleEnded.swift:599` |
+| init(_ elements:) | `init<S: Swift.Sequence>(_ elements: S)` (Copyable) | O(n) | `Queue.DoubleEnded.swift:599` |
 
 **Property.View positional accessors** (Copyable elements):
 

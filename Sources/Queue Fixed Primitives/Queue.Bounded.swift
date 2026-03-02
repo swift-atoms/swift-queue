@@ -59,6 +59,21 @@ extension Queue.Fixed where Element: ~Copyable {
         return _buffer.pop.front()
     }
 
+    /// Pushes an element to the back of the queue.
+    ///
+    /// Returns `nil` on success, or the rejected element if the queue is full.
+    /// Use this variant when the caller needs the element back on overflow —
+    /// essential for `~Copyable` resource types where losing the element is a
+    /// correctness bug.
+    ///
+    /// - Parameter element: The element to push (ownership transferred on success).
+    /// - Returns: `nil` if successfully pushed, or the rejected element if full.
+    /// - Complexity: O(1)
+    @inlinable
+    public mutating func push(_ element: consuming Element) -> Element? {
+        _buffer.push.back(element)
+    }
+
     /// Removes all elements from the queue.
     ///
     /// The capacity remains unchanged.
@@ -95,6 +110,18 @@ extension Queue.Fixed where Element: Copyable {
             return nil
         }
         return _buffer.pop.front()
+    }
+
+    /// Pushes an element to the back of the queue (CoW-aware).
+    ///
+    /// Returns `nil` on success, or the rejected element if the queue is full.
+    ///
+    /// - Parameter element: The element to push.
+    /// - Returns: `nil` if successfully pushed, or the rejected element if full.
+    /// - Complexity: O(1), O(n) if copy triggered
+    @inlinable
+    public mutating func push(_ element: Element) -> Element? {
+        _buffer.push.back(element)
     }
 
     /// Removes all elements from the queue (CoW-aware).
@@ -137,6 +164,24 @@ extension Queue.Fixed where Element: ~Copyable {
     @inlinable
     public func forEach(_ body: (borrowing Element) -> Void) {
         _buffer.forEach(body)
+    }
+}
+
+// MARK: - Sequence.Drain.Protocol (~Copyable)
+
+extension Queue.Fixed: Sequence.Drain.`Protocol` where Element: ~Copyable {
+    /// Drains all elements in FIFO order, passing each to the closure with ownership.
+    ///
+    /// After this method returns, the queue is empty but still usable.
+    /// The capacity remains unchanged.
+    ///
+    /// - Parameter body: A closure that receives each drained element with ownership.
+    /// - Complexity: O(n) where n is the number of elements.
+    @inlinable
+    public mutating func drain(_ body: (consuming Element) -> Void) {
+        while let element = dequeue() {
+            body(element)
+        }
     }
 }
 

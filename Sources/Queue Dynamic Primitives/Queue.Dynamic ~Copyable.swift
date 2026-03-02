@@ -130,3 +130,20 @@ extension Queue where Element: ~Copyable {
         _buffer.compact()
     }
 }
+
+// MARK: - Sequence.Drain.Protocol (~Copyable)
+
+extension Queue: Sequence.Drain.`Protocol` where Element: ~Copyable {
+    /// Drains all elements in FIFO order, passing each to the closure with ownership.
+    ///
+    /// After this method returns, the queue is empty but still usable.
+    ///
+    /// - Parameter body: A closure that receives each drained element with ownership.
+    /// - Complexity: O(n) where n is the number of elements.
+    @inlinable
+    public mutating func drain(_ body: (consuming Element) -> Void) {
+        while let element = dequeue() {
+            body(element)
+        }
+    }
+}

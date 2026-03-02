@@ -86,7 +86,7 @@ extension Queue.Fixed: Sequence.Clearable where Element: Copyable {
 // MARK: - Sequence.Drain.Protocol Conformance
 // ============================================================================
 
-extension Queue.Fixed: Sequence.Drain.`Protocol` where Element: Copyable {
+extension Queue.Fixed where Element: Copyable {
     /// Drains all elements in FIFO order, passing each to the closure with ownership.
     ///
     /// After this method returns, the queue is empty but still usable.

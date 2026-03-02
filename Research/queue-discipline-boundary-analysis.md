@@ -342,7 +342,7 @@ For each public API member across all source files in `queue-primitives`, classi
 | `CustomStringConvertible` on all non-Dynamic variants | Ergonomics | Low |
 | `ExpressibleByArrayLiteral` on `Queue.Fixed`, `Queue.Linked` | Syntax sugar | Low |
 | `Collection` conformances on `Queue.Fixed` | Protocol | Low -- Fixed queue is less commonly iterated by index |
-| `init<S: Sequence>(_:)` on `Queue` (dynamic) | Consumer ergonomics | Low |
+| `init<S: Swift.Sequence>(_:)` on `Queue` (dynamic) | Consumer ergonomics | Low |
 
 ---
 
