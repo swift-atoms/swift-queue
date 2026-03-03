@@ -9,11 +9,6 @@ applies_to: [swift-queue-primitives]
 normative: false
 ---
 -->
-
-@Metadata {
-    @TitleHeading("Queue Primitives")
-}
-
 Design decisions, implementation patterns, and lessons learned specific to this package.
 
 ## Overview
@@ -110,8 +105,6 @@ This reinforces the value of the [EXP-004a] Incremental Construction methodology
 
 ---
 
-## Topics
+## Related
 
-### Related Documents
-
-- <doc:Queue>
+- Queue
