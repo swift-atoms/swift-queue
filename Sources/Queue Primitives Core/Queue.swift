@@ -85,77 +85,6 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
     @usableFromInline
     package var _buffer: Buffer<Element>.Ring
 
-    // MARK: - Static (declared here to fix Swift compiler bug with ~Copyable in extensions)
-
-    /// A fixed-capacity, inline-storage FIFO queue with compile-time capacity.
-    ///
-    /// `Queue.Static` stores elements directly within the struct's memory layout,
-    /// requiring no heap allocation. The capacity is specified as a compile-time
-    /// generic parameter. Uses ring buffer semantics for O(1) operations.
-    ///
-    /// - Note: This type is declared inside `Queue` (not in an extension) due to a
-    ///   Swift compiler bug where nested types with value generic parameters declared
-    ///   in extensions do not properly inherit `~Copyable` constraints from the outer type.
-    public struct Static<let capacity: Int>: ~Copyable {
-        @usableFromInline
-        package var _buffer: Buffer<Element>.Ring.Inline<capacity>
-
-        /// Creates an empty inline queue.
-        @inlinable
-        public init() {
-            self._buffer = Buffer<Element>.Ring.Inline<capacity>()
-        }
-
-        // deinit: Buffer.Ring.Inline handles element cleanup
-    }
-
-    // MARK: - Small (SmallVec-style: inline then spill to heap)
-
-    /// A FIFO queue with small-buffer optimization (SmallVec pattern).
-    ///
-    /// `Queue.Small` stores up to `inlineCapacity` elements in inline storage,
-    /// then automatically spills to heap storage when that capacity is exceeded.
-    /// This provides the performance benefits of inline storage for common cases
-    /// while supporting unbounded growth.
-    ///
-    /// ## Example
-    ///
-    /// ```swift
-    /// var queue = Queue<Int>.Small<4>()  // Inline up to 4 elements
-    /// queue.enqueue(1)  // Inline
-    /// queue.enqueue(2)  // Inline
-    /// queue.enqueue(3)  // Inline
-    /// queue.enqueue(4)  // Inline
-    /// queue.enqueue(5)  // Spills to heap, moves all elements
-    /// ```
-    ///
-    /// ## Non-Copyable
-    ///
-    /// `Queue.Small` is unconditionally `~Copyable` (move-only) because it requires
-    /// a deinitializer to clean up inline storage.
-    ///
-    /// - Note: This type is declared inside `Queue` (not in an extension) due to a
-    ///   Swift compiler bug where nested types with value generic parameters declared
-    ///   in extensions do not properly inherit `~Copyable` constraints from the outer type.
-    @safe
-    public struct Small<let inlineCapacity: Int>: ~Copyable {
-        @usableFromInline
-        package var _buffer: Buffer<Element>.Ring.Small<inlineCapacity>
-
-        /// Creates an empty small queue.
-        @inlinable
-        public init() {
-            self._buffer = Buffer<Element>.Ring.Small<inlineCapacity>()
-        }
-
-        // deinit: Buffer.Ring.Small delegates to Ring.Inline (inline case)
-        // or Storage.Heap (heap case) for element cleanup
-
-        /// Whether the queue is currently using heap storage.
-        @inlinable
-        public var isSpilled: Bool { _buffer.isSpilled }
-    }
-
     /// A fixed-capacity FIFO queue supporting move-only elements.
     ///
     /// `Queue.Fixed` allocates storage upfront and throws on overflow.
@@ -352,56 +281,6 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
             }
         }
 
-        // MARK: - Static (inline-storage double-ended queue)
-
-        /// Inline-storage double-ended queue with compile-time capacity.
-        ///
-        /// `Queue.DoubleEnded.Static` stores elements directly within the struct's memory layout,
-        /// requiring no heap allocation. The capacity is specified as a compile-time
-        /// generic parameter. Uses ring buffer semantics for O(1) operations at both ends.
-        ///
-        /// - Note: This type is declared inside `Queue.DoubleEnded` (not via typealias) for
-        ///   proper API organization after Swift compiler improvements.
-        public struct Static<let capacity: Int>: ~Copyable {
-            @usableFromInline
-            package var _buffer: Buffer<Element>.Ring.Inline<capacity>
-
-            /// Creates an empty inline double-ended queue.
-            @inlinable
-            public init() {
-                self._buffer = Buffer<Element>.Ring.Inline<capacity>()
-            }
-
-            // deinit: Buffer.Ring.Inline handles element cleanup
-        }
-
-        // MARK: - Small (small-buffer optimization double-ended queue)
-
-        /// Small-buffer optimization double-ended queue.
-        ///
-        /// `Queue.DoubleEnded.Small` stores up to `inlineCapacity` elements in inline storage,
-        /// then automatically spills to heap storage when that capacity is exceeded.
-        ///
-        /// - Note: This type is declared inside `Queue.DoubleEnded` (not via typealias) for
-        ///   proper API organization after Swift compiler improvements.
-        @safe
-        public struct Small<let inlineCapacity: Int>: ~Copyable {
-            @usableFromInline
-            package var _buffer: Buffer<Element>.Ring.Small<inlineCapacity>
-
-            /// Creates an empty small double-ended queue.
-            @inlinable
-            public init() {
-                self._buffer = Buffer<Element>.Ring.Small<inlineCapacity>()
-            }
-
-            // deinit: Buffer.Ring.Small delegates to Ring.Inline (inline case)
-            // or Storage.Heap (heap case) for element cleanup
-
-            /// Whether the deque is currently using heap storage.
-            @inlinable
-            public var isSpilled: Bool { _buffer.isSpilled }
-        }
     }
 
     /// Creates an empty queue.
@@ -566,17 +445,5 @@ extension Queue.DoubleEnded: @unchecked Sendable where Element: Sendable {}
 /// `Queue.DoubleEnded.Fixed` is `Sendable` when its elements are `Sendable`.
 extension Queue.DoubleEnded.Fixed: @unchecked Sendable where Element: Sendable {}
 
-/// `Queue.DoubleEnded.Static` is `Sendable` when its elements are `Sendable`.
-extension Queue.DoubleEnded.Static: @unchecked Sendable where Element: Sendable {}
-
-/// `Queue.DoubleEnded.Small` is `Sendable` when its elements are `Sendable`.
-extension Queue.DoubleEnded.Small: @unchecked Sendable where Element: Sendable {}
-
 /// `Queue.Fixed` is `Sendable` when its elements are `Sendable`.
 extension Queue.Fixed: @unchecked Sendable where Element: Sendable {}
-
-/// `Queue.Static` is `Sendable` when its elements are `Sendable`.
-extension Queue.Static: @unchecked Sendable where Element: Sendable {}
-
-/// `Queue.Small` is `Sendable` when its elements are `Sendable`.
-extension Queue.Small: @unchecked Sendable where Element: Sendable {}
