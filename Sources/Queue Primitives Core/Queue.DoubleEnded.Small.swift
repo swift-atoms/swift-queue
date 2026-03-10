@@ -30,8 +30,10 @@ extension Queue.DoubleEnded where Element: ~Copyable {
             self._buffer = Buffer<Element>.Ring.Small<inlineCapacity>()
         }
 
-        // deinit: Buffer.Ring.Small delegates to Ring.Inline (inline case)
-        // or Storage.Heap (heap case) for element cleanup
+        deinit {
+            // Buffer.Ring.Small delegates to Ring.Inline (inline case)
+            // or Storage.Heap (heap case) for element cleanup
+        }
 
         /// Whether the deque is currently using heap storage.
         @inlinable

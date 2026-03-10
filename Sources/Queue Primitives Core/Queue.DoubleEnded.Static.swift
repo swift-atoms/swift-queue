@@ -30,7 +30,9 @@ extension Queue.DoubleEnded where Element: ~Copyable {
             self._buffer = Buffer<Element>.Ring.Inline<capacity>()
         }
 
-        // deinit: Buffer.Ring.Inline handles element cleanup
+        deinit {
+            // Buffer.Ring.Inline handles element cleanup
+        }
     }
 }
 
