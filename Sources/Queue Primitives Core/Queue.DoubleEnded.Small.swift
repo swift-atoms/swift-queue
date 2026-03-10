@@ -24,6 +24,12 @@ extension Queue.DoubleEnded where Element: ~Copyable {
         @usableFromInline
         package var _buffer: Buffer<Element>.Ring.Small<inlineCapacity>
 
+        // WORKAROUND: Forces compiler to execute deinit body.
+        // TRACKING: swiftlang/swift #86652 variant (nested ~Copyable deinit chain)
+        // WHEN TO REMOVE: When the compiler correctly destroys ~Copyable structs
+        //      with cross-package value-generic stored properties.
+        private var _deinitWorkaround: AnyObject? = nil
+
         /// Creates an empty small double-ended queue.
         @inlinable
         public init() {
@@ -31,8 +37,11 @@ extension Queue.DoubleEnded where Element: ~Copyable {
         }
 
         deinit {
-            // Buffer.Ring.Small delegates to Ring.Inline (inline case)
-            // or Storage.Heap (heap case) for element cleanup
+            // WORKAROUND: Manually clean up elements via the mutating path.
+            // TRACKING: swiftlang/swift #86652 variant
+            unsafe withUnsafePointer(to: _buffer) { ptr in
+                unsafe UnsafeMutablePointer(mutating: ptr).pointee.remove.all()
+            }
         }
 
         /// Whether the deque is currently using heap storage.
