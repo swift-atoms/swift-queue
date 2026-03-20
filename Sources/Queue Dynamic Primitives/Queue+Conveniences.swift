@@ -55,7 +55,7 @@ extension Queue: RandomAccessCollection where Element: Copyable {
     public func index(_ i: Index, offsetBy distance: Int) -> Index {
         // Stdlib boundary: Collection protocol requires Int
         let raw = Int(bitPattern: i) + distance
-        return Index(__unchecked: (), Ordinal(UInt(bitPattern: raw)))
+        return Index(Ordinal(UInt(bitPattern: raw)))
     }
 
     @inlinable
@@ -68,7 +68,7 @@ extension Queue: RandomAccessCollection where Element: Copyable {
         } else {
             guard raw >= limitRaw else { return nil }
         }
-        return Index(__unchecked: (), Ordinal(UInt(bitPattern: raw)))
+        return Index(Ordinal(UInt(bitPattern: raw)))
     }
 }
 
