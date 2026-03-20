@@ -39,7 +39,8 @@ let package = Package(
         .package(path: "../swift-property-primitives"),
     ],
     targets: [
-        // Internal: Core types with ~Copyable support (type declarations only)
+
+        // MARK: - Core
         .target(
             name: "Queue Primitives Core",
             dependencies: [
@@ -52,7 +53,8 @@ let package = Package(
                 .product(name: "Property Primitives", package: "swift-property-primitives"),
             ]
         ),
-        // Per-variant modules: Operations separated from Core types
+
+        // MARK: - Dynamic
         .target(
             name: "Queue Dynamic Primitives",
             dependencies: [
@@ -61,6 +63,8 @@ let package = Package(
                 .product(name: "Input Primitives", package: "swift-input-primitives"),
             ]
         ),
+
+        // MARK: - Fixed
         .target(
             name: "Queue Fixed Primitives",
             dependencies: [
@@ -70,6 +74,8 @@ let package = Package(
                 .product(name: "Input Primitives", package: "swift-input-primitives"),
             ]
         ),
+
+        // MARK: - Static
         .target(
             name: "Queue Static Primitives",
             dependencies: [
@@ -78,6 +84,8 @@ let package = Package(
                 .product(name: "Input Primitives", package: "swift-input-primitives"),
             ]
         ),
+
+        // MARK: - Small
         .target(
             name: "Queue Small Primitives",
             dependencies: [
@@ -87,6 +95,8 @@ let package = Package(
                 .product(name: "Input Primitives", package: "swift-input-primitives"),
             ]
         ),
+
+        // MARK: - Linked
         .target(
             name: "Queue Linked Primitives",
             dependencies: [
@@ -94,6 +104,8 @@ let package = Package(
                 .product(name: "Collection Primitives", package: "swift-collection-primitives"),
             ]
         ),
+
+        // MARK: - DoubleEnded
         .target(
             name: "Queue DoubleEnded Primitives",
             dependencies: [
@@ -101,7 +113,8 @@ let package = Package(
                 .product(name: "Collection Primitives", package: "swift-collection-primitives"),
             ]
         ),
-        // Public: Re-exports Core and all variant modules for users
+
+        // MARK: - Umbrella
         .target(
             name: "Queue Primitives",
             dependencies: [
@@ -114,6 +127,8 @@ let package = Package(
                 "Queue DoubleEnded Primitives",
             ]
         ),
+
+        // MARK: - Test Support
         .target(
             name: "Queue Primitives Test Support",
             dependencies: [
@@ -122,6 +137,8 @@ let package = Package(
             ],
             path: "Tests/Support"
         ),
+
+        // MARK: - Tests
         .testTarget(
             name: "Queue Primitives Tests",
             dependencies: [
