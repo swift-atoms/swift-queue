@@ -48,21 +48,21 @@ extension Queue: RandomAccessCollection where Element: Copyable {
     @inlinable
     public func distance(from start: Index, to end: Index) -> Int {
         // Stdlib boundary: Collection protocol requires Int
-        Int(bitPattern: end.rawValue.rawValue) - Int(bitPattern: start.rawValue.rawValue)
+        Int(bitPattern: end) - Int(bitPattern: start)
     }
 
     @inlinable
     public func index(_ i: Index, offsetBy distance: Int) -> Index {
         // Stdlib boundary: Collection protocol requires Int
-        let raw = Int(bitPattern: i.rawValue.rawValue) + distance
+        let raw = Int(bitPattern: i) + distance
         return Index(__unchecked: (), Ordinal(UInt(bitPattern: raw)))
     }
 
     @inlinable
     public func index(_ i: Index, offsetBy distance: Int, limitedBy limit: Index) -> Index? {
         // Stdlib boundary: Collection protocol requires Int
-        let raw = Int(bitPattern: i.rawValue.rawValue) + distance
-        let limitRaw = Int(bitPattern: limit.rawValue.rawValue)
+        let raw = Int(bitPattern: i) + distance
+        let limitRaw = Int(bitPattern: limit)
         if distance >= 0 {
             guard raw <= limitRaw else { return nil }
         } else {
