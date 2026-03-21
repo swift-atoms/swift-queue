@@ -24,14 +24,13 @@ extension Queue.DoubleEnded where Element: ~Copyable {
         @usableFromInline
         package var _buffer: Buffer<Element>.Ring.Inline<capacity>
 
-        // WORKAROUND: Forces compiler to execute deinit body.
-        // WHY: Without a reference-typed stored property, the compiler silently
-        //      skips the deinit body for ~Copyable structs with cross-package
-        //      value-generic stored properties.
-        // TRACKING: swiftlang/swift #86652 variant (nested ~Copyable deinit chain)
-        // EXPERIMENT: swift-institute/Experiments/noncopyable-nested-deinit-chain/
-        // WHEN TO REMOVE: When the compiler correctly destroys ~Copyable structs
-        //      with cross-package value-generic stored properties.
+        // WORKAROUND: swiftlang/swift#86652 — @_rawLayout triviality misclassification.
+        // Forces compiler to recognize type as non-trivially destructible so deinit executes.
+        // COST: 8 bytes overhead per instance.
+        // REMOVAL TEST: swift-buffer-primitives/Experiments/rawlayout-access-level-trigger/
+        //   Build with `public` access under -O. If it passes, remove this field
+        //   and the manual cleanup in deinit.
+        // TRACKING: swift-buffer-primitives/Research/rawlayout-release-crash-investigation.md
         private var _deinitWorkaround: AnyObject? = nil
 
         /// Creates an empty inline double-ended queue.
