@@ -59,8 +59,6 @@ let package = Package(
             name: "Queue Dynamic Primitives",
             dependencies: [
                 "Queue Primitives Core",
-                .product(name: "Collection Primitives", package: "swift-collection-primitives"),
-                .product(name: "Input Primitives", package: "swift-input-primitives"),
             ]
         ),
 
@@ -70,8 +68,6 @@ let package = Package(
             dependencies: [
                 "Queue Primitives Core",
                 "Queue Dynamic Primitives",
-                .product(name: "Collection Primitives", package: "swift-collection-primitives"),
-                .product(name: "Input Primitives", package: "swift-input-primitives"),
             ]
         ),
 
@@ -80,8 +76,6 @@ let package = Package(
             name: "Queue Static Primitives",
             dependencies: [
                 "Queue Primitives Core",
-                .product(name: "Collection Primitives", package: "swift-collection-primitives"),
-                .product(name: "Input Primitives", package: "swift-input-primitives"),
             ]
         ),
 
@@ -91,8 +85,6 @@ let package = Package(
             dependencies: [
                 "Queue Primitives Core",
                 "Queue Dynamic Primitives",
-                .product(name: "Collection Primitives", package: "swift-collection-primitives"),
-                .product(name: "Input Primitives", package: "swift-input-primitives"),
             ]
         ),
 
@@ -101,7 +93,6 @@ let package = Package(
             name: "Queue Linked Primitives",
             dependencies: [
                 "Queue Primitives Core",
-                .product(name: "Collection Primitives", package: "swift-collection-primitives"),
             ]
         ),
 
@@ -110,7 +101,6 @@ let package = Package(
             name: "Queue DoubleEnded Primitives",
             dependencies: [
                 "Queue Primitives Core",
-                .product(name: "Collection Primitives", package: "swift-collection-primitives"),
             ]
         ),
 
