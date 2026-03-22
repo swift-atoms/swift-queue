@@ -252,6 +252,8 @@ extension Queue.DoubleEnded.Fixed where Element: ~Copyable {
     /// Pushes an element to the specified end.
     ///
     /// - Throws: ``Queue/DoubleEnded/Fixed/Error/overflow`` if the deque is full.
+    // WORKAROUND: @_optimize(none) — CopyPropagation false positive. TRACKING: swift-buffer-primitives/Research/rawlayout-release-crash-investigation.md (Bug 2)
+    @_optimize(none)
     @inlinable
     public mutating func push(
         _ element: consuming Element,
@@ -322,6 +324,8 @@ extension Queue.DoubleEnded.Fixed: Sequence.Drain.`Protocol` where Element: ~Cop
     ///
     /// - Parameter body: A closure that receives each drained element with ownership.
     /// - Complexity: O(n) where n is the number of elements.
+    // WORKAROUND: @_optimize(none) — CopyPropagation false positive. TRACKING: swift-buffer-primitives/Research/rawlayout-release-crash-investigation.md (Bug 2)
+    @_optimize(none)
     @inlinable
     public mutating func drain(_ body: (consuming Element) -> Void) {
         while let element = pop(from: .front) {
