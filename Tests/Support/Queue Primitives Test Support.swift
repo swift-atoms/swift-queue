@@ -9,4 +9,4 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Queue_Primitives
+internal import Queue_Primitives

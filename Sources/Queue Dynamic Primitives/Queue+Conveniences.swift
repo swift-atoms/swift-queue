@@ -10,7 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 public import Queue_Primitives_Core
-public import Index_Primitives
+internal import Index_Primitives
 
 // MARK: - Collection (Copyable elements only)
 

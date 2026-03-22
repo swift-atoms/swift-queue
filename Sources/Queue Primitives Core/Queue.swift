@@ -10,9 +10,9 @@
 // ===----------------------------------------------------------------------===//
 
 public import Buffer_Primitives
-public import Buffer_Linked_Primitives
+internal import Buffer_Linked_Primitives
 import List_Primitives
-public import Index_Primitives
+internal import Index_Primitives
 import Vector_Primitives
 
 /// A dynamically-growing FIFO queue supporting move-only elements.
