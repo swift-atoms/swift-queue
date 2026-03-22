@@ -59,11 +59,7 @@ extension Queue.Small where Element: ~Copyable {
     /// - Parameter keepingCapacity: If `true` and spilled to heap, keeps heap capacity.
     ///   If `false`, reverts to inline storage. Default is `true`.
     /// - Complexity: O(n) where n is the number of elements.
-    // WORKAROUND: @_optimize(none) suppresses CopyPropagation false positive
     // on remove.all() + conditional buffer reassignment in deep @inlinable chain.
-    // WHEN TO REMOVE: When swiftlang/swift fixes SIL ownership verification in CopyPropagation.
-    // TRACKING: swift-buffer-primitives/Research/rawlayout-release-crash-investigation.md (Bug 2)
-    @_optimize(none)
     @inlinable
     public mutating func clear(keepingCapacity: Bool = true) {
         _buffer.remove.all()
