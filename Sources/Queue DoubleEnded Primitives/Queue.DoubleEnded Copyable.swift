@@ -163,7 +163,6 @@ extension Queue.DoubleEnded.Fixed where Element: Copyable {
             _inner.nextSpan(maximumCount: maximumCount)
         }
 
-        @_lifetime(self: immortal)
         @inlinable
         public mutating func next() -> Element? {
             _inner.next()
@@ -337,7 +336,6 @@ extension Queue.DoubleEnded.Static where Element: Copyable {
             _inner.nextSpan(maximumCount: maximumCount)
         }
 
-        @_lifetime(self: immortal)
         @inlinable
         public mutating func next() -> Element? {
             _inner.next()
@@ -461,7 +459,6 @@ extension Queue.DoubleEnded.Small where Element: Copyable {
             _inner.nextSpan(maximumCount: maximumCount)
         }
 
-        @_lifetime(self: immortal)
         @inlinable
         public mutating func next() -> Element? {
             _inner.next()
