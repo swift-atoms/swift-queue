@@ -78,7 +78,7 @@ extension Queue.Linked.Fixed where Element: Copyable {
     public mutating func enqueue(_ element: Element) throws(__QueueLinkedBoundedError) {
         guard !isFull else { throw .overflow }
         _makeUnique()
-        try! _buffer.insert.back(element)
+        _buffer.insert.back(element)
     }
 
     /// Dequeues and returns the front element, or nil if empty (CoW-aware).
