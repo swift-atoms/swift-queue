@@ -80,7 +80,7 @@ extension Queue.DoubleEnded where Element: Copyable {
 
 // MARK: - Front Accessor (Property.View.Typed)
 
-extension Queue.DoubleEnded where Element: Copyable {
+extension Queue.DoubleEnded where Element: ~Copyable {
     /// Accessor for front position operations.
     ///
     /// Use this to push, pop, or take elements at the front:
@@ -106,16 +106,17 @@ extension Queue.DoubleEnded where Element: Copyable {
 extension Property_Primitives.Property.View.Typed
 where Tag == Queue<Element>.DoubleEnded.Front,
       Base == Queue<Element>.DoubleEnded,
-      Element: Copyable
+      Element: ~Copyable
 {
-    /// Returns the front element without removing it.
+    /// Peeks at the front element without removing it.
     ///
-    /// - Returns: The front element, or `nil` if the deque is empty.
+    /// - Parameter body: A closure that borrows the front element.
+    /// - Returns: The result of `body`, or `nil` if the deque is empty.
     /// - Complexity: O(1)
     @inlinable
-    public var peek: Element? {
+    public func peek<R: ~Copyable>(_ body: (borrowing Element) -> R) -> R? {
         guard !(unsafe base.pointee.isEmpty) else { return nil }
-        return unsafe base.pointee._buffer.peek.front
+        return unsafe base.pointee._buffer.withFront(body)
     }
 
     /// Pushes an element to the front of the deque.
@@ -123,8 +124,8 @@ where Tag == Queue<Element>.DoubleEnded.Front,
     /// - Parameter element: The element to push.
     /// - Complexity: O(1) amortized
     @inlinable
-    public func push(_ element: Element) {
-        unsafe base.pointee._buffer.push.front(element)
+    public func push(_ element: consuming Element) {
+        unsafe base.pointee._buffer.push.front(consume element)
     }
 
     /// Removes and returns the front element.
@@ -151,9 +152,27 @@ where Tag == Queue<Element>.DoubleEnded.Front,
     }
 }
 
+// MARK: - Front Peek Convenience (Copyable)
+
+extension Property_Primitives.Property.View.Typed
+where Tag == Queue<Element>.DoubleEnded.Front,
+      Base == Queue<Element>.DoubleEnded,
+      Element: Copyable
+{
+    /// Returns the front element without removing it.
+    ///
+    /// - Returns: The front element, or `nil` if the deque is empty.
+    /// - Complexity: O(1)
+    @inlinable
+    public var peek: Element? {
+        guard !(unsafe base.pointee.isEmpty) else { return nil }
+        return unsafe base.pointee._buffer.peek.front
+    }
+}
+
 // MARK: - Back Accessor (Property.View.Typed)
 
-extension Queue.DoubleEnded where Element: Copyable {
+extension Queue.DoubleEnded where Element: ~Copyable {
     /// Accessor for back position operations.
     ///
     /// Use this to push, pop, or take elements at the back:
@@ -179,16 +198,17 @@ extension Queue.DoubleEnded where Element: Copyable {
 extension Property_Primitives.Property.View.Typed
 where Tag == Queue<Element>.DoubleEnded.Back,
       Base == Queue<Element>.DoubleEnded,
-      Element: Copyable
+      Element: ~Copyable
 {
-    /// Returns the back element without removing it.
+    /// Peeks at the back element without removing it.
     ///
-    /// - Returns: The back element, or `nil` if the deque is empty.
+    /// - Parameter body: A closure that borrows the back element.
+    /// - Returns: The result of `body`, or `nil` if the deque is empty.
     /// - Complexity: O(1)
     @inlinable
-    public var peek: Element? {
+    public func peek<R: ~Copyable>(_ body: (borrowing Element) -> R) -> R? {
         guard !(unsafe base.pointee.isEmpty) else { return nil }
-        return unsafe base.pointee._buffer.peek.back
+        return unsafe base.pointee._buffer.withBack(body)
     }
 
     /// Pushes an element to the back of the deque.
@@ -196,8 +216,8 @@ where Tag == Queue<Element>.DoubleEnded.Back,
     /// - Parameter element: The element to push.
     /// - Complexity: O(1) amortized
     @inlinable
-    public func push(_ element: Element) {
-        unsafe base.pointee._buffer.push.back(element)
+    public func push(_ element: consuming Element) {
+        unsafe base.pointee._buffer.push.back(consume element)
     }
 
     /// Removes and returns the back element.
@@ -221,5 +241,23 @@ where Tag == Queue<Element>.DoubleEnded.Back,
     public var take: Element? {
         guard !(unsafe base.pointee.isEmpty) else { return nil }
         return unsafe base.pointee._buffer.pop.back()
+    }
+}
+
+// MARK: - Back Peek Convenience (Copyable)
+
+extension Property_Primitives.Property.View.Typed
+where Tag == Queue<Element>.DoubleEnded.Back,
+      Base == Queue<Element>.DoubleEnded,
+      Element: Copyable
+{
+    /// Returns the back element without removing it.
+    ///
+    /// - Returns: The back element, or `nil` if the deque is empty.
+    /// - Complexity: O(1)
+    @inlinable
+    public var peek: Element? {
+        guard !(unsafe base.pointee.isEmpty) else { return nil }
+        return unsafe base.pointee._buffer.peek.back
     }
 }
