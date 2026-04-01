@@ -187,23 +187,39 @@ struct QueueDeinitOrderTests {
 
     // MARK: - Storage.Inline Deinit Regression
 
-    /// Bare wrapper — NO _deinitWorkaround, NO manual cleanup.
-    /// Storage.Inline's deinit handles element cleanup via bitvector iteration.
-    private struct _BareWrapper<Element: ~Copyable, let capacity: Int>: ~Copyable {
+    /// Wrapper with empty deinit — tests that Storage.Inline's deinit fires
+    /// through the explicit-deinit → member-destruction chain.
+    private struct _EmptyDeinitWrapper<Element: ~Copyable, let capacity: Int>: ~Copyable {
         var _buffer: Buffer<Element>.Ring.Inline<capacity>
-
-        init() {
-            self._buffer = Buffer<Element>.Ring.Inline<capacity>()
-        }
-
+        init() { self._buffer = Buffer<Element>.Ring.Inline<capacity>() }
         deinit {}
     }
 
-    @Test("Storage.Inline deinit cleans up through cross-module chain")
-    func storageInlineDeinitRegression() {
+    /// Wrapper with NO deinit at all — tests that Storage.Inline's deinit fires
+    /// through pure implicit member destruction. This is the exact shape
+    /// Queue.Static would have after removing _deinitWorkaround and deinit.
+    private struct _NoDeinitWrapper<Element: ~Copyable, let capacity: Int>: ~Copyable {
+        var _buffer: Buffer<Element>.Ring.Inline<capacity>
+        init() { self._buffer = Buffer<Element>.Ring.Inline<capacity>() }
+    }
+
+    @Test("Storage.Inline deinit — wrapper with empty deinit")
+    func storageInlineDeinitEmptyDeinit() {
         let tracker = Tracker()
         do {
-            var wrapper = _BareWrapper<TrackedElement, 4>()
+            var wrapper = _EmptyDeinitWrapper<TrackedElement, 4>()
+            wrapper._buffer.push.back(TrackedElement(1, tracker: tracker))
+            wrapper._buffer.push.back(TrackedElement(2, tracker: tracker))
+            wrapper._buffer.push.back(TrackedElement(3, tracker: tracker))
+        }
+        #expect(tracker.deinitOrder == [1, 2, 3])
+    }
+
+    @Test("Storage.Inline deinit — wrapper with no deinit")
+    func storageInlineDeinitNoDeinit() {
+        let tracker = Tracker()
+        do {
+            var wrapper = _NoDeinitWrapper<TrackedElement, 4>()
             wrapper._buffer.push.back(TrackedElement(1, tracker: tracker))
             wrapper._buffer.push.back(TrackedElement(2, tracker: tracker))
             wrapper._buffer.push.back(TrackedElement(3, tracker: tracker))
