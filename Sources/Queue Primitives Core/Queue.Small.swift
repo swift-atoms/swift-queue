@@ -62,11 +62,7 @@ extension Queue where Element: ~Copyable {
         }
 
         deinit {
-            // WORKAROUND: Manually clean up elements via the mutating path.
-            // TRACKING: swiftlang/swift #86652 variant
-            unsafe withUnsafePointer(to: _buffer) { ptr in
-                unsafe UnsafeMutablePointer(mutating: ptr).pointee.remove.all()
-            }
+            _buffer._deinitialize()
         }
 
         /// Whether the queue is currently using heap storage.
