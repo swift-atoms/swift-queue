@@ -10,7 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 public import Queue_Primitives_Core
-public import Buffer_Primitives
+public import Buffer_Ring_Primitives
 
 // Note: Queue.Static is unconditionally ~Copyable due to deinit requirement
 

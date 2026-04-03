@@ -10,7 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 public import Queue_Primitives_Core
-public import Buffer_Primitives
+public import Buffer_Ring_Primitives
 
 // Note: Conditional Copyable conformance and Sequence conformance are in Queue.swift
 // (must be same file as declaration due to Swift compiler bug)

@@ -68,12 +68,14 @@ let package = Package(
         .target(
             name: "Queue Primitives Core",
             dependencies: [
-                .product(name: "Buffer Primitives", package: "swift-buffer-primitives"),
+                .product(name: "Buffer Ring Primitives", package: "swift-buffer-primitives"),
+                .product(name: "Buffer Linear Primitives", package: "swift-buffer-primitives"),
+                .product(name: "Buffer Linked Primitives", package: "swift-buffer-primitives"),
                 .product(name: "Index Primitives", package: "swift-index-primitives"),
                 .product(name: "Vector Primitives", package: "swift-vector-primitives"),
                 .product(name: "Input Primitives", package: "swift-input-primitives"),
                 .product(name: "Collection Primitives", package: "swift-collection-primitives"),
-                .product(name: "List Primitives", package: "swift-list-primitives"),
+                .product(name: "List Primitives Core", package: "swift-list-primitives"),
                 .product(name: "Property Primitives", package: "swift-property-primitives"),
             ]
         ),

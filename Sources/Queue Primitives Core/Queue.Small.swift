@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Buffer_Primitives
+public import Buffer_Ring_Primitives
 
 extension Queue where Element: ~Copyable {
 

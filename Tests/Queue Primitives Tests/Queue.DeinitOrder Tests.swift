@@ -12,7 +12,7 @@
 import Testing
 @testable import Queue_Primitives
 import Queue_Primitives_Test_Support
-import Buffer_Primitives
+import Buffer_Ring_Primitives
 
 /// Tests verifying deinit order (FIFO: front-to-back) for all Queue variants.
 @Suite("Queue - Deinit Order")
