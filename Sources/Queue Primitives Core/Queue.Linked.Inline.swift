@@ -9,6 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
+public import List_Linked_Primitives
+
 extension Queue.Linked where Element: Copyable {
 
     /// A fixed-capacity, inline-storage FIFO queue with compile-time capacity.

@@ -10,6 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 public import Queue_Primitives_Core
+public import List_Linked_Primitives
 
 // ============================================================================
 // MARK: - Queue.Linked.Inline Extensions

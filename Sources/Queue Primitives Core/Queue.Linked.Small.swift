@@ -9,6 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
+public import List_Linked_Primitives
+
 extension Queue.Linked where Element: Copyable {
 
     /// A FIFO queue with small-buffer optimization (SmallVec pattern).

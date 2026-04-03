@@ -11,6 +11,7 @@
 
 public import Queue_Primitives_Core
 public import Buffer_Ring_Primitives
+public import Buffer_Ring_Inline_Primitives
 
 // Note: Queue.DoubleEnded struct declaration is in Queue.swift
 // (must be same file due to Swift compiler bug [MEM-COPY-006])
