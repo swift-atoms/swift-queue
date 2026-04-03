@@ -52,7 +52,7 @@ struct QueueDoubleEndedAccessorTests {
         @Test("front.pop throws on empty")
         func frontPopThrowsOnEmpty() {
             var deque = Queue<Int>.DoubleEnded()
-            #expect(throws: __QueueDoubleEndedError.empty) {
+            #expect(throws: Queue<Int>.DoubleEnded.Error.empty) {
                 try deque.front.pop()
             }
         }
@@ -60,7 +60,7 @@ struct QueueDoubleEndedAccessorTests {
         @Test("back.pop throws on empty")
         func backPopThrowsOnEmpty() {
             var deque = Queue<Int>.DoubleEnded()
-            #expect(throws: __QueueDoubleEndedError.empty) {
+            #expect(throws: Queue<Int>.DoubleEnded.Error.empty) {
                 try deque.back.pop()
             }
         }
@@ -175,7 +175,7 @@ struct QueueDoubleEndedAccessorTests {
         @Test("front.pop throws on empty")
         func frontPopThrowsOnEmpty() {
             var deque = Queue<Token>.DoubleEnded()
-            #expect(throws: __QueueDoubleEndedError.empty) {
+            #expect(throws: Queue<Token>.DoubleEnded.Error.empty) {
                 try deque.front.pop()
             }
         }
@@ -183,7 +183,7 @@ struct QueueDoubleEndedAccessorTests {
         @Test("back.pop throws on empty")
         func backPopThrowsOnEmpty() {
             var deque = Queue<Token>.DoubleEnded()
-            #expect(throws: __QueueDoubleEndedError.empty) {
+            #expect(throws: Queue<Token>.DoubleEnded.Error.empty) {
                 try deque.back.pop()
             }
         }

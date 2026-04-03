@@ -36,7 +36,7 @@ extension Queue.Linked.Inline where Element: Copyable {
     /// - Parameter element: The element to enqueue.
     /// - Throws: ``Inline/Error/overflow`` if the queue is at capacity.
     /// - Complexity: O(1)
-    public mutating func enqueue(_ element: Element) throws(__QueueLinkedInlineError) {
+    public mutating func enqueue(_ element: Element) throws(Queue<Element>.Linked.Inline<capacity>.Error) {
         do throws(__ListLinkedInlineError) {
             try _storage.append(element)
         } catch {
@@ -108,17 +108,6 @@ extension Queue.Linked.Inline where Element: Copyable {
 
 extension Queue.Linked.Inline: @unchecked Sendable where Element: Sendable {}
 
-// MARK: - Queue.Linked.Inline Error Types
-
-extension Queue.Linked.Inline where Element: Copyable {
-    /// Errors that can occur during inline linked queue operations.
-    ///
-    /// ## Cases
-    ///
-    /// - ``Queue/Linked/Inline/Error/empty``: The queue is empty and the operation requires elements.
-    /// - ``Queue/Linked/Inline/Error/overflow``: The queue is full and cannot accept more elements.
-    public typealias Error = __QueueLinkedInlineError
-}
 
 // ============================================================================
 // MARK: - Queue.Linked.Small Extensions
@@ -209,13 +198,3 @@ extension Queue.Linked.Small where Element: Copyable {
 
 extension Queue.Linked.Small: @unchecked Sendable where Element: Sendable {}
 
-// MARK: - Queue.Linked.Small Error Types
-
-extension Queue.Linked.Small where Element: Copyable {
-    /// Errors that can occur during small linked queue operations.
-    ///
-    /// ## Cases
-    ///
-    /// - ``Queue/Linked/Small/Error/empty``: The queue is empty and the operation requires elements.
-    public typealias Error = __QueueLinkedSmallError
-}

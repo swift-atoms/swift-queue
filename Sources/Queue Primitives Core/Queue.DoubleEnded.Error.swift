@@ -9,17 +9,17 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Queue where Element: ~Copyable {
-    /// Errors that can occur during unbounded queue operations.
-    ///
-    /// For the unbounded `Queue`, only `invalidCapacity` can occur
-    /// (when reserving negative capacity). The queue grows automatically,
-    /// so overflow is impossible.
+extension Queue.DoubleEnded where Element: ~Copyable {
+    /// Errors that can occur during double-ended queue operations.
     ///
     /// ## Cases
     ///
-    /// - ``Queue/Error/invalidCapacity``: The requested capacity is invalid (negative).
+    /// - ``Queue/DoubleEnded/Error/empty``: The deque is empty and the operation requires elements.
+    /// - ``Queue/DoubleEnded/Error/invalidCapacity``: The requested capacity is invalid (negative).
     public enum Error: Swift.Error, Sendable, Equatable {
+        /// The deque is empty and the operation requires elements.
+        case empty
+
         /// The requested capacity is invalid (negative).
         case invalidCapacity
     }

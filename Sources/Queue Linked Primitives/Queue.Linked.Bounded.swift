@@ -37,7 +37,7 @@ extension Queue.Linked.Fixed where Element: ~Copyable {
     /// - Throws: ``Bounded/Error/overflow`` if the queue is at capacity.
     /// - Complexity: O(1)
     @inlinable
-    public mutating func enqueue(_ element: consuming Element) throws(__QueueLinkedBoundedError) {
+    public mutating func enqueue(_ element: consuming Element) throws(Queue<Element>.Linked.Fixed.Error) {
         guard !isFull else { throw .overflow }
         try! _buffer.insert.back(element)
     }
@@ -75,7 +75,7 @@ extension Queue.Linked.Fixed where Element: Copyable {
     /// - Throws: ``Bounded/Error/overflow`` if the queue is at capacity.
     /// - Complexity: O(1), O(n) if copy triggered
     @inlinable
-    public mutating func enqueue(_ element: Element) throws(__QueueLinkedBoundedError) {
+    public mutating func enqueue(_ element: Element) throws(Queue<Element>.Linked.Fixed.Error) {
         guard !isFull else { throw .overflow }
         _makeUnique()
         _buffer.insert.back(element)
@@ -223,14 +223,3 @@ extension Queue.Linked.Fixed: Hashable where Element: Hashable {
 
 extension Queue.Linked.Fixed: @unchecked Sendable where Element: Sendable {}
 
-// MARK: - Error Types
-
-extension Queue.Linked where Element: ~Copyable {
-    /// Errors that can occur during linked queue operations.
-    public typealias Error = __QueueLinkedError
-}
-
-extension Queue.Linked.Fixed where Element: ~Copyable {
-    /// Errors that can occur during bounded linked queue operations.
-    public typealias Error = __QueueLinkedBoundedError
-}

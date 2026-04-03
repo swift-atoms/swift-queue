@@ -59,7 +59,7 @@ struct QueueFixedTests {
         try queue.enqueue(2)
 
         #expect(queue.isFull)
-        #expect(throws: __QueueBoundedError.overflow) {
+        #expect(throws: Queue<Int>.Fixed.Error.overflow) {
             try queue.enqueue(3)
         }
     }
@@ -358,7 +358,7 @@ struct QueueStaticTests {
         try queue.enqueue(2)
 
         #expect(queue.isFull == true)
-        #expect(throws: __QueueStaticError.overflow) {
+        #expect(throws: Queue<Int>.Static<2>.Error.overflow) {
             try queue.enqueue(3)
         }
     }

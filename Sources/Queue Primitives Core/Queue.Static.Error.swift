@@ -9,18 +9,17 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Queue where Element: ~Copyable {
-    /// Errors that can occur during unbounded queue operations.
+extension Queue.Static where Element: ~Copyable {
+    /// Errors that can occur during static queue operations.
     ///
-    /// For the unbounded `Queue`, only `invalidCapacity` can occur
-    /// (when reserving negative capacity). The queue grows automatically,
-    /// so overflow is impossible.
+    /// For `Queue.Static`, only `overflow` can occur. The capacity is
+    /// fixed at compile time, so `invalidCapacity` is impossible.
     ///
     /// ## Cases
     ///
-    /// - ``Queue/Error/invalidCapacity``: The requested capacity is invalid (negative).
+    /// - ``Queue/Static/Error/overflow``: The queue is full and cannot accept more elements.
     public enum Error: Swift.Error, Sendable, Equatable {
-        /// The requested capacity is invalid (negative).
-        case invalidCapacity
+        /// The queue is full and cannot accept more elements.
+        case overflow
     }
 }

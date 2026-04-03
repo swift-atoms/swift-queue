@@ -60,7 +60,7 @@ extension Queue where Element: ~Copyable {
         /// - Parameter capacity: Number of elements to reserve space for.
         /// - Throws: ``Linked/Error/invalidCapacity`` if capacity is negative.
         @inlinable
-        public init(reservingCapacity capacity: Int) throws(__QueueLinkedError) {
+        public init(reservingCapacity capacity: Int) throws(Queue<Element>.Linked.Error) {
             guard capacity >= 0 else {
                 throw .invalidCapacity
             }
@@ -96,7 +96,7 @@ extension Queue where Element: ~Copyable {
             /// - Parameter capacity: Maximum number of elements. Must be positive.
             /// - Throws: ``Bounded/Error/invalidCapacity`` if capacity is not positive.
             @inlinable
-            public init(capacity: Index_Primitives.Index<Element>.Count) throws(__QueueLinkedBoundedError) {
+            public init(capacity: Index_Primitives.Index<Element>.Count) throws(Queue<Element>.Linked.Fixed.Error) {
                 guard capacity > .zero else {
                     throw .invalidCapacity
                 }

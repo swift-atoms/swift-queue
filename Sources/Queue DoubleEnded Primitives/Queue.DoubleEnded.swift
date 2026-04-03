@@ -16,28 +16,6 @@ public import Buffer_Primitives
 // (must be same file due to Swift compiler bug [MEM-COPY-006])
 // This file contains extensions with operations and conformances.
 
-// MARK: - Error Typealiases
-
-extension Queue.DoubleEnded where Element: ~Copyable {
-    /// Errors that can occur during double-ended queue operations.
-    public typealias Error = __QueueDoubleEndedError
-}
-
-extension Queue.DoubleEnded.Fixed where Element: ~Copyable {
-    /// Errors that can occur during fixed-capacity double-ended queue operations.
-    public typealias Error = __QueueDoubleEndedFixedError
-}
-
-extension Queue.DoubleEnded.Static {
-    /// Errors that can occur during static double-ended queue operations.
-    public typealias Error = __QueueDoubleEndedStaticError
-}
-
-extension Queue.DoubleEnded.Small {
-    /// Errors that can occur during small double-ended queue operations.
-    public typealias Error = __QueueDoubleEndedSmallError
-}
-
 // MARK: - Deque Typealias
 
 /// A double-ended queue (deque) with O(1) amortized operations at both ends.

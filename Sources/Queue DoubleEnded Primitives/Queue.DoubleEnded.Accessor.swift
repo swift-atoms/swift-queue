@@ -134,7 +134,7 @@ where Tag == Queue<Element>.DoubleEnded.Front,
     /// - Throws: ``Queue/DoubleEnded/Error/empty`` if the deque is empty.
     /// - Complexity: O(1)
     @inlinable
-    public func pop() throws(__QueueDoubleEndedError) -> Element {
+    public func pop() throws(Queue<Element>.DoubleEnded.Error) -> Element {
         guard !(unsafe base.pointee.isEmpty) else {
             throw .empty
         }
@@ -226,7 +226,7 @@ where Tag == Queue<Element>.DoubleEnded.Back,
     /// - Throws: ``Queue/DoubleEnded/Error/empty`` if the deque is empty.
     /// - Complexity: O(1)
     @inlinable
-    public func pop() throws(__QueueDoubleEndedError) -> Element {
+    public func pop() throws(Queue<Element>.DoubleEnded.Error) -> Element {
         guard !(unsafe base.pointee.isEmpty) else {
             throw .empty
         }

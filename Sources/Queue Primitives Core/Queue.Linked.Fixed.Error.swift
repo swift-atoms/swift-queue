@@ -9,18 +9,22 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Queue where Element: ~Copyable {
-    /// Errors that can occur during unbounded queue operations.
-    ///
-    /// For the unbounded `Queue`, only `invalidCapacity` can occur
-    /// (when reserving negative capacity). The queue grows automatically,
-    /// so overflow is impossible.
+extension Queue.Linked.Fixed where Element: ~Copyable {
+    /// Errors that can occur during bounded linked queue operations.
     ///
     /// ## Cases
     ///
-    /// - ``Queue/Error/invalidCapacity``: The requested capacity is invalid (negative).
+    /// - ``Queue/Linked/Fixed/Error/empty``: The queue is empty and the operation requires elements.
+    /// - ``Queue/Linked/Fixed/Error/invalidCapacity``: The requested capacity is invalid (negative).
+    /// - ``Queue/Linked/Fixed/Error/overflow``: The queue is full and cannot accept more elements.
     public enum Error: Swift.Error, Sendable, Equatable {
+        /// The queue is empty and the operation requires elements.
+        case empty
+
         /// The requested capacity is invalid (negative).
         case invalidCapacity
+
+        /// The queue is full and cannot accept more elements.
+        case overflow
     }
 }
