@@ -17,11 +17,35 @@ let package = Package(
             targets: ["Queue Primitives"]
         ),
         .library(
-            name: "Deque Primitives",
-            targets: ["Queue DoubleEnded Primitives"]
+            name: "Queue Primitives Core",
+            targets: ["Queue Primitives Core"]
+        ),
+        .library(
+            name: "Queue Dynamic Primitives",
+            targets: ["Queue Dynamic Primitives"]
+        ),
+        .library(
+            name: "Queue Fixed Primitives",
+            targets: ["Queue Fixed Primitives"]
+        ),
+        .library(
+            name: "Queue Static Primitives",
+            targets: ["Queue Static Primitives"]
+        ),
+        .library(
+            name: "Queue Small Primitives",
+            targets: ["Queue Small Primitives"]
+        ),
+        .library(
+            name: "Queue Linked Primitives",
+            targets: ["Queue Linked Primitives"]
         ),
         .library(
             name: "Queue DoubleEnded Primitives",
+            targets: ["Queue DoubleEnded Primitives"]
+        ),
+        .library(
+            name: "Deque Primitives",
             targets: ["Queue DoubleEnded Primitives"]
         ),
         .library(
