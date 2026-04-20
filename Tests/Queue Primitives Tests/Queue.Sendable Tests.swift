@@ -27,8 +27,8 @@ struct QueueSendableTests {
         // Compile-time verification only
     }
 
-    @Test("Queue<Int> is Sendable")
-    func queueIntIsSendable() {
+    @Test
+    func `Queue<Int> is Sendable`() {
         var queue = Queue<Int>()
         queue.enqueue(1)
         queue.enqueue(2)
@@ -36,8 +36,8 @@ struct QueueSendableTests {
         requireSendable(queue)
     }
 
-    @Test("Queue<String> is Sendable")
-    func queueStringIsSendable() {
+    @Test
+    func `Queue<String> is Sendable`() {
         var queue = Queue<String>()
         queue.enqueue("a")
         queue.enqueue("b")
@@ -45,29 +45,29 @@ struct QueueSendableTests {
         requireSendable(queue)
     }
 
-    @Test("Queue.Fixed<Int> is Sendable")
-    func fixedIntIsSendable() throws {
+    @Test
+    func `Queue.Fixed<Int> is Sendable`() throws {
         var fixed = Queue<Int>.Fixed(capacity: 10)
         try fixed.enqueue(1)
         requireSendable(fixed)
     }
 
-    @Test("Queue.Static<Int> is Sendable")
-    func staticIntIsSendable() throws {
+    @Test
+    func `Queue.Static<Int> is Sendable`() throws {
         var staticQueue = Queue<Int>.Static<4>()
         try staticQueue.enqueue(1)
         requireSendableNC(staticQueue)
     }
 
-    @Test("Queue.Small<Int> is Sendable")
-    func smallIntIsSendable() {
+    @Test
+    func `Queue.Small<Int> is Sendable`() {
         var small = Queue<Int>.Small<4>()
         small.enqueue(1)
         requireSendableNC(small)
     }
 
-    @Test("Async task transfer")
-    func asyncTaskTransfer() async {
+    @Test
+    func `Async task transfer`() async {
         @Sendable
         func processInBackground(_ queue: Queue<Int>) async -> Int {
             var sum = 0

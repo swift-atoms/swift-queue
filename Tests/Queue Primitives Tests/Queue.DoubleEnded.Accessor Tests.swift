@@ -21,8 +21,8 @@ struct QueueDoubleEndedAccessorTests {
     @Suite("Copyable elements")
     struct CopyableTests {
 
-        @Test("front.push and front.take")
-        func frontPushTake() {
+        @Test
+        func `front.push and front.take`() {
             var deque = Queue<Int>.DoubleEnded()
             deque.front.push(1)
             deque.front.push(2)
@@ -35,8 +35,8 @@ struct QueueDoubleEndedAccessorTests {
             if let _ = deque.front.take { Issue.record("Expected nil from front.take") }
         }
 
-        @Test("back.push and back.take")
-        func backPushTake() {
+        @Test
+        func `back.push and back.take`() {
             var deque = Queue<Int>.DoubleEnded()
             deque.back.push(1)
             deque.back.push(2)
@@ -49,24 +49,24 @@ struct QueueDoubleEndedAccessorTests {
             if let _ = deque.back.take { Issue.record("Expected nil from back.take") }
         }
 
-        @Test("front.pop throws on empty")
-        func frontPopThrowsOnEmpty() {
+        @Test
+        func `front.pop throws on empty`() {
             var deque = Queue<Int>.DoubleEnded()
             #expect(throws: Queue<Int>.DoubleEnded.Error.empty) {
                 try deque.front.pop()
             }
         }
 
-        @Test("back.pop throws on empty")
-        func backPopThrowsOnEmpty() {
+        @Test
+        func `back.pop throws on empty`() {
             var deque = Queue<Int>.DoubleEnded()
             #expect(throws: Queue<Int>.DoubleEnded.Error.empty) {
                 try deque.back.pop()
             }
         }
 
-        @Test("front.peek returns value without removal")
-        func frontPeekValue() {
+        @Test
+        func `front.peek returns value without removal`() {
             var deque = Queue<Int>.DoubleEnded()
             deque.back.push(10)
             deque.back.push(20)
@@ -75,8 +75,8 @@ struct QueueDoubleEndedAccessorTests {
             #expect(deque.count == 2)
         }
 
-        @Test("back.peek returns value without removal")
-        func backPeekValue() {
+        @Test
+        func `back.peek returns value without removal`() {
             var deque = Queue<Int>.DoubleEnded()
             deque.back.push(10)
             deque.back.push(20)
@@ -85,8 +85,8 @@ struct QueueDoubleEndedAccessorTests {
             #expect(deque.count == 2)
         }
 
-        @Test("front.peek closure-based")
-        func frontPeekClosure() {
+        @Test
+        func `front.peek closure-based`() {
             var deque = Queue<Int>.DoubleEnded()
             deque.back.push(42)
 
@@ -95,8 +95,8 @@ struct QueueDoubleEndedAccessorTests {
             #expect(deque.count == 1)
         }
 
-        @Test("mixed front and back operations")
-        func mixedFrontBack() throws {
+        @Test
+        func `mixed front and back operations`() throws {
             var deque = Queue<Int>.DoubleEnded()
             deque.back.push(2)
             deque.back.push(3)
@@ -111,8 +111,8 @@ struct QueueDoubleEndedAccessorTests {
             #expect(deque.isEmpty)
         }
 
-        @Test("peek on empty returns nil")
-        func peekOnEmpty() {
+        @Test
+        func `peek on empty returns nil`() {
             var deque = Queue<Int>.DoubleEnded()
             #expect(deque.front.peek == nil)
             #expect(deque.back.peek == nil)
@@ -130,8 +130,8 @@ struct QueueDoubleEndedAccessorTests {
             let id: Int
         }
 
-        @Test("front.push and front.take")
-        func frontPushTake() {
+        @Test
+        func `front.push and front.take`() {
             var deque = Queue<Token>.DoubleEnded()
             deque.front.push(Token(id: 1))
             deque.front.push(Token(id: 2))
@@ -151,8 +151,8 @@ struct QueueDoubleEndedAccessorTests {
             if let _ = deque.front.take { Issue.record("Expected nil from front.take") }
         }
 
-        @Test("back.push and back.take")
-        func backPushTake() {
+        @Test
+        func `back.push and back.take`() {
             var deque = Queue<Token>.DoubleEnded()
             deque.back.push(Token(id: 1))
             deque.back.push(Token(id: 2))
@@ -172,24 +172,24 @@ struct QueueDoubleEndedAccessorTests {
             if let _ = deque.back.take { Issue.record("Expected nil from back.take") }
         }
 
-        @Test("front.pop throws on empty")
-        func frontPopThrowsOnEmpty() {
+        @Test
+        func `front.pop throws on empty`() {
             var deque = Queue<Token>.DoubleEnded()
             #expect(throws: Queue<Token>.DoubleEnded.Error.empty) {
                 try deque.front.pop()
             }
         }
 
-        @Test("back.pop throws on empty")
-        func backPopThrowsOnEmpty() {
+        @Test
+        func `back.pop throws on empty`() {
             var deque = Queue<Token>.DoubleEnded()
             #expect(throws: Queue<Token>.DoubleEnded.Error.empty) {
                 try deque.back.pop()
             }
         }
 
-        @Test("front.peek borrows without removal")
-        func frontPeekBorrow() {
+        @Test
+        func `front.peek borrows without removal`() {
             var deque = Queue<Token>.DoubleEnded()
             deque.back.push(Token(id: 42))
 
@@ -198,8 +198,8 @@ struct QueueDoubleEndedAccessorTests {
             #expect(deque.count == 1)
         }
 
-        @Test("back.peek borrows without removal")
-        func backPeekBorrow() {
+        @Test
+        func `back.peek borrows without removal`() {
             var deque = Queue<Token>.DoubleEnded()
             deque.back.push(Token(id: 99))
 
@@ -208,8 +208,8 @@ struct QueueDoubleEndedAccessorTests {
             #expect(deque.count == 1)
         }
 
-        @Test("peek on empty returns nil")
-        func peekOnEmpty() {
+        @Test
+        func `peek on empty returns nil`() {
             var deque = Queue<Token>.DoubleEnded()
             let result = deque.front.peek { $0.id }
             #expect(result == nil)
@@ -218,8 +218,8 @@ struct QueueDoubleEndedAccessorTests {
             #expect(backResult == nil)
         }
 
-        @Test("mixed front and back operations")
-        func mixedFrontBack() throws {
+        @Test
+        func `mixed front and back operations`() throws {
             var deque = Queue<Token>.DoubleEnded()
             deque.back.push(Token(id: 2))
             deque.back.push(Token(id: 3))

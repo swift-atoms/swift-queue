@@ -43,8 +43,8 @@ struct QueueDeinitOrderTests {
         }
     }
 
-    @Test("Queue deinit order (simple)")
-    func queueDeinitSimple() {
+    @Test
+    func `Queue deinit order (simple)`() {
         let tracker = Tracker()
         do {
             var queue = Queue<TrackedElement>()
@@ -56,8 +56,8 @@ struct QueueDeinitOrderTests {
         #expect(order == [1, 2, 3])
     }
 
-    @Test("Queue.Fixed deinit order")
-    func fixedDeinitOrder() throws {
+    @Test
+    func `Queue.Fixed deinit order`() throws {
         let tracker = Tracker()
         do {
             var fixed = Queue<TrackedElement>.Fixed(capacity: 5)
@@ -69,8 +69,8 @@ struct QueueDeinitOrderTests {
         #expect(order == [1, 2, 3])
     }
 
-    @Test("Queue.Small deinit order (inline path)")
-    func smallInlineDeinitOrder() {
+    @Test
+    func `Queue.Small deinit order (inline path)`() {
         let tracker = Tracker()
         do {
             var small = Queue<TrackedElement>.Small<4>()
@@ -81,8 +81,8 @@ struct QueueDeinitOrderTests {
         #expect(order == [1, 2])
     }
 
-    @Test("Queue.Small deinit order (spilled path)")
-    func smallSpilledDeinitOrder() {
+    @Test
+    func `Queue.Small deinit order (spilled path)`() {
         let tracker = Tracker()
         do {
             var small = Queue<TrackedElement>.Small<2>()
@@ -94,8 +94,8 @@ struct QueueDeinitOrderTests {
         #expect(order == [1, 2, 3])
     }
 
-    @Test("Queue.Static deinit order")
-    func staticDeinitOrder() throws {
+    @Test
+    func `Queue.Static deinit order`() throws {
         let tracker = Tracker()
         do {
             var staticQueue = Queue<TrackedElement>.Static<4>()
@@ -107,8 +107,8 @@ struct QueueDeinitOrderTests {
         #expect(order == [1, 2, 3])
     }
 
-    @Test("Queue.Fixed deinit order (with wraparound)")
-    func fixedDeinitWraparound() throws {
+    @Test
+    func `Queue.Fixed deinit order (with wraparound)`() throws {
         let tracker = Tracker()
         do {
             var fixed = Queue<TrackedElement>.Fixed(capacity: 4)
@@ -124,8 +124,8 @@ struct QueueDeinitOrderTests {
         #expect(order == [1, 2, 3, 4])
     }
 
-    @Test("Queue.Static deinit order (with wraparound)")
-    func staticDeinitWraparound() throws {
+    @Test
+    func `Queue.Static deinit order (with wraparound)`() throws {
         let tracker = Tracker()
         do {
             var staticQueue = Queue<TrackedElement>.Static<4>()
@@ -157,8 +157,8 @@ struct QueueDeinitOrderTests {
         }
     }
 
-    @Test("Queue.DoubleEnded.Static deinit order")
-    func doubleEndedStaticDeinitOrder() throws {
+    @Test
+    func `Queue.DoubleEnded.Static deinit order`() throws {
         let tracker = Tracker()
         do {
             var deque = Queue<TrackedBox>.DoubleEnded.Static<4>()
@@ -170,8 +170,8 @@ struct QueueDeinitOrderTests {
         #expect(order == [1, 2, 3])
     }
 
-    @Test("Queue.DoubleEnded.Static deinit order (with wraparound)")
-    func doubleEndedStaticDeinitWraparound() throws {
+    @Test
+    func `Queue.DoubleEnded.Static deinit order (with wraparound)`() throws {
         let tracker = Tracker()
         do {
             var deque = Queue<TrackedBox>.DoubleEnded.Static<4>()
@@ -203,8 +203,8 @@ struct QueueDeinitOrderTests {
         init() { self._buffer = Buffer<Element>.Ring.Inline<capacity>() }
     }
 
-    @Test("Storage.Inline deinit — wrapper with empty deinit")
-    func storageInlineDeinitEmptyDeinit() {
+    @Test
+    func `Storage.Inline deinit — wrapper with empty deinit`() {
         let tracker = Tracker()
         do {
             var wrapper = _EmptyDeinitWrapper<TrackedElement, 4>()
@@ -215,8 +215,8 @@ struct QueueDeinitOrderTests {
         #expect(tracker.deinitOrder == [1, 2, 3])
     }
 
-    @Test("Storage.Inline deinit — wrapper with no deinit")
-    func storageInlineDeinitNoDeinit() {
+    @Test
+    func `Storage.Inline deinit — wrapper with no deinit`() {
         let tracker = Tracker()
         do {
             var wrapper = _NoDeinitWrapper<TrackedElement, 4>()
@@ -227,8 +227,8 @@ struct QueueDeinitOrderTests {
         #expect(tracker.deinitOrder == [1, 2, 3])
     }
 
-    @Test("Empty queue deinit (no crash)")
-    func emptyDeinitNoCrash() {
+    @Test
+    func `Empty queue deinit (no crash)`() {
         let tracker = Tracker()
         do {
             let _: Queue<TrackedElement> = Queue()

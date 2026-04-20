@@ -24,8 +24,8 @@ struct QueueConditionalCopyableTests {
         let id: Int
     }
 
-    @Test("Queue<Int> is Copyable")
-    func queueIntIsCopyable() {
+    @Test
+    func `Queue<Int> is Copyable`() {
         var original = Queue<Int>()
         original.enqueue(1)
         original.enqueue(2)
@@ -38,8 +38,8 @@ struct QueueConditionalCopyableTests {
         #expect(copyCount == 3)
     }
 
-    @Test("Queue.Fixed<Int> is Copyable")
-    func fixedIntIsCopyable() throws {
+    @Test
+    func `Queue.Fixed<Int> is Copyable`() throws {
         var original = Queue<Int>.Fixed(capacity: 10)
         try original.enqueue(1)
         try original.enqueue(2)
@@ -55,8 +55,8 @@ struct QueueConditionalCopyableTests {
         #expect(origCap == copyCap)
     }
 
-    @Test("Queue<MoveOnly> is ~Copyable")
-    func queueMoveOnlyIsNotCopyable() {
+    @Test
+    func `Queue<MoveOnly> is ~Copyable`() {
         var queue = Queue<MoveOnly>()
         queue.enqueue(MoveOnly(id: 1))
 
@@ -66,8 +66,8 @@ struct QueueConditionalCopyableTests {
         #expect(count == 1)
     }
 
-    @Test("Queue.Static<Int> is unconditionally ~Copyable")
-    func staticIsUnconditionallyNonCopyable() throws {
+    @Test
+    func `Queue.Static<Int> is unconditionally ~Copyable`() throws {
         var staticQueue = Queue<Int>.Static<4>()
         try staticQueue.enqueue(1)
         try staticQueue.enqueue(2)
@@ -78,8 +78,8 @@ struct QueueConditionalCopyableTests {
         #expect(count == 2)
     }
 
-    @Test("Queue.Small<Int> is unconditionally ~Copyable")
-    func smallIsUnconditionallyNonCopyable() {
+    @Test
+    func `Queue.Small<Int> is unconditionally ~Copyable`() {
         var small = Queue<Int>.Small<4>()
         small.enqueue(1)
         small.enqueue(2)

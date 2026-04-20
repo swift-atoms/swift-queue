@@ -32,8 +32,8 @@ struct QueueNonCopyableTests {
         }
     }
 
-    @Test("Queue with ~Copyable elements: enqueue/dequeue/peek")
-    func queueWithNonCopyable() {
+    @Test
+    func `Queue with ~Copyable elements: enqueue/dequeue/peek`() {
         var queue = Queue<Token>()
         queue.enqueue(Token(1))
         queue.enqueue(Token(2))
@@ -60,8 +60,8 @@ struct QueueNonCopyableTests {
         #expect(countAfter == 2)
     }
 
-    @Test("Queue with ~Copyable elements: forEach iteration")
-    func queueForEach() {
+    @Test
+    func `Queue with ~Copyable elements: forEach iteration`() {
         var queue = Queue<Token>()
         queue.enqueue(Token(1))
         queue.enqueue(Token(2))
@@ -75,8 +75,8 @@ struct QueueNonCopyableTests {
         #expect(ids == [1, 2, 3])
     }
 
-    @Test("Queue.Fixed with ~Copyable elements")
-    func fixedWithNonCopyable() throws {
+    @Test
+    func `Queue.Fixed with ~Copyable elements`() throws {
         var fixed = Queue<Token>.Fixed(capacity: 5)
         try fixed.enqueue(Token(10))
         try fixed.enqueue(Token(20))
@@ -93,8 +93,8 @@ struct QueueNonCopyableTests {
         }
     }
 
-    @Test("Queue.Fixed with ~Copyable elements: forEach")
-    func fixedForEach() throws {
+    @Test
+    func `Queue.Fixed with ~Copyable elements: forEach`() throws {
         var fixed = Queue<Token>.Fixed(capacity: 5)
         try fixed.enqueue(Token(1))
         try fixed.enqueue(Token(2))
@@ -108,8 +108,8 @@ struct QueueNonCopyableTests {
         #expect(ids == [1, 2, 3])
     }
 
-    @Test("Queue.Static with ~Copyable elements")
-    func staticWithNonCopyable() throws {
+    @Test
+    func `Queue.Static with ~Copyable elements`() throws {
         var staticQueue = Queue<Token>.Static<4>()
         try staticQueue.enqueue(Token(100))
         try staticQueue.enqueue(Token(200))
@@ -126,8 +126,8 @@ struct QueueNonCopyableTests {
         }
     }
 
-    @Test("Queue.Static with ~Copyable elements: forEach")
-    func staticForEach() throws {
+    @Test
+    func `Queue.Static with ~Copyable elements: forEach`() throws {
         var staticQueue = Queue<Token>.Static<4>()
         try staticQueue.enqueue(Token(1))
         try staticQueue.enqueue(Token(2))
@@ -141,8 +141,8 @@ struct QueueNonCopyableTests {
         #expect(ids == [1, 2, 3])
     }
 
-    @Test("Queue.Static with ~Copyable elements: ring buffer wraparound")
-    func staticWraparound() throws {
+    @Test
+    func `Queue.Static with ~Copyable elements: ring buffer wraparound`() throws {
         var staticQueue = Queue<Token>.Static<3>()
         try staticQueue.enqueue(Token(1))
         try staticQueue.enqueue(Token(2))
@@ -158,8 +158,8 @@ struct QueueNonCopyableTests {
         #expect(ids == [2, 3, 4])
     }
 
-    @Test("Queue.Small with ~Copyable elements (inline path)")
-    func smallInlineWithNonCopyable() {
+    @Test
+    func `Queue.Small with ~Copyable elements (inline path)`() {
         var small = Queue<Token>.Small<4>()
         small.enqueue(Token(1))
         small.enqueue(Token(2))
@@ -170,8 +170,8 @@ struct QueueNonCopyableTests {
         #expect(!isSpilled)
     }
 
-    @Test("Queue.Small with ~Copyable elements (spill path)")
-    func smallSpillWithNonCopyable() {
+    @Test
+    func `Queue.Small with ~Copyable elements (spill path)`() {
         var small = Queue<Token>.Small<2>()
         small.enqueue(Token(1000))
         small.enqueue(Token(2000))
@@ -191,8 +191,8 @@ struct QueueNonCopyableTests {
         }
     }
 
-    @Test("Queue.Small with ~Copyable elements: forEach after spill")
-    func smallForEachAfterSpill() {
+    @Test
+    func `Queue.Small with ~Copyable elements: forEach after spill`() {
         var small = Queue<Token>.Small<2>()
         small.enqueue(Token(1))
         small.enqueue(Token(2))

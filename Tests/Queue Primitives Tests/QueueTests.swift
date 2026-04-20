@@ -19,8 +19,8 @@ import Queue_Primitives_Test_Support
 @Suite("Queue.Fixed")
 struct QueueFixedTests {
 
-    @Test("Initialize with valid capacity")
-    func initializeWithValidCapacity() {
+    @Test
+    func `Initialize with valid capacity`() {
         let queue = Queue<Int>.Fixed(capacity: 10)
         #expect(queue.capacity == 10)
         #expect(queue.count == 0)
@@ -28,8 +28,8 @@ struct QueueFixedTests {
         #expect(!queue.isFull)
     }
 
-    @Test("Initialize with zero capacity")
-    func initializeWithZeroCapacity() {
+    @Test
+    func `Initialize with zero capacity`() {
         let queue = Queue<Int>.Fixed(capacity: 0)
         #expect(queue.capacity == 0)
         #expect(queue.count == 0)
@@ -37,8 +37,8 @@ struct QueueFixedTests {
         #expect(queue.isFull)
     }
 
-    @Test("Enqueue and dequeue FIFO order")
-    func enqueueAndDequeueFIFO() throws {
+    @Test
+    func `Enqueue and dequeue FIFO order`() throws {
         var queue = Queue<Int>.Fixed(capacity: 5)
         try queue.enqueue(1)
         try queue.enqueue(2)
@@ -52,8 +52,8 @@ struct QueueFixedTests {
         #expect(queue.isEmpty)
     }
 
-    @Test("Overflow throws error")
-    func overflowThrows() throws {
+    @Test
+    func `Overflow throws error`() throws {
         var queue = Queue<Int>.Fixed(capacity: 2)
         try queue.enqueue(1)
         try queue.enqueue(2)
@@ -64,8 +64,8 @@ struct QueueFixedTests {
         }
     }
 
-    @Test("Peek returns front element")
-    func peekReturnsFront() throws {
+    @Test
+    func `Peek returns front element`() throws {
         var queue = Queue<Int>.Fixed(capacity: 3)
         try queue.enqueue(1)
         try queue.enqueue(2)
@@ -74,8 +74,8 @@ struct QueueFixedTests {
         #expect(queue.count == 2)  // Peek doesn't remove
     }
 
-    @Test("Ring buffer wrap-around")
-    func ringBufferWrapAround() throws {
+    @Test
+    func `Ring buffer wrap-around`() throws {
         var queue = Queue<Int>.Fixed(capacity: 3)
 
         // Fill queue
@@ -98,8 +98,8 @@ struct QueueFixedTests {
         #expect(queue.dequeue() == nil)
     }
 
-    @Test("Clear empties queue")
-    func clearEmptiesQueue() throws {
+    @Test
+    func `Clear empties queue`() throws {
         var queue = Queue<Int>.Fixed(capacity: 5)
         try queue.enqueue(1)
         try queue.enqueue(2)
@@ -112,8 +112,8 @@ struct QueueFixedTests {
         #expect(queue.capacity == 5)  // Capacity unchanged
     }
 
-    @Test("ForEach iterates in FIFO order")
-    func forEachIteratesInFIFOOrder() throws {
+    @Test
+    func `ForEach iterates in FIFO order`() throws {
         var queue = Queue<Int>.Fixed(capacity: 5)
         try queue.enqueue(1)
         try queue.enqueue(2)
@@ -125,8 +125,8 @@ struct QueueFixedTests {
         #expect(result == [1, 2, 3])
     }
 
-    @Test("ForEach iteration (via forEach)")
-    func forEachIteration() throws {
+    @Test
+    func `ForEach iteration (via forEach)`() throws {
         var queue = Queue<Int>.Fixed(capacity: 5)
         try queue.enqueue(10)
         try queue.enqueue(20)
@@ -146,28 +146,28 @@ struct QueueFixedTests {
 @Suite("Queue (Unbounded)")
 struct QueueUnboundedTests {
 
-    @Test("Initialize empty")
-    func initializeEmpty() {
+    @Test
+    func `Initialize empty`() {
         let queue = Queue<Int>()
         #expect(queue.count == 0)
         #expect(queue.isEmpty)
     }
 
-    @Test("Initialize from sequence")
-    func initializeFromSequence() {
+    @Test
+    func `Initialize from sequence`() {
         let queue: Queue<Int> = [1, 2, 3]
         #expect(queue.count == 3)
     }
 
-    @Test("Initialize with reserved capacity")
-    func initializeWithReservedCapacity() {
+    @Test
+    func `Initialize with reserved capacity`() {
         let queue = Queue<Int>(reservingCapacity: 100)
         #expect(queue.capacity >= 100)
         #expect(queue.count == 0)
     }
 
-    @Test("Enqueue and dequeue FIFO order")
-    func enqueueAndDequeueFIFO() {
+    @Test
+    func `Enqueue and dequeue FIFO order`() {
         var queue = Queue<Int>()
         queue.enqueue(1)
         queue.enqueue(2)
@@ -180,8 +180,8 @@ struct QueueUnboundedTests {
         #expect(queue.dequeue() == nil)
     }
 
-    @Test("Automatic growth")
-    func automaticGrowth() {
+    @Test
+    func `Automatic growth`() {
         var queue = Queue<Int>()
 
         // Enqueue many elements to trigger growth
@@ -197,8 +197,8 @@ struct QueueUnboundedTests {
         }
     }
 
-    @Test("Peek returns front element")
-    func peekReturnsFront() {
+    @Test
+    func `Peek returns front element`() {
         var queue = Queue<Int>()
         queue.enqueue(10)
         queue.enqueue(20)
@@ -207,8 +207,8 @@ struct QueueUnboundedTests {
         #expect(queue.count == 2)
     }
 
-    @Test("Clear releases storage")
-    func clearReleasesStorage() {
+    @Test
+    func `Clear releases storage`() {
         var queue = Queue<Int>()
         for i in 0..<50 {
             queue.enqueue(i)
@@ -221,8 +221,8 @@ struct QueueUnboundedTests {
         #expect(queue.capacity < capacityBefore)
     }
 
-    @Test("Compact reduces capacity")
-    func compactReducesCapacity() {
+    @Test
+    func `Compact reduces capacity`() {
         var queue = Queue<Int>()
         for i in 0..<50 {
             queue.enqueue(i)
@@ -239,8 +239,8 @@ struct QueueUnboundedTests {
         #expect(queue.capacity == 5)
     }
 
-    @Test("Sequence iteration")
-    func sequenceIteration() {
+    @Test
+    func `Sequence iteration`() {
         var queue = Queue<Int>()
         queue.enqueue(1)
         queue.enqueue(2)
@@ -254,8 +254,8 @@ struct QueueUnboundedTests {
         #expect(result == [1, 2, 3])
     }
 
-    @Test("Reserve capacity")
-    func reserveCapacity() {
+    @Test
+    func `Reserve capacity`() {
         var queue = Queue<Int>()
         queue.reserve(100)
 
@@ -277,8 +277,8 @@ struct MoveOnlyElementTests {
         }
     }
 
-    @Test("Fixed queue with move-only elements")
-    func fixedWithMoveOnly() throws {
+    @Test
+    func `Fixed queue with move-only elements`() throws {
         var queue = Queue<MoveOnlyValue>.Fixed(capacity: 5)
         try queue.enqueue(MoveOnlyValue(1))
         try queue.enqueue(MoveOnlyValue(2))
@@ -298,8 +298,8 @@ struct MoveOnlyElementTests {
         }
     }
 
-    @Test("Unbounded queue with move-only elements")
-    func unboundedWithMoveOnly() {
+    @Test
+    func `Unbounded queue with move-only elements`() {
         var queue = Queue<MoveOnlyValue>()
         queue.enqueue(MoveOnlyValue(10))
         queue.enqueue(MoveOnlyValue(20))
@@ -313,8 +313,8 @@ struct MoveOnlyElementTests {
         }
     }
 
-    @Test("Peek with closure for move-only")
-    func peekWithClosureForMoveOnly() throws {
+    @Test
+    func `Peek with closure for move-only`() throws {
         var queue = Queue<MoveOnlyValue>.Fixed(capacity: 5)
         try queue.enqueue(MoveOnlyValue(42))
 
@@ -329,16 +329,16 @@ struct MoveOnlyElementTests {
 @Suite("Queue.Static")
 struct QueueStaticTests {
 
-    @Test("Initialize empty")
-    func initializeEmpty() {
+    @Test
+    func `Initialize empty`() {
         let queue = Queue<Int>.Static<8>()
         #expect(queue.count == 0)
         #expect(queue.isEmpty == true)
         #expect(queue.isFull == false)
     }
 
-    @Test("Enqueue and dequeue FIFO order")
-    func enqueueAndDequeueFIFO() throws {
+    @Test
+    func `Enqueue and dequeue FIFO order`() throws {
         var queue = Queue<Int>.Static<8>()
         try queue.enqueue(1)
         try queue.enqueue(2)
@@ -351,8 +351,8 @@ struct QueueStaticTests {
         #expect(queue.dequeue() == nil)
     }
 
-    @Test("Overflow throws error")
-    func overflowThrows() throws {
+    @Test
+    func `Overflow throws error`() throws {
         var queue = Queue<Int>.Static<2>()
         try queue.enqueue(1)
         try queue.enqueue(2)
@@ -363,8 +363,8 @@ struct QueueStaticTests {
         }
     }
 
-    @Test("Ring buffer wrap-around")
-    func ringBufferWrapAround() throws {
+    @Test
+    func `Ring buffer wrap-around`() throws {
         var queue = Queue<Int>.Static<3>()
 
         try queue.enqueue(1)
@@ -382,8 +382,8 @@ struct QueueStaticTests {
         #expect(queue.dequeue() == 5)
     }
 
-    @Test("Clear empties queue")
-    func clearEmptiesQueue() throws {
+    @Test
+    func `Clear empties queue`() throws {
         var queue = Queue<Int>.Static<8>()
         try queue.enqueue(1)
         try queue.enqueue(2)
@@ -394,8 +394,8 @@ struct QueueStaticTests {
         #expect(queue.count == 0)
     }
 
-    @Test("Peek returns front element")
-    func peekReturnsFront() throws {
+    @Test
+    func `Peek returns front element`() throws {
         var queue = Queue<Int>.Static<8>()
         try queue.enqueue(10)
         try queue.enqueue(20)
@@ -404,8 +404,8 @@ struct QueueStaticTests {
         #expect(queue.count == 2)
     }
 
-    @Test("ForEach iterates in FIFO order")
-    func forEachIteratesInFIFOOrder() throws {
+    @Test
+    func `ForEach iterates in FIFO order`() throws {
         var queue = Queue<Int>.Static<8>()
         try queue.enqueue(1)
         try queue.enqueue(2)
@@ -423,16 +423,16 @@ struct QueueStaticTests {
 @Suite("Queue.Small")
 struct QueueSmallTests {
 
-    @Test("Initialize empty")
-    func initializeEmpty() {
+    @Test
+    func `Initialize empty`() {
         let queue = Queue<Int>.Small<4>()
         #expect(queue.count == 0)
         #expect(queue.isEmpty == true)
         #expect(queue.isSpilled == false)
     }
 
-    @Test("Inline storage")
-    func inlineStorage() {
+    @Test
+    func `Inline storage`() {
         var queue = Queue<Int>.Small<4>()
         queue.enqueue(1)
         queue.enqueue(2)
@@ -444,8 +444,8 @@ struct QueueSmallTests {
         #expect(queue.capacity == 4)
     }
 
-    @Test("Spill to heap")
-    func spillToHeap() {
+    @Test
+    func `Spill to heap`() {
         var queue = Queue<Int>.Small<4>()
         queue.enqueue(1)
         queue.enqueue(2)
@@ -458,8 +458,8 @@ struct QueueSmallTests {
         #expect(queue.capacity > 4)
     }
 
-    @Test("FIFO order after spill")
-    func fifoOrderAfterSpill() {
+    @Test
+    func `FIFO order after spill`() {
         var queue = Queue<Int>.Small<2>()
         queue.enqueue(1)
         queue.enqueue(2)
@@ -472,8 +472,8 @@ struct QueueSmallTests {
         #expect(queue.dequeue() == 4)
     }
 
-    @Test("Clear removes all elements")
-    func clearRemovesAll() {
+    @Test
+    func `Clear removes all elements`() {
         var queue = Queue<Int>.Small<4>()
         queue.enqueue(1)
         queue.enqueue(2)
@@ -488,8 +488,8 @@ struct QueueSmallTests {
         #expect(queue.isEmpty == true)
     }
 
-    @Test("Clear releases heap storage")
-    func clearReleasesHeapStorage() {
+    @Test
+    func `Clear releases heap storage`() {
         var queue = Queue<Int>.Small<4>()
         for i in 0..<10 {
             queue.enqueue(i)
@@ -503,8 +503,8 @@ struct QueueSmallTests {
         #expect(queue.isSpilled == false)  // Back to inline
     }
 
-    @Test("Peek returns front element")
-    func peekReturnsFront() {
+    @Test
+    func `Peek returns front element`() {
         var queue = Queue<Int>.Small<4>()
         queue.enqueue(10)
         queue.enqueue(20)
@@ -513,8 +513,8 @@ struct QueueSmallTests {
         #expect(queue.count == 2)
     }
 
-    @Test("ForEach iterates in FIFO order")
-    func forEachIteratesInFIFOOrder() {
+    @Test
+    func `ForEach iterates in FIFO order`() {
         var queue = Queue<Int>.Small<4>()
         queue.enqueue(1)
         queue.enqueue(2)
@@ -526,8 +526,8 @@ struct QueueSmallTests {
         #expect(result == [1, 2, 3])
     }
 
-    @Test("ForEach after spill")
-    func forEachAfterSpill() {
+    @Test
+    func `ForEach after spill`() {
         var queue = Queue<Int>.Small<2>()
         queue.enqueue(1)
         queue.enqueue(2)
@@ -546,8 +546,8 @@ struct QueueSmallTests {
 
 @Suite("drain(while:_:)")
 struct DrainWhileTests {
-    @Test("Queue drains some elements in FIFO order")
-    func queueDrainWhileSome() {
+    @Test
+    func `Queue drains some elements in FIFO order`() {
         var q = Queue<Int>()
         for e in [1, 2, 3, 4, 5] { q.enqueue(e) }
         var drained: [Int] = []
@@ -556,8 +556,8 @@ struct DrainWhileTests {
         #expect(Int(bitPattern: q.count) == 2)
     }
 
-    @Test("Queue drains zero elements")
-    func queueDrainWhileNone() {
+    @Test
+    func `Queue drains zero elements`() {
         var q = Queue<Int>()
         for e in [1, 2, 3] { q.enqueue(e) }
         var drained: [Int] = []
@@ -566,8 +566,8 @@ struct DrainWhileTests {
         #expect(Int(bitPattern: q.count) == 3)
     }
 
-    @Test("Queue drains all elements")
-    func queueDrainWhileAll() {
+    @Test
+    func `Queue drains all elements`() {
         var q = Queue<Int>()
         for e in [1, 2, 3] { q.enqueue(e) }
         var drained: [Int] = []
@@ -576,8 +576,8 @@ struct DrainWhileTests {
         #expect(q.isEmpty)
     }
 
-    @Test("DoubleEnded drains some elements front-to-back")
-    func dequeDrainWhileSome() {
+    @Test
+    func `DoubleEnded drains some elements front-to-back`() {
         var q = Queue<Int>.DoubleEnded()
         for e in [1, 2, 3, 4, 5] { q.push(e, to: .back) }
         var drained: [Int] = []
@@ -586,8 +586,8 @@ struct DrainWhileTests {
         #expect(Int(bitPattern: q.count) == 2)
     }
 
-    @Test("DoubleEnded.Fixed drains some elements")
-    func dequeFixedDrainWhileSome() throws {
+    @Test
+    func `DoubleEnded.Fixed drains some elements`() throws {
         var q = Queue<Int>.DoubleEnded.Fixed(capacity: 10)
         for e in [1, 2, 3, 4, 5] { try q.push(e, to: .back) }
         var drained: [Int] = []
@@ -620,8 +620,8 @@ struct QueueSmallMoveOnlyTests {
         var deinitCount: Int = 0
     }
 
-    @Test("Deinit properly cleans up inline storage")
-    func deinitCleansUpInline() {
+    @Test
+    func `Deinit properly cleans up inline storage`() {
         let tracker = DeinitTracker()
 
         do {
@@ -634,8 +634,8 @@ struct QueueSmallMoveOnlyTests {
         #expect(tracker.deinitCount == 2)
     }
 
-    @Test("Deinit properly cleans up heap storage")
-    func deinitCleansUpHeap() {
+    @Test
+    func `Deinit properly cleans up heap storage`() {
         let tracker = DeinitTracker()
 
         do {
@@ -650,8 +650,8 @@ struct QueueSmallMoveOnlyTests {
         #expect(tracker.deinitCount == 3)
     }
 
-    @Test("Clear properly deinitializes")
-    func clearProperlyDeinitializes() {
+    @Test
+    func `Clear properly deinitializes`() {
         let tracker = DeinitTracker()
         var queue = Queue<TrackedValue>.Small<4>()
 
