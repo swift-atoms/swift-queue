@@ -115,8 +115,8 @@ where Tag == Queue<Element>.DoubleEnded.Front,
     /// - Complexity: O(1)
     @inlinable
     public func peek<R: ~Copyable>(_ body: (borrowing Element) -> R) -> R? {
-        guard !(unsafe base.pointee.isEmpty) else { return nil }
-        return unsafe base.pointee._buffer.withFront(body)
+        guard !(unsafe base.value.isEmpty) else { return nil }
+        return unsafe base.value._buffer.withFront(body)
     }
 
     /// Pushes an element to the front of the deque.
@@ -125,7 +125,7 @@ where Tag == Queue<Element>.DoubleEnded.Front,
     /// - Complexity: O(1) amortized
     @inlinable
     public func push(_ element: consuming Element) {
-        unsafe base.pointee._buffer.push.front(consume element)
+        unsafe base.value._buffer.push.front(consume element)
     }
 
     /// Removes and returns the front element.
@@ -135,10 +135,10 @@ where Tag == Queue<Element>.DoubleEnded.Front,
     /// - Complexity: O(1)
     @inlinable
     public func pop() throws(Queue<Element>.DoubleEnded.Error) -> Element {
-        guard !(unsafe base.pointee.isEmpty) else {
+        guard !(unsafe base.value.isEmpty) else {
             throw .empty
         }
-        return unsafe base.pointee._buffer.pop.front()
+        return unsafe base.value._buffer.pop.front()
     }
 
     /// Removes and returns the front element, or nil if empty.
@@ -147,8 +147,8 @@ where Tag == Queue<Element>.DoubleEnded.Front,
     /// - Complexity: O(1)
     @inlinable
     public var take: Element? {
-        guard !(unsafe base.pointee.isEmpty) else { return nil }
-        return unsafe base.pointee._buffer.pop.front()
+        guard !(unsafe base.value.isEmpty) else { return nil }
+        return unsafe base.value._buffer.pop.front()
     }
 }
 
@@ -165,8 +165,8 @@ where Tag == Queue<Element>.DoubleEnded.Front,
     /// - Complexity: O(1)
     @inlinable
     public var peek: Element? {
-        guard !(unsafe base.pointee.isEmpty) else { return nil }
-        return unsafe base.pointee._buffer.peek.front
+        guard !(unsafe base.value.isEmpty) else { return nil }
+        return unsafe base.value._buffer.peek.front
     }
 }
 
@@ -207,8 +207,8 @@ where Tag == Queue<Element>.DoubleEnded.Back,
     /// - Complexity: O(1)
     @inlinable
     public func peek<R: ~Copyable>(_ body: (borrowing Element) -> R) -> R? {
-        guard !(unsafe base.pointee.isEmpty) else { return nil }
-        return unsafe base.pointee._buffer.withBack(body)
+        guard !(unsafe base.value.isEmpty) else { return nil }
+        return unsafe base.value._buffer.withBack(body)
     }
 
     /// Pushes an element to the back of the deque.
@@ -217,7 +217,7 @@ where Tag == Queue<Element>.DoubleEnded.Back,
     /// - Complexity: O(1) amortized
     @inlinable
     public func push(_ element: consuming Element) {
-        unsafe base.pointee._buffer.push.back(consume element)
+        unsafe base.value._buffer.push.back(consume element)
     }
 
     /// Removes and returns the back element.
@@ -227,10 +227,10 @@ where Tag == Queue<Element>.DoubleEnded.Back,
     /// - Complexity: O(1)
     @inlinable
     public func pop() throws(Queue<Element>.DoubleEnded.Error) -> Element {
-        guard !(unsafe base.pointee.isEmpty) else {
+        guard !(unsafe base.value.isEmpty) else {
             throw .empty
         }
-        return unsafe base.pointee._buffer.pop.back()
+        return unsafe base.value._buffer.pop.back()
     }
 
     /// Removes and returns the back element, or nil if empty.
@@ -239,8 +239,8 @@ where Tag == Queue<Element>.DoubleEnded.Back,
     /// - Complexity: O(1)
     @inlinable
     public var take: Element? {
-        guard !(unsafe base.pointee.isEmpty) else { return nil }
-        return unsafe base.pointee._buffer.pop.back()
+        guard !(unsafe base.value.isEmpty) else { return nil }
+        return unsafe base.value._buffer.pop.back()
     }
 }
 
@@ -257,7 +257,7 @@ where Tag == Queue<Element>.DoubleEnded.Back,
     /// - Complexity: O(1)
     @inlinable
     public var peek: Element? {
-        guard !(unsafe base.pointee.isEmpty) else { return nil }
-        return unsafe base.pointee._buffer.peek.back
+        guard !(unsafe base.value.isEmpty) else { return nil }
+        return unsafe base.value._buffer.peek.back
     }
 }
