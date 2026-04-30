@@ -5,6 +5,8 @@
 // reference itself. We will find a struct configuration that works.
 //
 // Toolchain: Swift 6.0 (swift-6.0-RELEASE)
+// Status: SUPERSEDED 2026-04-30 — Tagged<Element, Cardinal> generic arity surface changed; experiment's typed-count idiom requires re-targeting
+// Revalidated: Swift 6.3.1 (2026-04-30) — STILL PRESENT (deep API drift; SUPERSEDED per [META-007])
 // Platform: macOS Darwin 25.0.0
 //
 // Test Progression: [EXP-004a] Incremental Construction
