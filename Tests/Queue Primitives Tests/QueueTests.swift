@@ -9,10 +9,10 @@
 //
 // ===----------------------------------------------------------------------===//
 
+import Queue_Primitives_Test_Support
 import Testing
 
 @testable import Queue_Primitives
-import Queue_Primitives_Test_Support
 
 // MARK: - Queue.Fixed Tests
 

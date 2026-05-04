@@ -9,8 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Queue_Primitives_Core
 public import Buffer_Linked_Primitives
+public import Queue_Primitives_Core
 
 // MARK: - Properties
 
@@ -222,4 +222,3 @@ extension Queue.Linked.Fixed: Hashable where Element: Hashable {
 // MARK: - Sendable
 
 extension Queue.Linked.Fixed: @unchecked Sendable where Element: Sendable {}
-

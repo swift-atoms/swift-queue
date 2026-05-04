@@ -9,8 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Queue_Primitives_Core
 internal import Index_Primitives
+public import Queue_Primitives_Core
 
 // MARK: - Collection (Copyable elements only)
 
@@ -114,17 +114,17 @@ extension Queue: ExpressibleByArrayLiteral where Element: Copyable {
 // MARK: - CustomStringConvertible
 
 #if !hasFeature(Embedded)
-extension Queue: CustomStringConvertible where Element: Copyable {
-    public var description: String {
-        var result = "Queue(["
-        var first = true
-        forEach { element in
-            if !first { result += ", " }
-            result += String(describing: element)
-            first = false
+    extension Queue: CustomStringConvertible where Element: Copyable {
+        public var description: String {
+            var result = "Queue(["
+            var first = true
+            forEach { element in
+                if !first { result += ", " }
+                result += String(describing: element)
+                first = false
+            }
+            result += "])"
+            return result
         }
-        result += "])"
-        return result
     }
-}
 #endif

@@ -9,9 +9,9 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Queue_Primitives_Core
-public import Property_Primitives
 public import Buffer_Ring_Primitives
+public import Property_Primitives
+public import Queue_Primitives_Core
 
 // MARK: - Position Namespaces
 
@@ -104,9 +104,10 @@ extension Queue.DoubleEnded where Element: ~Copyable {
 }
 
 extension Property_Primitives.Property.View.Typed
-where Tag == Queue<Element>.DoubleEnded.Front,
-      Base == Queue<Element>.DoubleEnded,
-      Element: ~Copyable
+where
+    Tag == Queue<Element>.DoubleEnded.Front,
+    Base == Queue<Element>.DoubleEnded,
+    Element: ~Copyable
 {
     /// Peeks at the front element without removing it.
     ///
@@ -155,9 +156,10 @@ where Tag == Queue<Element>.DoubleEnded.Front,
 // MARK: - Front Peek Convenience (Copyable)
 
 extension Property_Primitives.Property.View.Typed
-where Tag == Queue<Element>.DoubleEnded.Front,
-      Base == Queue<Element>.DoubleEnded,
-      Element: Copyable
+where
+    Tag == Queue<Element>.DoubleEnded.Front,
+    Base == Queue<Element>.DoubleEnded,
+    Element: Copyable
 {
     /// Returns the front element without removing it.
     ///
@@ -196,9 +198,10 @@ extension Queue.DoubleEnded where Element: ~Copyable {
 }
 
 extension Property_Primitives.Property.View.Typed
-where Tag == Queue<Element>.DoubleEnded.Back,
-      Base == Queue<Element>.DoubleEnded,
-      Element: ~Copyable
+where
+    Tag == Queue<Element>.DoubleEnded.Back,
+    Base == Queue<Element>.DoubleEnded,
+    Element: ~Copyable
 {
     /// Peeks at the back element without removing it.
     ///
@@ -247,9 +250,10 @@ where Tag == Queue<Element>.DoubleEnded.Back,
 // MARK: - Back Peek Convenience (Copyable)
 
 extension Property_Primitives.Property.View.Typed
-where Tag == Queue<Element>.DoubleEnded.Back,
-      Base == Queue<Element>.DoubleEnded,
-      Element: Copyable
+where
+    Tag == Queue<Element>.DoubleEnded.Back,
+    Base == Queue<Element>.DoubleEnded,
+    Element: Copyable
 {
     /// Returns the back element without removing it.
     ///

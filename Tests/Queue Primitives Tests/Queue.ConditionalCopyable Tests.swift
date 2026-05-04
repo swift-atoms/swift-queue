@@ -9,9 +9,10 @@
 //
 // ===----------------------------------------------------------------------===//
 
-import Testing
-@testable import Queue_Primitives
 import Queue_Primitives_Test_Support
+import Testing
+
+@testable import Queue_Primitives
 
 /// Tests verifying conditional Copyable conformance.
 /// - Queue<Copyable> is Copyable

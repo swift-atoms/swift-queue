@@ -9,9 +9,9 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Queue_Primitives_Core
-public import Input_Primitives
 public import Buffer_Ring_Primitives
+public import Input_Primitives
+public import Queue_Primitives_Core
 
 // MARK: - Input.Streaming Conformance
 

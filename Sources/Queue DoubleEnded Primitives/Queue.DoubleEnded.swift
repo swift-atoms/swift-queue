@@ -9,9 +9,9 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Queue_Primitives_Core
-public import Buffer_Ring_Primitives
 public import Buffer_Ring_Inline_Primitives
+public import Buffer_Ring_Primitives
+public import Queue_Primitives_Core
 
 // Note: Queue.DoubleEnded struct declaration is in Queue.swift
 // (must be same file due to Swift compiler bug [MEM-COPY-006])
@@ -616,19 +616,19 @@ extension Queue.DoubleEnded where Element: Copyable {
 // MARK: - CustomStringConvertible
 
 #if !hasFeature(Embedded)
-extension Queue.DoubleEnded: CustomStringConvertible where Element: Copyable {
-    public var description: String {
-        var result = "Queue.DoubleEnded(["
-        var i: Index_Primitives.Index<Element>.Count = .zero
-        while i < count {
-            if i > .zero { result += ", " }
-            result += String(describing: _readElement(at: i))
-            i += .one
+    extension Queue.DoubleEnded: CustomStringConvertible where Element: Copyable {
+        public var description: String {
+            var result = "Queue.DoubleEnded(["
+            var i: Index_Primitives.Index<Element>.Count = .zero
+            while i < count {
+                if i > .zero { result += ", " }
+                result += String(describing: _readElement(at: i))
+                i += .one
+            }
+            result += "])"
+            return result
         }
-        result += "])"
-        return result
     }
-}
 #endif
 
 // MARK: - Internal CoW Identity (for testing)

@@ -9,8 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Queue_Primitives_Core
 public import List_Linked_Primitives
+public import Queue_Primitives_Core
 
 // ============================================================================
 // MARK: - Queue.Linked.Inline Extensions
@@ -109,7 +109,6 @@ extension Queue.Linked.Inline where Element: Copyable {
 
 extension Queue.Linked.Inline: @unchecked Sendable where Element: Sendable {}
 
-
 // ============================================================================
 // MARK: - Queue.Linked.Small Extensions
 // ============================================================================
@@ -198,4 +197,3 @@ extension Queue.Linked.Small where Element: Copyable {
 // MARK: - Queue.Linked.Small Sendable
 
 extension Queue.Linked.Small: @unchecked Sendable where Element: Sendable {}
-

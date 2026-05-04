@@ -9,9 +9,10 @@
 //
 // ===----------------------------------------------------------------------===//
 
-import Testing
-@testable import Queue_Primitives
 import Queue_Primitives_Test_Support
+import Testing
+
+@testable import Queue_Primitives
 
 /// Comprehensive tests verifying ~Copyable element support across all Queue variants.
 @Suite("Queue - NonCopyable Elements")
