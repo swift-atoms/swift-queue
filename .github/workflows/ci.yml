@@ -27,11 +27,6 @@ jobs:
   docs:
     uses: swift-institute/.github/.github/workflows/swift-docs.yml@main
     with:
-      umbrella-module: Queue_Primitives
-      umbrella-display-name: "Queue Primitives"
-      umbrella-bundle-id: "swift-queue-primitives.Queue-Primitives"
-      umbrella-docc-path: "Sources/Queue Primitives/Queue Primitives.docc"
-      exclude-modules: "Queue_Primitives_Test_Support"
       enable-private-repos: true
     secrets:
       PRIVATE_REPO_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
