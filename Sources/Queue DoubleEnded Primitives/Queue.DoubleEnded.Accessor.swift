@@ -18,12 +18,12 @@ public import Queue_Primitives_Core
 extension Queue.DoubleEnded where Element: ~Copyable {
     /// Namespace for front position operations.
     public enum Front {
-        public typealias View = Property<Queue<Element>.DoubleEnded.Front, Queue<Element>.DoubleEnded>.View.Typed<Element>
+        public typealias View = Property<Queue<Element>.DoubleEnded.Front, Queue<Element>.DoubleEnded>.Inout.Typed<Element>
     }
 
     /// Namespace for back position operations.
     public enum Back {
-        public typealias View = Property<Queue<Element>.DoubleEnded.Back, Queue<Element>.DoubleEnded>.View.Typed<Element>
+        public typealias View = Property<Queue<Element>.DoubleEnded.Back, Queue<Element>.DoubleEnded>.Inout.Typed<Element>
     }
 }
 
@@ -78,7 +78,7 @@ extension Queue.DoubleEnded where Element: Copyable {
     }
 }
 
-// MARK: - Front Accessor (Property.View.Typed)
+// MARK: - Front Accessor (Property.Inout.Typed)
 
 extension Queue.DoubleEnded where Element: ~Copyable {
     /// Accessor for front position operations.
@@ -103,7 +103,7 @@ extension Queue.DoubleEnded where Element: ~Copyable {
     }
 }
 
-extension Property_Primitives.Property.View.Typed
+extension Property_Primitives.Property.Inout.Typed
 where
     Tag == Queue<Element>.DoubleEnded.Front,
     Base == Queue<Element>.DoubleEnded,
@@ -116,8 +116,8 @@ where
     /// - Complexity: O(1)
     @inlinable
     public func peek<R: ~Copyable>(_ body: (borrowing Element) -> R) -> R? {
-        guard !(unsafe base.value.isEmpty) else { return nil }
-        return unsafe base.value._buffer.withFront(body)
+        guard !(base.value.isEmpty) else { return nil }
+        return base.value._buffer.withFront(body)
     }
 
     /// Pushes an element to the front of the deque.
@@ -126,7 +126,7 @@ where
     /// - Complexity: O(1) amortized
     @inlinable
     public func push(_ element: consuming Element) {
-        unsafe base.value._buffer.push.front(consume element)
+        base.value._buffer.push.front(consume element)
     }
 
     /// Removes and returns the front element.
@@ -136,10 +136,10 @@ where
     /// - Complexity: O(1)
     @inlinable
     public func pop() throws(Queue<Element>.DoubleEnded.Error) -> Element {
-        guard !(unsafe base.value.isEmpty) else {
+        guard !(base.value.isEmpty) else {
             throw .empty
         }
-        return unsafe base.value._buffer.pop.front()
+        return base.value._buffer.pop.front()
     }
 
     /// Removes and returns the front element, or nil if empty.
@@ -148,14 +148,14 @@ where
     /// - Complexity: O(1)
     @inlinable
     public var take: Element? {
-        guard !(unsafe base.value.isEmpty) else { return nil }
-        return unsafe base.value._buffer.pop.front()
+        guard !(base.value.isEmpty) else { return nil }
+        return base.value._buffer.pop.front()
     }
 }
 
 // MARK: - Front Peek Convenience (Copyable)
 
-extension Property_Primitives.Property.View.Typed
+extension Property_Primitives.Property.Inout.Typed
 where
     Tag == Queue<Element>.DoubleEnded.Front,
     Base == Queue<Element>.DoubleEnded,
@@ -167,12 +167,12 @@ where
     /// - Complexity: O(1)
     @inlinable
     public var peek: Element? {
-        guard !(unsafe base.value.isEmpty) else { return nil }
-        return unsafe base.value._buffer.peek.front
+        guard !(base.value.isEmpty) else { return nil }
+        return base.value._buffer.peek.front
     }
 }
 
-// MARK: - Back Accessor (Property.View.Typed)
+// MARK: - Back Accessor (Property.Inout.Typed)
 
 extension Queue.DoubleEnded where Element: ~Copyable {
     /// Accessor for back position operations.
@@ -197,7 +197,7 @@ extension Queue.DoubleEnded where Element: ~Copyable {
     }
 }
 
-extension Property_Primitives.Property.View.Typed
+extension Property_Primitives.Property.Inout.Typed
 where
     Tag == Queue<Element>.DoubleEnded.Back,
     Base == Queue<Element>.DoubleEnded,
@@ -210,8 +210,8 @@ where
     /// - Complexity: O(1)
     @inlinable
     public func peek<R: ~Copyable>(_ body: (borrowing Element) -> R) -> R? {
-        guard !(unsafe base.value.isEmpty) else { return nil }
-        return unsafe base.value._buffer.withBack(body)
+        guard !(base.value.isEmpty) else { return nil }
+        return base.value._buffer.withBack(body)
     }
 
     /// Pushes an element to the back of the deque.
@@ -220,7 +220,7 @@ where
     /// - Complexity: O(1) amortized
     @inlinable
     public func push(_ element: consuming Element) {
-        unsafe base.value._buffer.push.back(consume element)
+        base.value._buffer.push.back(consume element)
     }
 
     /// Removes and returns the back element.
@@ -230,10 +230,10 @@ where
     /// - Complexity: O(1)
     @inlinable
     public func pop() throws(Queue<Element>.DoubleEnded.Error) -> Element {
-        guard !(unsafe base.value.isEmpty) else {
+        guard !(base.value.isEmpty) else {
             throw .empty
         }
-        return unsafe base.value._buffer.pop.back()
+        return base.value._buffer.pop.back()
     }
 
     /// Removes and returns the back element, or nil if empty.
@@ -242,14 +242,14 @@ where
     /// - Complexity: O(1)
     @inlinable
     public var take: Element? {
-        guard !(unsafe base.value.isEmpty) else { return nil }
-        return unsafe base.value._buffer.pop.back()
+        guard !(base.value.isEmpty) else { return nil }
+        return base.value._buffer.pop.back()
     }
 }
 
 // MARK: - Back Peek Convenience (Copyable)
 
-extension Property_Primitives.Property.View.Typed
+extension Property_Primitives.Property.Inout.Typed
 where
     Tag == Queue<Element>.DoubleEnded.Back,
     Base == Queue<Element>.DoubleEnded,
@@ -261,7 +261,7 @@ where
     /// - Complexity: O(1)
     @inlinable
     public var peek: Element? {
-        guard !(unsafe base.value.isEmpty) else { return nil }
-        return unsafe base.value._buffer.peek.back
+        guard !(base.value.isEmpty) else { return nil }
+        return base.value._buffer.peek.back
     }
 }

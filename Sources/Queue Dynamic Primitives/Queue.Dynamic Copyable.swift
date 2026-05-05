@@ -152,7 +152,7 @@ extension Queue: Sequence.`Protocol` where Element: Copyable {
 extension Queue: Sequence.Clearable where Element: Copyable {
     /// Removes all elements from the queue.
     ///
-    /// This enables `.forEach.consuming { }` pattern via `Property.View` extension.
+    /// This enables `.forEach.consuming { }` pattern via `Property.Inout` extension.
     @inlinable
     public mutating func removeAll() {
         clear(keepingCapacity: false)
@@ -211,13 +211,13 @@ extension Queue where Element: Copyable {
 
 extension Queue where Element: Copyable {
     /// Accessor for drain operations.
-    public var drain: Property<Sequence.Drain, Self>.View {
+    public var drain: Property<Sequence.Drain, Self>.Inout {
         mutating _read {
-            yield unsafe Property<Sequence.Drain, Self>.View(&self)
+            yield Property<Sequence.Drain, Self>.Inout(&self)
         }
         mutating _modify {
-            var view = unsafe Property<Sequence.Drain, Self>.View(&self)
-            yield &view
+            var accessor = Property<Sequence.Drain, Self>.Inout(&self)
+            yield &accessor
         }
     }
 }
