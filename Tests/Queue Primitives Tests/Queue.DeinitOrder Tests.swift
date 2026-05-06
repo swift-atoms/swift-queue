@@ -9,6 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
+import Buffer_Ring_Inline_Primitives
 import Buffer_Ring_Primitives
 import Queue_Primitives_Test_Support
 import Testing
