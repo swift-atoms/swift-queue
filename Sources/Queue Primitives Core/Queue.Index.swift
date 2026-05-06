@@ -21,7 +21,7 @@ extension Queue where Element: ~Copyable {
     /// ## Position Semantics
     ///
     /// Position 0 is the front of the queue (next to be dequeued).
-    /// Position `count - 1` is the back (most recently enqueued).
+    /// The last position is the back (most recently enqueued).
     ///
     /// ## Example
     ///
