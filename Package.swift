@@ -104,6 +104,7 @@ let package = Package(
             name: "Queue Static Primitives",
             dependencies: [
                 "Queue Primitives Core",
+                "Queue Dynamic Primitives",
             ]
         ),
 

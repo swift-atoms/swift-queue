@@ -157,3 +157,19 @@ extension Queue.Linked where Element: ~Copyable {
         self = builder()
     }
 }
+
+// MARK: - Sequence Bulk-Add (Copyable Element only)
+
+extension Queue.Linked.Builder where Element: Copyable {
+    /// Bulk-enqueue a Swift.Sequence without per-iteration allocation.
+    /// FIFO: iteration order = enqueue order.
+    @inlinable
+    public static func buildExpression<S: Swift.Sequence>(_ expression: S) -> Queue<Element>.Linked
+    where S.Element == Element {
+        var result = Queue<Element>.Linked()
+        for value in expression {
+            result.enqueue(value)
+        }
+        return result
+    }
+}
