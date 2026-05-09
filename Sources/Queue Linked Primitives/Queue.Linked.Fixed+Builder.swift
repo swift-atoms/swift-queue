@@ -16,7 +16,7 @@ extension Queue.Linked.Fixed where Element: ~Copyable {
     public init(
         capacity: Index<Element>.Count,
         @Queue<Element>.Linked.Builder _ builder: () -> Queue<Element>.Linked
-    ) throws(Error) {
+    ) throws(Self.Error) {
         var fixed = try Queue<Element>.Linked.Fixed(capacity: capacity)
         var dynamic = builder()
         while let elem = dynamic.dequeue() {
