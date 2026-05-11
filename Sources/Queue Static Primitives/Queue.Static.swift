@@ -40,7 +40,7 @@ extension Queue.Static where Element: ~Copyable {
     /// - Throws: ``Queue/Static/Error/overflow`` if the queue is full.
     /// - Complexity: O(1)
     @inlinable
-    public mutating func enqueue(_ element: consuming Element) throws(Queue.Static.Error) {
+    public mutating func enqueue(_ element: consuming Element) throws(Self.Error) {
         guard !_buffer.isFull else {
             throw .overflow
         }
