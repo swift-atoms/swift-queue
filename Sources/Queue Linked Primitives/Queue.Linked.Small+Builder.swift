@@ -19,7 +19,7 @@ extension Queue.Linked.Small where Element: Copyable {
     /// support is a separate ecosystem extension.
     public init(
         @Queue<Element>.Linked.Builder _ builder: () -> Queue<Element>.Linked
-    ) throws(Self.Error) {
+    ) throws(Queue.Linked.Small.Error) {
         var dynamic = builder()
         self.init()
         while let elem = dynamic.dequeue() {

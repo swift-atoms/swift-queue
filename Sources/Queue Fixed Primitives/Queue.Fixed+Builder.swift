@@ -20,7 +20,7 @@ extension Queue.Fixed where Element: ~Copyable {
     public init(
         capacity: Index<Element>.Count,
         @Queue<Element>.Builder _ builder: () -> Queue<Element>
-    ) throws(Self.Error) {
+    ) throws(Queue.Fixed.Error) {
         var fixed = Queue<Element>.Fixed(capacity: capacity)
         var dynamic = builder()
         while let elem = dynamic.dequeue() {

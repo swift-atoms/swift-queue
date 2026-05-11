@@ -20,7 +20,7 @@ extension Queue.Static where Element: ~Copyable {
     /// throws `Error` from `Queue.Static.enqueue`.
     public init(
         @Queue<Element>.Builder _ builder: () -> Queue<Element>
-    ) throws(Self.Error) {
+    ) throws(Queue.Static.Error) {
         var dynamic = builder()
         self.init()
         while let elem = dynamic.dequeue() {
