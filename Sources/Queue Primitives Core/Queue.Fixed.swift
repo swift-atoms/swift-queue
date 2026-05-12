@@ -39,6 +39,9 @@ extension Queue where Element: ~Copyable {
     /// var handles = try Queue<FileHandle>.Bounded(capacity: 5)
     /// try handles.enqueue(FileHandle())
     /// ```
+    // WHY: Category D — structural Sendable workaround; the type is
+    // WHY: structurally value-safe but the compiler cannot synthesize
+    // WHY: Sendable due to a stored pointer / generic parameter shape.
     @safe
     public struct Fixed: ~Copyable {
         @usableFromInline

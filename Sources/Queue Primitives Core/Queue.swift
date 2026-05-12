@@ -79,6 +79,9 @@ import Vector_Primitives
 /// current capacity (minimum 4) and moves all elements. This provides
 /// O(1) amortized enqueue with approximately 2.0 copies per element over
 /// the queue's lifetime.
+// WHY: Category D — structural Sendable workaround; the type is
+// WHY: structurally value-safe but the compiler cannot synthesize
+// WHY: Sendable due to a stored pointer / generic parameter shape.
 @safe
 public struct Queue<Element: ~Copyable>: ~Copyable {
 

@@ -43,6 +43,9 @@ extension Queue where Element: ~Copyable {
     ///
     /// When `Element` is `Copyable`, `Queue.Linked` uses copy-on-write semantics:
     /// copies share storage until mutation.
+    // SAFETY: Safe by construction — backing storage uses only stdlib
+    // SAFETY: safe types; `@safe` documents that this type performs no
+    // SAFETY: unsafe operations.
     @safe
     public struct Linked: ~Copyable {
 
@@ -83,6 +86,9 @@ extension Queue where Element: ~Copyable {
         /// try queue.enqueue(2)
         /// queue.dequeue()  // Optional(1)
         /// ```
+        // SAFETY: Safe by construction — backing storage uses only stdlib
+        // SAFETY: safe types; `@safe` documents that this type performs no
+        // SAFETY: unsafe operations.
         @safe
         public struct Fixed: ~Copyable {
             @usableFromInline

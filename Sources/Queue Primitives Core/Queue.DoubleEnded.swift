@@ -16,6 +16,9 @@ extension Queue where Element: ~Copyable {
     /// Double-ended queue with O(1) amortized operations at both ends.
     ///
     /// Operations and implementation details are in `Queue.DoubleEnded.swift`.
+    // WHY: Category D — structural Sendable workaround; the type is
+    // WHY: structurally value-safe but the compiler cannot synthesize
+    // WHY: Sendable due to a stored pointer / generic parameter shape.
     @safe
     public struct DoubleEnded {
 
@@ -43,6 +46,9 @@ extension Queue where Element: ~Copyable {
         /// Fixed-capacity double-ended queue.
         ///
         /// Accessed as `Queue<E>.DoubleEnded.Fixed` or via the `Deque.Fixed` typealias.
+        // WHY: Category D — structural Sendable workaround; the type is
+        // WHY: structurally value-safe but the compiler cannot synthesize
+        // WHY: Sendable due to a stored pointer / generic parameter shape.
         @safe
         public struct Fixed {
             @usableFromInline

@@ -39,6 +39,9 @@ extension Queue.Linked where Element: Copyable {
     ///
     /// This variant requires `Element: Copyable` due to InlineArray limitations.
     /// For ~Copyable elements, use ``Queue/Linked`` or ``Queue/Linked/Bounded`` instead.
+    // SAFETY: Safe by construction — backing storage uses only stdlib
+    // SAFETY: safe types; `@safe` documents that this type performs no
+    // SAFETY: unsafe operations.
     @safe
     public struct Small<let inlineCapacity: Int>: ~Copyable {
         @usableFromInline

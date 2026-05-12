@@ -40,6 +40,9 @@ extension Queue where Element: ~Copyable {
     /// a deinitializer to clean up inline storage.
     /// Element cleanup is handled by `Storage.Inline`'s deinit (inline path)
     /// or `Storage.Heap`'s deinit (spilled path). No workarounds needed.
+    // WHY: Category D — structural Sendable workaround; the type is
+    // WHY: structurally value-safe but the compiler cannot synthesize
+    // WHY: Sendable due to a stored pointer / generic parameter shape.
     @safe
     public struct Small<let inlineCapacity: Int>: ~Copyable {
         @usableFromInline
