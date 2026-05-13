@@ -40,7 +40,7 @@ extension Queue.Fixed where Element: Copyable {
     }
 }
 
-extension Queue.Fixed.Iterator: @unchecked Sendable where Element: Sendable {}
+extension Queue.Fixed.Iterator: Sendable where Element: Sendable {}
 
 // ============================================================================
 // MARK: - Sequence.Protocol Conformance

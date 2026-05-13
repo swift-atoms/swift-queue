@@ -82,7 +82,7 @@ extension Queue.DoubleEnded.Fixed: Copyable where Element: Copyable {}
 // MARK: - Sendable
 
 /// `Queue.DoubleEnded` is `Sendable` when its elements are `Sendable`.
-extension Queue.DoubleEnded: @unchecked Sendable where Element: Sendable {}
+extension Queue.DoubleEnded: Sendable where Element: Sendable {}
 
 /// `Queue.DoubleEnded.Fixed` is `Sendable` when its elements are `Sendable`.
-extension Queue.DoubleEnded.Fixed: @unchecked Sendable where Element: Sendable {}
+extension Queue.DoubleEnded.Fixed: Sendable where Element: Sendable {}

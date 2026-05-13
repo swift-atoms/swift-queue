@@ -72,4 +72,4 @@ extension Queue where Element: ~Copyable {
 extension Queue.Fixed: Copyable where Element: Copyable {}
 
 /// `Queue.Fixed` is `Sendable` when its elements are `Sendable`.
-extension Queue.Fixed: @unchecked Sendable where Element: Sendable {}
+extension Queue.Fixed: Sendable where Element: Sendable {}

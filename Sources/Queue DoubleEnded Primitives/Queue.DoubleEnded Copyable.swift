@@ -171,7 +171,7 @@ extension Queue.DoubleEnded.Fixed where Element: Copyable {
     }
 }
 
-extension Queue.DoubleEnded.Fixed.Iterator: @unchecked Sendable where Element: Sendable {}
+extension Queue.DoubleEnded.Fixed.Iterator: Sendable where Element: Sendable {}
 
 // MARK: Swift.Sequence
 

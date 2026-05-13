@@ -555,7 +555,7 @@ extension Queue.DoubleEnded: Swift.Sequence where Element: Copyable {
     }
 }
 
-extension Queue.DoubleEnded.Iterator: @unchecked Sendable where Element: Sendable {}
+extension Queue.DoubleEnded.Iterator: Sendable where Element: Sendable {}
 
 // MARK: - Equatable (Copyable)
 
