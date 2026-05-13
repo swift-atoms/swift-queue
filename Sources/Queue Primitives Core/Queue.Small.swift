@@ -62,4 +62,4 @@ extension Queue where Element: ~Copyable {
 
 // MARK: - Sendable
 
-extension Queue.Small: Sendable where Element: Sendable {}
+extension Queue.Small: @unchecked Sendable where Element: Sendable {}

@@ -44,4 +44,4 @@ extension Queue.DoubleEnded where Element: ~Copyable {
 
 // MARK: - Sendable
 
-extension Queue.DoubleEnded.Small: Sendable where Element: Sendable {}
+extension Queue.DoubleEnded.Small: @unchecked Sendable where Element: Sendable {}

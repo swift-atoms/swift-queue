@@ -123,4 +123,4 @@ extension Queue: Copyable where Element: Copyable {}
 // MARK: - Sendable
 
 /// `Queue` is `Sendable` when its elements are `Sendable`.
-extension Queue: Sendable where Element: Sendable {}
+extension Queue: @unchecked Sendable where Element: Sendable {}
