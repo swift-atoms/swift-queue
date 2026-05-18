@@ -13,12 +13,12 @@ public import Buffer_Ring_Primitives
 public import Input_Primitives
 public import Queue_Primitives_Core
 
-// MARK: - Input.Streaming Conformance
+// MARK: - Input_Primitives.Input.Streaming Conformance
 
 // Note: Queue.Small is unconditionally ~Copyable due to deinit requirement.
-// Input.Streaming conformance requires Element: Copyable for `first: Element?`.
+// Input_Primitives.Input.Streaming conformance requires Element: Copyable for `first: Element?`.
 
-extension Queue.Small: Input.Streaming where Element: Copyable {
+extension Queue.Small: Input_Primitives.Input.Streaming where Element: Copyable {
     /// The front element, if any.
     ///
     /// Uses `_read` accessor for borrowing semantics per SE-0474 preparation.
@@ -45,7 +45,7 @@ extension Queue.Small: Input.Streaming where Element: Copyable {
 
 // MARK: - Input.Protocol Conformance
 
-extension Queue.Small: Input.`Protocol` where Element: Copyable {
+extension Queue.Small: Input_Primitives.Input.`Protocol` where Element: Copyable {
     /// Checkpoint for backtracking.
     ///
     /// Restoring to a checkpoint moves the logical head pointer back,
@@ -65,7 +65,7 @@ extension Queue.Small: Input.`Protocol` where Element: Copyable {
     ///
     /// > Note: Checkpoints are invalidated by `enqueue()` operations.
     @inlinable
-    public var checkpointRange: ClosedRange<Checkpoint> {
+    public var bounds: ClosedRange<Checkpoint> {
         checkpoint...checkpoint
     }
 
@@ -75,7 +75,7 @@ extension Queue.Small: Input.`Protocol` where Element: Copyable {
     /// - Precondition: The checkpoint was created from this queue instance and
     ///   no elements have been enqueued since the checkpoint was taken.
     @inlinable
-    public mutating func setPosition(to checkpoint: Checkpoint) {
+    public mutating func seek(to checkpoint: Checkpoint) {
         _buffer.restore(to: checkpoint)
     }
 
