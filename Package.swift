@@ -55,6 +55,9 @@ let package = Package(
     ],
     dependencies: [
         .package(path: "../swift-buffer-primitives"),
+        .package(path: "../swift-buffer-ring-primitives"),
+        .package(path: "../swift-buffer-linear-primitives"),
+        .package(path: "../swift-buffer-linked-primitives"),
         .package(path: "../swift-index-primitives"),
         .package(path: "../swift-vector-primitives"),
         .package(path: "../swift-input-primitives"),
@@ -68,10 +71,10 @@ let package = Package(
         .target(
             name: "Queue Primitives Core",
             dependencies: [
-                .product(name: "Buffer Ring Primitives", package: "swift-buffer-primitives"),
-                .product(name: "Buffer Ring Inline Primitives", package: "swift-buffer-primitives"),
-                .product(name: "Buffer Linear Primitives", package: "swift-buffer-primitives"),
-                .product(name: "Buffer Linked Primitives", package: "swift-buffer-primitives"),
+                .product(name: "Buffer Ring Primitives", package: "swift-buffer-ring-primitives"),
+                .product(name: "Buffer Ring Inline Primitives", package: "swift-buffer-ring-primitives"),
+                .product(name: "Buffer Linear Primitives", package: "swift-buffer-linear-primitives"),
+                .product(name: "Buffer Linked Primitives", package: "swift-buffer-linked-primitives"),
                 .product(name: "Index Primitives", package: "swift-index-primitives"),
                 .product(name: "Vector Primitives", package: "swift-vector-primitives"),
                 .product(name: "Input Primitives", package: "swift-input-primitives"),
