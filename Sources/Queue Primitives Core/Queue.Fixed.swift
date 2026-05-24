@@ -10,6 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 public import Buffer_Ring_Primitives
+public import Buffer_Ring_Bounded_Primitive
 
 extension Queue where Element: ~Copyable {
 

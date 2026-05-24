@@ -9,8 +9,9 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Buffer_Ring_Inline_Primitives
+public import Buffer_Ring_Primitive
 public import Buffer_Ring_Primitives
+public import Buffer_Ring_Inline_Primitives
 public import Queue_Primitives_Core
 
 // Note: Queue.DoubleEnded struct declaration is in Queue.swift

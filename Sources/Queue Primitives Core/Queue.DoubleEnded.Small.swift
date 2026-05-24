@@ -9,8 +9,9 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Buffer_Ring_Inline_Primitives
 public import Buffer_Ring_Primitives
+public import Buffer_Ring_Inline_Primitives
+public import Buffer_Ring_Small_Primitive
 
 extension Queue.DoubleEnded where Element: ~Copyable {
 

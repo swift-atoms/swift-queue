@@ -71,9 +71,14 @@ let package = Package(
         .target(
             name: "Queue Primitives Core",
             dependencies: [
+                .product(name: "Buffer Ring Primitive", package: "swift-buffer-ring-primitives"),
                 .product(name: "Buffer Ring Primitives", package: "swift-buffer-ring-primitives"),
+                .product(name: "Buffer Ring Bounded Primitive", package: "swift-buffer-ring-primitives"),
                 .product(name: "Buffer Ring Inline Primitives", package: "swift-buffer-ring-primitives"),
+                .product(name: "Buffer Ring Small Primitive", package: "swift-buffer-ring-primitives"),
+                .product(name: "Buffer Linear Primitive", package: "swift-buffer-linear-primitives"),
                 .product(name: "Buffer Linear Primitives", package: "swift-buffer-linear-primitives"),
+                .product(name: "Buffer Linked Primitive", package: "swift-buffer-linked-primitives"),
                 .product(name: "Buffer Linked Primitives", package: "swift-buffer-linked-primitives"),
                 .product(name: "Index Primitives", package: "swift-index-primitives"),
                 .product(name: "Vector Primitives", package: "swift-vector-primitives"),

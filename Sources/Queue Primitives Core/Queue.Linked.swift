@@ -9,6 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
+public import Buffer_Linked_Primitive
 public import Buffer_Linked_Primitives
 
 extension Queue where Element: ~Copyable {

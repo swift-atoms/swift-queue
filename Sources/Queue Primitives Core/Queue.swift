@@ -9,8 +9,9 @@
 //
 // ===----------------------------------------------------------------------===//
 
-internal import Buffer_Linked_Primitives
+public import Buffer_Ring_Primitive
 public import Buffer_Ring_Primitives
+internal import Buffer_Linked_Primitives
 internal import Index_Primitives
 import List_Primitives_Core
 import Vector_Primitives
