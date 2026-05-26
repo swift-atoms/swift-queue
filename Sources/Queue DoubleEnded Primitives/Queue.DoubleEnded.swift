@@ -632,12 +632,7 @@ extension Queue.DoubleEnded where Element: Copyable {
     }
 #endif
 
-// MARK: - Internal CoW Identity (for testing)
-
-extension Queue.DoubleEnded where Element: Copyable {
-    /// Buffer identity for CoW testing.
-    @usableFromInline
-    internal var _identity: ObjectIdentifier {
-        _buffer.bufferIdentity
-    }
-}
+// (Removed: the obsolete `_identity` CoW-test probe forwarded to
+// `Buffer.Ring.bufferIdentity` (ObjectIdentifier), which was deleted in the
+// value-type Storage.Heap migration — it was dead (zero call sites) and
+// meaningless on value-type storage; CoW is now a storage-layer guarantee.)
