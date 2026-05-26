@@ -575,26 +575,6 @@ struct DrainWhileTests {
         #expect(drained == [1, 2, 3])
         #expect(q.isEmpty)
     }
-
-    @Test
-    func `DoubleEnded drains some elements front-to-back`() {
-        var q = Queue<Int>.DoubleEnded()
-        for e in [1, 2, 3, 4, 5] { q.push(e, to: .back) }
-        var drained: [Int] = []
-        q.drain(while: { $0 < 4 }) { drained.append($0) }
-        #expect(drained == [1, 2, 3])
-        #expect(Int(bitPattern: q.count) == 2)
-    }
-
-    @Test
-    func `DoubleEnded.Fixed drains some elements`() throws {
-        var q = Queue<Int>.DoubleEnded.Fixed(capacity: 10)
-        for e in [1, 2, 3, 4, 5] { try q.push(e, to: .back) }
-        var drained: [Int] = []
-        q.drain(while: { $0 < 4 }) { drained.append($0) }
-        #expect(drained == [1, 2, 3])
-        #expect(Int(bitPattern: q.count) == 2)
-    }
 }
 
 // MARK: - Queue.Small Move-Only Tests

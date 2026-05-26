@@ -37,18 +37,6 @@ let package = Package(
             targets: ["Queue Small Primitives"]
         ),
         .library(
-            name: "Queue Linked Primitives",
-            targets: ["Queue Linked Primitives"]
-        ),
-        .library(
-            name: "Queue DoubleEnded Primitives",
-            targets: ["Queue DoubleEnded Primitives"]
-        ),
-        .library(
-            name: "Deque Primitives",
-            targets: ["Queue DoubleEnded Primitives"]
-        ),
-        .library(
             name: "Queue Primitives Test Support",
             targets: ["Queue Primitives Test Support"]
         ),
@@ -57,12 +45,10 @@ let package = Package(
         .package(path: "../swift-buffer-primitives"),
         .package(path: "../swift-buffer-ring-primitives"),
         .package(path: "../swift-buffer-linear-primitives"),
-        .package(path: "../swift-buffer-linked-primitives"),
         .package(path: "../swift-index-primitives"),
         .package(path: "../swift-vector-primitives"),
         .package(path: "../swift-input-primitives"),
         .package(path: "../swift-collection-primitives"),
-        .package(path: "../swift-list-primitives"),
         .package(path: "../swift-property-primitives"),
     ],
     targets: [
@@ -78,14 +64,10 @@ let package = Package(
                 .product(name: "Buffer Ring Small Primitive", package: "swift-buffer-ring-primitives"),
                 .product(name: "Buffer Linear Primitive", package: "swift-buffer-linear-primitives"),
                 .product(name: "Buffer Linear Primitives", package: "swift-buffer-linear-primitives"),
-                .product(name: "Buffer Linked Primitive", package: "swift-buffer-linked-primitives"),
-                .product(name: "Buffer Linked Primitives", package: "swift-buffer-linked-primitives"),
                 .product(name: "Index Primitives", package: "swift-index-primitives"),
                 .product(name: "Vector Primitives", package: "swift-vector-primitives"),
                 .product(name: "Input Primitives", package: "swift-input-primitives"),
                 .product(name: "Collection Primitives", package: "swift-collection-primitives"),
-                .product(name: "List Primitives Core", package: "swift-list-primitives"),
-                .product(name: "List Linked Primitives", package: "swift-list-primitives"),
                 .product(name: "Property Primitives", package: "swift-property-primitives"),
             ]
         ),
@@ -125,22 +107,6 @@ let package = Package(
             ]
         ),
 
-        // MARK: - Linked
-        .target(
-            name: "Queue Linked Primitives",
-            dependencies: [
-                "Queue Primitives Core",
-            ]
-        ),
-
-        // MARK: - DoubleEnded
-        .target(
-            name: "Queue DoubleEnded Primitives",
-            dependencies: [
-                "Queue Primitives Core",
-            ]
-        ),
-
         // MARK: - Umbrella
         .target(
             name: "Queue Primitives",
@@ -150,8 +116,6 @@ let package = Package(
                 "Queue Fixed Primitives",
                 "Queue Static Primitives",
                 "Queue Small Primitives",
-                "Queue Linked Primitives",
-                "Queue DoubleEnded Primitives",
             ]
         ),
 
