@@ -72,7 +72,7 @@ struct QueueSendableTests {
         @Sendable
         func processInBackground(_ queue: Queue<Int>) async -> Int {
             var sum = 0
-            for element in queue {
+            queue.forEach { element in
                 sum += element
             }
             return sum

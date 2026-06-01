@@ -11,13 +11,13 @@
 
 public import Buffer_Ring_Primitives
 public import Buffer_Ring_Inline_Primitives
-public import Queue_Primitives_Core
+public import Buffer_Ring_Small_Primitive
 
-// Note: Queue.Static is unconditionally ~Copyable due to deinit requirement
+// Note: Queue.Small is unconditionally ~Copyable due to deinit requirement
 
 // MARK: - Properties
 
-extension Queue.Static where Element: ~Copyable {
+extension Queue.Small where Element: ~Copyable {
     /// The current number of elements in the queue.
     @inlinable
     public var count: Index_Primitives.Index<Element>.Count { _buffer.count }
@@ -26,24 +26,20 @@ extension Queue.Static where Element: ~Copyable {
     @inlinable
     public var isEmpty: Bool { _buffer.isEmpty }
 
-    /// Whether the queue is full.
+    /// The current capacity of the queue.
     @inlinable
-    public var isFull: Bool { _buffer.isFull }
+    public var capacity: Index_Primitives.Index<Element>.Count { _buffer.capacity }
 }
 
 // MARK: - Core Operations
 
-extension Queue.Static where Element: ~Copyable {
+extension Queue.Small where Element: ~Copyable {
     /// Enqueues an element at the back of the queue.
     ///
     /// - Parameter element: The element to enqueue.
-    /// - Throws: ``Queue/Static/Error/overflow`` if the queue is full.
-    /// - Complexity: O(1)
+    /// - Complexity: O(1) amortized. O(n) when spilling from inline to heap.
     @inlinable
-    public mutating func enqueue(_ element: consuming Element) throws(Self.Error) {
-        guard !_buffer.isFull else {
-            throw .overflow
-        }
+    public mutating func enqueue(_ element: consuming Element) {
         _buffer.push.back(consume element)
     }
 
@@ -61,16 +57,22 @@ extension Queue.Static where Element: ~Copyable {
 
     /// Removes all elements from the queue.
     ///
+    /// - Parameter keepingCapacity: If `true` and spilled to heap, keeps heap capacity.
+    ///   If `false`, reverts to inline storage. Default is `true`.
     /// - Complexity: O(n) where n is the number of elements.
+    // on remove.all() + conditional buffer reassignment in deep @inlinable chain.
     @inlinable
-    public mutating func clear() {
+    public mutating func clear(keepingCapacity: Bool = true) {
         _buffer.remove.all()
+        if !keepingCapacity {
+            _buffer = Buffer<Element>.Ring.Small<inlineCapacity>()
+        }
     }
 }
 
 // MARK: - Peek
 
-extension Queue.Static where Element: ~Copyable {
+extension Queue.Small where Element: ~Copyable {
     /// Peeks at the front element without removing it.
     ///
     /// Uses a closure to support `~Copyable` elements via borrowing.
@@ -87,10 +89,8 @@ extension Queue.Static where Element: ~Copyable {
     }
 }
 
-extension Queue.Static where Element: Copyable {
+extension Queue.Small where Element: Copyable {
     /// Returns the front element without removing it, or nil if empty.
-    ///
-    /// This is a convenience method for `Copyable` elements.
     ///
     /// - Returns: A copy of the front element, or `nil` if the queue is empty.
     /// - Complexity: O(1)
@@ -105,7 +105,7 @@ extension Queue.Static where Element: Copyable {
 
 // MARK: - Iteration (for ~Copyable elements)
 
-extension Queue.Static where Element: ~Copyable {
+extension Queue.Small where Element: ~Copyable {
     /// Calls the given closure for each element in the queue.
     ///
     /// Elements are visited from front (oldest) to back (newest).

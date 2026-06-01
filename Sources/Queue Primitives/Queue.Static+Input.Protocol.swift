@@ -12,11 +12,14 @@
 public import Buffer_Ring_Primitive
 public import Buffer_Ring_Primitives
 public import Input_Primitives
-public import Queue_Primitives_Core
+public import Queue_Primitive
 
 // MARK: - Input_Primitives.Input.Streaming Conformance
 
-extension Queue: Input_Primitives.Input.Streaming where Element: Copyable {
+// Note: Queue.Static is unconditionally ~Copyable due to deinit requirement.
+// Input_Primitives.Input.Streaming conformance requires Element: Copyable for `first: Element?`.
+
+extension Queue.Static: Input_Primitives.Input.Streaming where Element: Copyable {
     /// The front element, if any.
     ///
     /// Uses `_read` accessor for borrowing semantics per SE-0474 preparation.
@@ -43,15 +46,12 @@ extension Queue: Input_Primitives.Input.Streaming where Element: Copyable {
 
 // MARK: - Input.Protocol Conformance
 
-extension Queue: Input_Primitives.Input.`Protocol` where Element: Copyable {
+extension Queue.Static: Input_Primitives.Input.`Protocol` where Element: Copyable {
     /// Checkpoint for backtracking.
     ///
     /// Restoring to a checkpoint moves the logical head pointer back,
     /// effectively "unconsuming" elements. This only works if no elements
     /// have been enqueued since the checkpoint was created.
-    ///
-    /// > Note: The ring buffer preserves dequeued elements until
-    /// > they are overwritten by new enqueues, enabling checkpoint/restore.
     public typealias Checkpoint = Buffer<Element>.Ring.Checkpoint
 
     /// Creates a checkpoint at the current position.
@@ -75,7 +75,6 @@ extension Queue: Input_Primitives.Input.`Protocol` where Element: Copyable {
     ///   no elements have been enqueued since the checkpoint was taken.
     @inlinable
     public mutating func seek(to checkpoint: Checkpoint) {
-        _buffer.ensureUnique()
         _buffer.restore(to: checkpoint)
     }
 

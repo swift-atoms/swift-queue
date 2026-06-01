@@ -9,21 +9,22 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Queue_Dynamic_Primitives
-public import Queue_Primitives_Core
+public import Queue_Primitive
+public import Queue_Primitive
 
-extension Queue.Small where Element: ~Copyable {
-    /// Constructs a SmallVec queue from a result-builder closure.
+extension Queue.Static where Element: ~Copyable {
+    /// Constructs a fixed-capacity inline queue from a result-builder closure.
     ///
     /// Wraps the dynamic `Queue<Element>.Builder` per Round-2 Option Y.
-    /// FIFO; non-throwing because Small spills to heap on overflow.
+    /// FIFO: declaration order = enqueue order = dequeue order. Overflow
+    /// throws `Error` from `Queue.Static.enqueue`.
     public init(
         @Queue<Element>.Builder _ builder: () -> Queue<Element>
-    ) {
+    ) throws(Self.Error) {
         var dynamic = builder()
         self.init()
         while let elem = dynamic.dequeue() {
-            self.enqueue(consume elem)
+            try self.enqueue(consume elem)
         }
     }
 }

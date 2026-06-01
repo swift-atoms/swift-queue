@@ -12,11 +12,11 @@
 public import Buffer_Ring_Primitive
 public import Buffer_Ring_Primitives
 public import Input_Primitives
-public import Queue_Primitives_Core
+public import Queue_Primitive
 
 // MARK: - Input_Primitives.Input.Streaming Conformance
 
-extension Queue.Fixed: Input_Primitives.Input.Streaming where Element: Copyable {
+extension Queue: Input_Primitives.Input.Streaming where Element: Copyable {
     /// The front element, if any.
     ///
     /// Uses `_read` accessor for borrowing semantics per SE-0474 preparation.
@@ -43,12 +43,15 @@ extension Queue.Fixed: Input_Primitives.Input.Streaming where Element: Copyable 
 
 // MARK: - Input.Protocol Conformance
 
-extension Queue.Fixed: Input_Primitives.Input.`Protocol` where Element: Copyable {
+extension Queue: Input_Primitives.Input.`Protocol` where Element: Copyable {
     /// Checkpoint for backtracking.
     ///
-    /// Restoring to a checkpoint "unconsumes" elements by adjusting the
-    /// ring buffer head pointer. This only works if no elements have been
-    /// enqueued since the checkpoint was created.
+    /// Restoring to a checkpoint moves the logical head pointer back,
+    /// effectively "unconsuming" elements. This only works if no elements
+    /// have been enqueued since the checkpoint was created.
+    ///
+    /// > Note: The ring buffer preserves dequeued elements until
+    /// > they are overwritten by new enqueues, enabling checkpoint/restore.
     public typealias Checkpoint = Buffer<Element>.Ring.Checkpoint
 
     /// Creates a checkpoint at the current position.

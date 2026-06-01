@@ -11,7 +11,7 @@
 
 public import Buffer_Ring_Primitive
 public import Buffer_Ring_Primitives
-public import Queue_Primitives_Core
+public import Queue_Primitive
 
 // MARK: - Typed Subscript (Copyable, with CoW)
 
@@ -94,57 +94,10 @@ extension Queue {
     }
 }
 
-// MARK: - Sequence (Copyable elements only)
-
-/// `Queue` conforms to `Sequence` when `Element` is `Copyable`.
-///
-/// This enables `for-in` loops, `map`, `filter`, and other sequence operations.
-/// For `~Copyable` elements, use ``forEach(_:)`` instead.
-extension Queue: Swift.Sequence where Element: Copyable {
-
-    /// An iterator over the elements of a queue.
-    public struct Iterator: Sequence.Iterator.`Protocol`, IteratorProtocol {
-        @usableFromInline
-        var _inner: Buffer<Element>.Ring.Iterator
-
-        @usableFromInline
-        init(_inner: Buffer<Element>.Ring.Iterator) {
-            self._inner = _inner
-        }
-
-        @_lifetime(&self)
-        @inlinable
-        public mutating func nextSpan(maximumCount: Cardinal) -> Span<Element> {
-            _inner.nextSpan(maximumCount: maximumCount)
-        }
-
-        @inlinable
-        public mutating func next() -> Element? {
-            _inner.next()
-        }
-    }
-
-    /// Returns an iterator over the elements of the queue.
-    ///
-    /// Elements are yielded from front (oldest) to back (newest).
-    @inlinable
-    public func makeIterator() -> Iterator {
-        Iterator(_inner: _buffer.makeIterator())
-    }
-}
-
-// ============================================================================
-// MARK: - Sequence.Protocol Conformance
-// ============================================================================
-
-extension Queue: Sequence.`Protocol` where Element: Copyable {
-    /// Returns the count as the underestimated count since we know the exact size.
-    ///
-    /// This explicit implementation resolves ambiguity between Swift.Sequence
-    /// and Sequence.Protocol+Swift.Sequence default implementation.
-    @inlinable
-    public var underestimatedCount: Int { Int(bitPattern: count) }
-}
+// Note: iteration is via the institute `Iterable` + `Sequenceable` attachables — see
+// Queue.Iterator.swift (scalar ring-walk), Queue+Iterable.swift (materialising bulk iterator),
+// and Queue+Sequenceable.swift. The per-type `Swift.Sequence` conformance is dropped to match
+// the exemplar — the deferred stdlib-interop axis (one generic `Swift.Sequence` bridge, vended once).
 
 // ============================================================================
 // MARK: - Sequence.Clearable Conformance

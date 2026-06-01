@@ -12,7 +12,7 @@
 public import Buffer_Ring_Primitives
 public import Buffer_Ring_Small_Primitive
 public import Input_Primitives
-public import Queue_Primitives_Core
+public import Queue_Primitive
 
 // MARK: - Input_Primitives.Input.Streaming Conformance
 

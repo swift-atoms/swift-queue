@@ -247,7 +247,7 @@ struct QueueUnboundedTests {
         queue.enqueue(3)
 
         var result: [Int] = []
-        for element in queue {
+        queue.forEach { element in
             result.append(element)
         }
 

@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Queue_Primitives_Core
+public import Queue_Primitive
 
 extension Queue where Element: ~Copyable {
     /// A result builder for declaratively constructing queues.

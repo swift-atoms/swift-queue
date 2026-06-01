@@ -10,73 +10,15 @@
 // ===----------------------------------------------------------------------===//
 
 public import Buffer_Ring_Primitives
-public import Buffer_Linear_Primitive
-public import Buffer_Linear_Primitives
-public import Queue_Primitives_Core
+public import Queue_Primitive
+import Sequence_Primitives
 
-// Note: Queue.Small is unconditionally ~Copyable (inline storage requires deinit),
-// so it cannot conform to Swift.Sequence which requires Copyable.
-// It conforms to Sequence.Protocol which supports ~Copyable containers.
-
-// ============================================================================
-// MARK: - Iterator
-// ============================================================================
-
-extension Queue.Small where Element: Copyable {
-    /// Iterator for Queue.Small elements.
-    ///
-    /// Delegates to `Buffer.Linear.Iterator` over a snapshot for safe iteration,
-    /// avoiding pointer escape issues with inline storage.
-    public struct Iterator: Sequence.Iterator.`Protocol`, IteratorProtocol {
-        @usableFromInline
-        var _inner: Buffer<Element>.Linear.Iterator
-
-        @usableFromInline
-        init(_inner: Buffer<Element>.Linear.Iterator) {
-            self._inner = _inner
-        }
-
-        @_lifetime(&self)
-        @inlinable
-        public mutating func nextSpan(maximumCount: Cardinal) -> Span<Element> {
-            _inner.nextSpan(maximumCount: maximumCount)
-        }
-
-        @inlinable
-        public mutating func next() -> Element? {
-            _inner.next()
-        }
-    }
-}
-
-extension Queue.Small.Iterator: Sendable where Element: Sendable {}
-
-// ============================================================================
-// MARK: - Sequence.Protocol Conformance
-// ============================================================================
-
-extension Queue.Small: Sequence.`Protocol` where Element: Copyable {
-    /// Returns an iterator over the queue elements.
-    ///
-    /// Copies elements to a `Buffer.Linear` snapshot for safe iteration,
-    /// avoiding pointer escape issues with inline storage.
-    /// Elements are yielded from front (oldest) to back (newest).
-    ///
-    /// - Note: Incurs O(n) copy cost. For performance-critical code, use
-    ///   the mutating `forEach` method instead.
-    @inlinable
-    public borrowing func makeIterator() -> Iterator {
-        var snapshot = Buffer<Element>.Linear(minimumCapacity: count)
-        _buffer.forEach { element in
-            snapshot.append(element)
-        }
-        return Iterator(_inner: snapshot.makeIterator())
-    }
-
-    /// Returns the count as the underestimated count since we know the exact size.
-    @inlinable
-    public var underestimatedCount: Int { Int(bitPattern: count) }
-}
+// Note: Queue.Small is unconditionally ~Copyable (inline storage requires deinit), so it cannot
+// conform to Swift.Sequence (which requires Copyable). Iteration is via the institute `Iterable` +
+// `Sequenceable` attachables — the type module's `Queue.Small+Iterable.swift` (delegating to the
+// small ring's borrow-backed `Iterable` witness) and `Queue.Small+Sequenceable.swift` (consuming
+// scalar witness), plus the thin `Sequenceable` conformance in this ops module. The prior per-type
+// `struct Iterator` + `Sequence.Protocol` conformances are dropped to match the exemplar.
 
 // ============================================================================
 // MARK: - Sequence.Clearable Conformance

@@ -9,23 +9,21 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Queue_Dynamic_Primitives
-public import Queue_Primitives_Core
+public import Queue_Primitive
+public import Queue_Primitive
 
-extension Queue.Fixed where Element: ~Copyable {
-    /// Constructs a heap-allocated bounded FIFO queue from a result-builder closure.
+extension Queue.Small where Element: ~Copyable {
+    /// Constructs a SmallVec queue from a result-builder closure.
     ///
     /// Wraps the dynamic `Queue<Element>.Builder` per Round-2 Option Y.
-    /// FIFO; capacity supplied at outer init; overflow throws `Error`.
+    /// FIFO; non-throwing because Small spills to heap on overflow.
     public init(
-        capacity: Index<Element>.Count,
         @Queue<Element>.Builder _ builder: () -> Queue<Element>
-    ) throws(Self.Error) {
-        var fixed = Queue<Element>.Fixed(capacity: capacity)
+    ) {
         var dynamic = builder()
+        self.init()
         while let elem = dynamic.dequeue() {
-            try fixed.enqueue(consume elem)
+            self.enqueue(consume elem)
         }
-        self = fixed
     }
 }

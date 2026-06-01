@@ -10,7 +10,6 @@
 // ===----------------------------------------------------------------------===//
 
 public import Buffer_Ring_Primitives
-public import Queue_Primitives_Core
 
 // Note: Conditional Copyable conformance and Sequence conformance are in Queue.swift
 // (must be same file as declaration due to Swift compiler bug)
@@ -167,24 +166,6 @@ extension Queue.Fixed where Element: ~Copyable {
     }
 }
 
-// MARK: - Sequence.Drain.Protocol (~Copyable)
-
-extension Queue.Fixed: Sequence.Drain.`Protocol` where Element: ~Copyable {
-    /// Drains all elements in FIFO order, passing each to the closure with ownership.
-    ///
-    /// After this method returns, the queue is empty but still usable.
-    /// The capacity remains unchanged.
-    ///
-    /// - Parameter body: A closure that receives each drained element with ownership.
-    /// - Complexity: O(n) where n is the number of elements.
-    @inlinable
-    public mutating func drain(_ body: (consuming Element) -> Void) {
-        while let element = dequeue() {
-            body(element)
-        }
-    }
-}
-
-// Note: Sendable conformance declared in Queue.swift (Queue_Primitives_Core)
-// Note: Swift.Sequence conformance for Queue.Fixed is in Queue.swift
-// (must be in same file as declaration due to Swift compiler bug with ~Copyable)
+// Note: the `Sequence.Drain.Protocol` conformance (cold, brings `Sequence_Primitives`) lives in
+// the ops module (Queue.Fixed+Sequence.Drain.swift) per [MOD-004]/[MOD-036].
+// Note: Sendable + conditional Copyable conformance declared in Queue.Fixed.swift (the type module).

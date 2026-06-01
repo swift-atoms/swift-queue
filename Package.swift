@@ -12,34 +12,11 @@ let package = Package(
         .visionOS(.v26)
     ],
     products: [
-        .library(
-            name: "Queue Primitives",
-            targets: ["Queue Primitives"]
-        ),
-        .library(
-            name: "Queue Primitives Core",
-            targets: ["Queue Primitives Core"]
-        ),
-        .library(
-            name: "Queue Dynamic Primitives",
-            targets: ["Queue Dynamic Primitives"]
-        ),
-        .library(
-            name: "Queue Fixed Primitives",
-            targets: ["Queue Fixed Primitives"]
-        ),
-        .library(
-            name: "Queue Static Primitives",
-            targets: ["Queue Static Primitives"]
-        ),
-        .library(
-            name: "Queue Small Primitives",
-            targets: ["Queue Small Primitives"]
-        ),
-        .library(
-            name: "Queue Primitives Test Support",
-            targets: ["Queue Primitives Test Support"]
-        ),
+        // MARK: - Type module (lean ~Copyable types; Copyable-requiring conformances live in the ops module per [MOD-004])
+        .library(name: "Queue Primitive", targets: ["Queue Primitive"]),
+        // MARK: - Ops module; `Queue Primitives` doubles as the [MOD-005] umbrella
+        .library(name: "Queue Primitives", targets: ["Queue Primitives"]),
+        .library(name: "Queue Primitives Test Support", targets: ["Queue Primitives Test Support"]),
     ],
     dependencies: [
         .package(url: "https://github.com/swift-primitives/swift-buffer-primitives.git", branch: "main"),
@@ -50,18 +27,22 @@ let package = Package(
         .package(url: "https://github.com/swift-primitives/swift-input-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-collection-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-property-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-iterator-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-sequence-primitives.git", branch: "main"),
     ],
     targets: [
 
-        // MARK: - Core
+        // MARK: - Type module — lean ~Copyable Queue + nested variants/errors + iteration witnesses ([MOD-036])
         .target(
-            name: "Queue Primitives Core",
+            name: "Queue Primitive",
             dependencies: [
                 .product(name: "Buffer Ring Primitive", package: "swift-buffer-ring-primitives"),
                 .product(name: "Buffer Ring Primitives", package: "swift-buffer-ring-primitives"),
                 .product(name: "Buffer Ring Bounded Primitive", package: "swift-buffer-ring-primitives"),
+                .product(name: "Buffer Ring Bounded Primitives", package: "swift-buffer-ring-primitives"),
                 .product(name: "Buffer Ring Inline Primitives", package: "swift-buffer-ring-primitives"),
                 .product(name: "Buffer Ring Small Primitive", package: "swift-buffer-ring-primitives"),
+                .product(name: "Buffer Ring Small Primitives", package: "swift-buffer-ring-primitives"),
                 .product(name: "Buffer Linear Primitive", package: "swift-buffer-linear-primitives"),
                 .product(name: "Buffer Linear Primitives", package: "swift-buffer-linear-primitives"),
                 .product(name: "Index Primitives", package: "swift-index-primitives"),
@@ -69,53 +50,27 @@ let package = Package(
                 .product(name: "Input Primitives", package: "swift-input-primitives"),
                 .product(name: "Collection Primitives", package: "swift-collection-primitives"),
                 .product(name: "Property Primitives", package: "swift-property-primitives"),
+                .product(name: "Iterator Primitive", package: "swift-iterator-primitives"),
+                .product(name: "Iterator Protocol", package: "swift-iterator-primitives"),
+                .product(name: "Iterable", package: "swift-iterator-primitives"),
+                .product(name: "Iterator Chunk Primitives", package: "swift-iterator-primitives"),
             ]
         ),
 
-        // MARK: - Dynamic
-        .target(
-            name: "Queue Dynamic Primitives",
-            dependencies: [
-                "Queue Primitives Core",
-            ]
-        ),
-
-        // MARK: - Fixed
-        .target(
-            name: "Queue Fixed Primitives",
-            dependencies: [
-                "Queue Primitives Core",
-                "Queue Dynamic Primitives",
-            ]
-        ),
-
-        // MARK: - Static
-        .target(
-            name: "Queue Static Primitives",
-            dependencies: [
-                "Queue Primitives Core",
-                "Queue Dynamic Primitives",
-            ]
-        ),
-
-        // MARK: - Small
-        .target(
-            name: "Queue Small Primitives",
-            dependencies: [
-                "Queue Primitives Core",
-                "Queue Dynamic Primitives",
-            ]
-        ),
-
-        // MARK: - Umbrella
+        // MARK: - Ops module + umbrella — Copyable conformances + ops, re-exports the type module
         .target(
             name: "Queue Primitives",
             dependencies: [
-                "Queue Primitives Core",
-                "Queue Dynamic Primitives",
-                "Queue Fixed Primitives",
-                "Queue Static Primitives",
-                "Queue Small Primitives",
+                "Queue Primitive",
+                .product(name: "Buffer Ring Primitive", package: "swift-buffer-ring-primitives"),
+                .product(name: "Buffer Ring Primitives", package: "swift-buffer-ring-primitives"),
+                .product(name: "Buffer Ring Bounded Primitive", package: "swift-buffer-ring-primitives"),
+                .product(name: "Index Primitives", package: "swift-index-primitives"),
+                .product(name: "Input Primitives", package: "swift-input-primitives"),
+                .product(name: "Property Primitives", package: "swift-property-primitives"),
+                .product(name: "Iterator Primitive", package: "swift-iterator-primitives"),
+                .product(name: "Iterable", package: "swift-iterator-primitives"),
+                .product(name: "Sequence Primitives", package: "swift-sequence-primitives"),
             ]
         ),
 
