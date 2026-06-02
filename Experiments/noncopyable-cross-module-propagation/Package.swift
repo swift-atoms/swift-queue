@@ -6,7 +6,7 @@ let package = Package(
     name: "noncopyable-cross-module-propagation",
     platforms: [.macOS(.v26)],
     dependencies: [
-        .package(path: "../../../swift-list-primitives")
+        .package(url: "https://github.com/swift-primitives/swift-list-primitives.git", branch: "main")
     ],
     targets: [
         .executableTarget(
