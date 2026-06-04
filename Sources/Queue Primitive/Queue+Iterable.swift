@@ -18,10 +18,10 @@ public import Iterator_Chunk_Primitives
 // MARK: - Iterable (multipass, borrowing) — via materialising adapter
 //
 // The ring-buffer queue has NO single contiguous element span (the ring wraps), so — unlike the
-// contiguous containers which vend `Iterator.Chunk` over a `Memory.Contiguous.Protocol` span —
+// contiguous containers which vend `Iterator.Chunk` over a `Span.Protocol` span —
 // `Queue` produces its bulk iterator by wrapping the backing ring's hand-written scalar witness
 // `Buffer.Ring.Scalar` in `Iterator_Primitive.Iterator.Materializing`, the span-primitive adapter for generator-style
-// sequences. The queue therefore does NOT conform `Memory.Contiguous.Protocol` (no element span).
+// sequences. The queue therefore does NOT conform `Span.Protocol` (no element span).
 //
 // Per-backing divergence from the queue-linked exemplar: `Buffer.Ring.Scalar` is itself the
 // `~Copyable` hand-written GR3 scalar witness (demangle-safe, per Buffer.Ring+Sequence.Protocol),

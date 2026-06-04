@@ -24,7 +24,7 @@ public import Iterator_Chunk_Primitives
 // the Dynamic exemplar (where `_buffer` is CoW-copyable): the `Iterable` face delegates to the
 // small ring's OWN borrow-backed `Iterable` witness — the borrow-backed scalar walker
 // `Buffer.Ring.Small.Walk` wrapped in `Iterator.Materializing`. The queue does NOT conform
-// `Memory.Contiguous.Protocol` (no element span — the ring wraps).
+// `Span.Protocol` (no element span — the ring wraps).
 //
 // `@_implements` splits the unified `Iterator` associated type: `Iterable.Iterator` binds the
 // materialising bulk iterator here; `Sequenceable.Iterator` binds the scalar

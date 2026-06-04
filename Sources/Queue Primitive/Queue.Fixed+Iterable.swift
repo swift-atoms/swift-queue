@@ -20,10 +20,10 @@ public import Iterator_Chunk_Primitives
 //
 // `Queue.Fixed` is a bounded ring buffer: it has NO single contiguous element span (the ring
 // wraps), so — unlike the contiguous containers which vend `Iterator.Chunk` over a
-// `Memory.Contiguous.Protocol` span — it produces its bulk iterator by wrapping the backing bounded
+// `Span.Protocol` span — it produces its bulk iterator by wrapping the backing bounded
 // ring's hand-written scalar witness `Buffer.Ring.Bounded.Scalar` in
 // `Iterator_Primitive.Iterator.Materializing`. The queue therefore does NOT conform
-// `Memory.Contiguous.Protocol` (no element span).
+// `Span.Protocol` (no element span).
 //
 // `@_implements` splits the unified `Iterator` associated type: `Iterable.Iterator` binds the
 // materialising bulk iterator here; `Sequenceable.Iterator` binds the scalar
