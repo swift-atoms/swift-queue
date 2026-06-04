@@ -28,8 +28,8 @@ extension Queue: Equatable where Element: Equatable & Copyable {
         // Consume snapshot copies through the Sequenceable scalar witness. The explicit
         // result type pins the consuming `makeIterator()` (the `Iterable` borrowing witness
         // is the other `@_implements(makeIterator())` overload).
-        var li: Buffer<Element>.Ring.Scalar = lhs.makeIterator()
-        var ri: Buffer<Element>.Ring.Scalar = rhs.makeIterator()
+        var li: Buffer<Storage<Element>.Heap>.Ring.Scalar = lhs.makeIterator()
+        var ri: Buffer<Storage<Element>.Heap>.Ring.Scalar = rhs.makeIterator()
         while let l = li.next(), let r = ri.next() {
             if l != r { return false }
         }

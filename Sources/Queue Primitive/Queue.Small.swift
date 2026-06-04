@@ -47,12 +47,12 @@ extension Queue where Element: ~Copyable {
     @safe
     public struct Small<let inlineCapacity: Int>: ~Copyable {
         @usableFromInline
-        package var _buffer: Buffer<Element>.Ring.Small<inlineCapacity>
+        package var _buffer: Buffer<Storage<Element>.Heap>.Ring.Small<inlineCapacity>
 
         /// Creates an empty small queue.
         @inlinable
         public init() {
-            self._buffer = Buffer<Element>.Ring.Small<inlineCapacity>()
+            self._buffer = Buffer<Storage<Element>.Heap>.Ring.Small<inlineCapacity>()
         }
 
         /// Whether the queue is currently using heap storage.

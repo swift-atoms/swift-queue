@@ -27,7 +27,7 @@ public import Sequence_Primitives
 
 extension Queue.Small: Sequenceable where Element: Copyable {
     @_implements(Sequenceable, Iterator)
-    public typealias SequenceableIterator = Buffer<Element>.Ring.Small<inlineCapacity>.Scalar
+    public typealias SequenceableIterator = Buffer<Storage<Element>.Heap>.Ring.Small<inlineCapacity>.Scalar
 
     /// Returns the count as the underestimated count since we know the exact size.
     @inlinable

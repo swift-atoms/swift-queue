@@ -63,7 +63,7 @@ extension Queue where Element: ~Copyable {
         _buffer.remove.all()
 
         if !keepingCapacity {
-            _buffer = Buffer<Element>.Ring(minimumCapacity: .zero)
+            _buffer = Buffer<Storage<Element>.Heap>.Ring(minimumCapacity: .zero)
         }
     }
 }

@@ -46,7 +46,7 @@ extension Queue where Element: ~Copyable {
     @safe
     public struct Fixed: ~Copyable {
         @usableFromInline
-        package var _buffer: Buffer<Element>.Ring.Bounded
+        package var _buffer: Buffer<Storage<Element>.Heap>.Ring.Bounded
 
         /// The maximum number of elements the queue can hold.
         public let capacity: Index.Count
@@ -56,7 +56,7 @@ extension Queue where Element: ~Copyable {
         /// - Parameter capacity: Maximum number of elements.
         @inlinable
         public init(capacity: Index.Count) {
-            self._buffer = Buffer<Element>.Ring.Bounded(minimumCapacity: capacity)
+            self._buffer = Buffer<Storage<Element>.Heap>.Ring.Bounded(minimumCapacity: capacity)
             self.capacity = capacity
         }
 

@@ -52,7 +52,7 @@ extension Queue: Input_Primitives.Input.`Protocol` where Element: Copyable {
     ///
     /// > Note: The ring buffer preserves dequeued elements until
     /// > they are overwritten by new enqueues, enabling checkpoint/restore.
-    public typealias Checkpoint = Buffer<Element>.Ring.Checkpoint
+    public typealias Checkpoint = Buffer<Storage<Element>.Heap>.Ring.Checkpoint
 
     /// Creates a checkpoint at the current position.
     @inlinable

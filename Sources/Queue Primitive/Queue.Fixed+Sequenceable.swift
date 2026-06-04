@@ -26,7 +26,7 @@ extension Queue.Fixed where Element: Copyable {
     /// Returns a single-pass consuming iterator over the queue's elements, front to back.
     /// Witness for `Sequenceable`.
     @inlinable
-    public consuming func makeIterator() -> Buffer<Element>.Ring.Bounded.Scalar {
+    public consuming func makeIterator() -> Buffer<Storage<Element>.Heap>.Ring.Bounded.Scalar {
         _buffer.makeIterator()
     }
 }

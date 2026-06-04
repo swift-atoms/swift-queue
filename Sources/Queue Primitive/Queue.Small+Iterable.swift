@@ -32,13 +32,13 @@ public import Iterator_Chunk_Primitives
 
 extension Queue.Small: Iterable where Element: Copyable {
     @_implements(Iterable, Iterator)
-    public typealias IterableIterator = Iterator_Primitive.Iterator.Materializing<Buffer<Element>.Ring.Small<inlineCapacity>.Walk>
+    public typealias IterableIterator = Iterator_Primitive.Iterator.Materializing<Buffer<Storage<Element>.Heap>.Ring.Small<inlineCapacity>.Walk>
 
     /// Iterable's bulk span witness: delegates to the small ring's borrow-backed `Iterable`
     /// witness (multipass-safe over the borrowed storage).
     @inlinable
     @_implements(Iterable, makeIterator())
-    public borrowing func iterableMakeIterator() -> Iterator_Primitive.Iterator.Materializing<Buffer<Element>.Ring.Small<inlineCapacity>.Walk> {
+    public borrowing func iterableMakeIterator() -> Iterator_Primitive.Iterator.Materializing<Buffer<Storage<Element>.Heap>.Ring.Small<inlineCapacity>.Walk> {
         _buffer.makeIterator()
     }
 }

@@ -54,7 +54,7 @@ extension Queue.Small: Input_Primitives.Input.`Protocol` where Element: Copyable
     /// have been enqueued since the checkpoint was created.
     ///
     /// > Note: Works correctly whether storage is inline or on heap.
-    public typealias Checkpoint = Buffer<Element>.Ring.Small<inlineCapacity>.Checkpoint
+    public typealias Checkpoint = Buffer<Storage<Element>.Heap>.Ring.Small<inlineCapacity>.Checkpoint
 
     /// Creates a checkpoint at the current position.
     @inlinable

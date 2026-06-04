@@ -49,7 +49,7 @@ extension Queue.Fixed: Input_Primitives.Input.`Protocol` where Element: Copyable
     /// Restoring to a checkpoint "unconsumes" elements by adjusting the
     /// ring buffer head pointer. This only works if no elements have been
     /// enqueued since the checkpoint was created.
-    public typealias Checkpoint = Buffer<Element>.Ring.Checkpoint
+    public typealias Checkpoint = Buffer<Storage<Element>.Heap>.Ring.Checkpoint
 
     /// Creates a checkpoint at the current position.
     @inlinable

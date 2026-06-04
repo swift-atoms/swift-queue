@@ -34,14 +34,14 @@ public import Iterator_Chunk_Primitives
 
 extension Queue: Iterable where Element: Copyable {
     @_implements(Iterable, Iterator)
-    public typealias IterableIterator = Iterator_Primitive.Iterator.Materializing<Buffer<Element>.Ring.Scalar>
+    public typealias IterableIterator = Iterator_Primitive.Iterator.Materializing<Buffer<Storage<Element>.Heap>.Ring.Scalar>
 
     /// Iterable's bulk span witness: wraps the ring's scalar walk in the generator materialise
     /// adapter. Iterates a copy-on-write snapshot of the ring (multipass-safe).
     @inlinable
     @_lifetime(borrow self)
     @_implements(Iterable, makeIterator())
-    public borrowing func iterableMakeIterator() -> Iterator_Primitive.Iterator.Materializing<Buffer<Element>.Ring.Scalar> {
+    public borrowing func iterableMakeIterator() -> Iterator_Primitive.Iterator.Materializing<Buffer<Storage<Element>.Heap>.Ring.Scalar> {
         var snapshot = _buffer
         return Iterator_Primitive.Iterator.Materializing(snapshot.makeIterator())
     }

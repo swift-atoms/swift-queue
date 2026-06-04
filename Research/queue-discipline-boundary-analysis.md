@@ -324,7 +324,7 @@ For each public API member across all source files in `queue-primitives`, classi
 | `isSpilled` on `Queue.Linked.Small` | Same as above. | **CONTESTED** -- same rationale. Keep it. |
 | `compact()` on `Queue` | Triggers ring buffer linearization -- buffer-level concern. | **OK** -- the user intent ("release unused memory") is queue-level. The linearization is an implementation consequence, not exposed. |
 | `reserve(_:)` on `Queue` and `Queue.Linked` | Capacity reservation is a buffer concern. | **OK** -- consumer ergonomics. The user wants to "pre-allocate for my workload." The how (buffer growth) is hidden. |
-| `Checkpoint` typealias exposing `Buffer<Element>.Ring.Checkpoint` | The `Input.Protocol` conformance exposes the buffer's checkpoint type directly. | **MINOR LEAK** -- `Checkpoint` is a public typealias to `Buffer<Element>.Ring.Checkpoint`. The buffer type name is visible to consumers. Consider wrapping in a `Queue.Checkpoint` for abstraction, though this is cosmetic since the checkpoint is opaque to users anyway. |
+| `Checkpoint` typealias exposing `Buffer<Storage<Element>.Heap>.Ring.Checkpoint` | The `Input.Protocol` conformance exposes the buffer's checkpoint type directly. | **MINOR LEAK** -- `Checkpoint` is a public typealias to `Buffer<Storage<Element>.Heap>.Ring.Checkpoint`. The buffer type name is visible to consumers. Consider wrapping in a `Queue.Checkpoint` for abstraction, though this is cosmetic since the checkpoint is opaque to users anyway. |
 | `Queue.Static.Iterator` copies to `Buffer.Linear` snapshot | Iterator creates a `Buffer<Element>.Linear` internally for safe iteration. | **OK** -- this is an implementation detail hidden behind the `Iterator` type. The user sees `Queue.Static.Iterator`, not the buffer copy. |
 | `Queue.Linked.Iterator` wraps `Buffer<Element>.Linked<1>.Iterator` | Thin wrapper providing queue-level type identity. | **OK** -- correctly wraps the buffer iterator. |
 | `_deinitWorkaround: AnyObject?` on `Queue.Static` and `Queue.DoubleEnded.Static` | Compiler bug workaround. | **OK** -- not part of public API. Documented with issue link. |
@@ -364,7 +364,7 @@ The current `queue-primitives` package is **overwhelmingly correct** in its sepa
 
 #### 1. Wrap `Queue.Checkpoint` (Minor)
 
-The `Input.Protocol` conformance on Queue, Queue.Fixed, Queue.Static, and Queue.Small all expose `Buffer<Element>.Ring.Checkpoint` (or `Buffer<Element>.Ring.Small<N>.Checkpoint`) as a public typealias. For abstraction purity, consider wrapping in `Queue.Checkpoint`. This is cosmetic -- the type is opaque to consumers regardless.
+The `Input.Protocol` conformance on Queue, Queue.Fixed, Queue.Static, and Queue.Small all expose `Buffer<Storage<Element>.Heap>.Ring.Checkpoint` (or `Buffer<Storage<Element>.Heap>.Ring.Small<N>.Checkpoint`) as a public typealias. For abstraction purity, consider wrapping in `Queue.Checkpoint`. This is cosmetic -- the type is opaque to consumers regardless.
 
 #### 2. Add `Equatable` / `Hashable` to More Variants (Medium Priority)
 
