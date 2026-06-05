@@ -20,14 +20,13 @@ import Sequence_Primitives
 // conformances are dropped to match the exemplar — the deferred stdlib-interop axis.
 
 // ============================================================================
-// MARK: - Sequence.Clearable Conformance
+// MARK: - removeAll()
 // ============================================================================
 
-extension Queue.Fixed: Sequence.Clearable where Element: Copyable {
+extension Queue.Fixed where Element: Copyable {
     /// Removes all elements from the queue.
     ///
     /// The capacity remains unchanged.
-    /// This enables `.forEach.consuming { }` pattern via `Property.Inout` extension.
     @inlinable
     public mutating func removeAll() {
         clear()
