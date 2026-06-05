@@ -10,6 +10,8 @@
 // ===----------------------------------------------------------------------===//
 
 public import Buffer_Ring_Primitive
+public import Memory_Heap_Primitives
+public import Storage_Contiguous_Primitives
 public import Buffer_Ring_Primitives
 public import Input_Primitives
 public import Queue_Primitive
@@ -52,7 +54,7 @@ extension Queue.Static: Input_Primitives.Input.`Protocol` where Element: Copyabl
     /// Restoring to a checkpoint moves the logical head pointer back,
     /// effectively "unconsuming" elements. This only works if no elements
     /// have been enqueued since the checkpoint was created.
-    public typealias Checkpoint = Buffer<Storage<Element>.Heap>.Ring.Checkpoint
+    public typealias Checkpoint = Buffer<Storage<Element>.Contiguous<Memory.Heap<Element>>>.Ring.Checkpoint
 
     /// Creates a checkpoint at the current position.
     @inlinable

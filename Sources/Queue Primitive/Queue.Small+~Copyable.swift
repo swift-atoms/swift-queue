@@ -10,6 +10,8 @@
 // ===----------------------------------------------------------------------===//
 
 public import Buffer_Ring_Primitives
+public import Memory_Heap_Primitives
+public import Storage_Contiguous_Primitives
 public import Buffer_Ring_Inline_Primitives
 public import Buffer_Ring_Small_Primitive
 
@@ -65,7 +67,7 @@ extension Queue.Small where Element: ~Copyable {
     public mutating func clear(keepingCapacity: Bool = true) {
         _buffer.remove.all()
         if !keepingCapacity {
-            _buffer = Buffer<Storage<Element>.Heap>.Ring.Small<inlineCapacity>()
+            _buffer = Buffer<Storage<Element>.Contiguous<Memory.Heap<Element>>>.Ring.Small<inlineCapacity>()
         }
     }
 }

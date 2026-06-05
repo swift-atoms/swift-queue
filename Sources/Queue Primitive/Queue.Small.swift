@@ -10,6 +10,8 @@
 // ===----------------------------------------------------------------------===//
 
 public import Buffer_Ring_Primitives
+public import Memory_Heap_Primitives
+public import Storage_Contiguous_Primitives
 public import Buffer_Ring_Inline_Primitives
 public import Buffer_Ring_Small_Primitive
 
@@ -47,12 +49,12 @@ extension Queue where Element: ~Copyable {
     @safe
     public struct Small<let inlineCapacity: Int>: ~Copyable {
         @usableFromInline
-        package var _buffer: Buffer<Storage<Element>.Heap>.Ring.Small<inlineCapacity>
+        package var _buffer: Buffer<Storage<Element>.Contiguous<Memory.Heap<Element>>>.Ring.Small<inlineCapacity>
 
         /// Creates an empty small queue.
         @inlinable
         public init() {
-            self._buffer = Buffer<Storage<Element>.Heap>.Ring.Small<inlineCapacity>()
+            self._buffer = Buffer<Storage<Element>.Contiguous<Memory.Heap<Element>>>.Ring.Small<inlineCapacity>()
         }
 
         /// Whether the queue is currently using heap storage.

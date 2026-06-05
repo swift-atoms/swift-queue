@@ -10,6 +10,8 @@
 // ===----------------------------------------------------------------------===//
 
 public import Buffer_Ring_Primitives
+public import Memory_Heap_Primitives
+public import Storage_Contiguous_Primitives
 public import Buffer_Ring_Inline_Primitives
 
 // MARK: - Sequenceable witness (consuming makeIterator)
@@ -27,7 +29,7 @@ extension Queue.Static where Element: Copyable {
     /// Returns a single-pass consuming iterator over the queue's elements, front to back.
     /// Witness for `Sequenceable`.
     @inlinable
-    public consuming func makeIterator() -> Buffer<Storage<Element>.Heap>.Ring.Inline<capacity>.Scalar {
+    public consuming func makeIterator() -> Buffer<Storage<Element>.Contiguous<Memory.Heap<Element>>>.Ring.Inline<capacity>.Scalar {
         _buffer.makeIterator()
     }
 }

@@ -10,6 +10,8 @@
 // ===----------------------------------------------------------------------===//
 
 public import Queue_Primitive
+public import Memory_Heap_Primitives
+public import Storage_Contiguous_Primitives
 public import Buffer_Ring_Primitive
 public import Buffer_Ring_Primitives
 public import Sequence_Primitives
@@ -30,7 +32,7 @@ public import Sequence_Primitives
 
 extension Queue: Sequenceable where Element: Copyable {
     @_implements(Sequenceable, Iterator)
-    public typealias SequenceableIterator = Buffer<Storage<Element>.Heap>.Ring.Scalar
+    public typealias SequenceableIterator = Buffer<Storage<Element>.Contiguous<Memory.Heap<Element>>>.Ring.Scalar
 
     /// Returns the count as the underestimated count since we know the exact size.
     @inlinable

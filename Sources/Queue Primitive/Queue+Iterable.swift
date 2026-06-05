@@ -10,6 +10,8 @@
 // ===----------------------------------------------------------------------===//
 
 public import Buffer_Ring_Primitive
+public import Memory_Heap_Primitives
+public import Storage_Contiguous_Primitives
 public import Buffer_Ring_Primitives
 public import Iterable
 public import Iterator_Primitive
@@ -34,14 +36,14 @@ public import Iterator_Chunk_Primitives
 
 extension Queue: Iterable where Element: Copyable {
     @_implements(Iterable, Iterator)
-    public typealias IterableIterator = Iterator_Primitive.Iterator.Materializing<Buffer<Storage<Element>.Heap>.Ring.Scalar>
+    public typealias IterableIterator = Iterator_Primitive.Iterator.Materializing<Buffer<Storage<Element>.Contiguous<Memory.Heap<Element>>>.Ring.Scalar>
 
     /// Iterable's bulk span witness: wraps the ring's scalar walk in the generator materialise
     /// adapter. Iterates a copy-on-write snapshot of the ring (multipass-safe).
     @inlinable
     @_lifetime(borrow self)
     @_implements(Iterable, makeIterator())
-    public borrowing func iterableMakeIterator() -> Iterator_Primitive.Iterator.Materializing<Buffer<Storage<Element>.Heap>.Ring.Scalar> {
+    public borrowing func iterableMakeIterator() -> Iterator_Primitive.Iterator.Materializing<Buffer<Storage<Element>.Contiguous<Memory.Heap<Element>>>.Ring.Scalar> {
         var snapshot = _buffer
         return Iterator_Primitive.Iterator.Materializing(snapshot.makeIterator())
     }

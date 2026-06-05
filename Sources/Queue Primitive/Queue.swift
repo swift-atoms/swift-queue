@@ -10,6 +10,8 @@
 // ===----------------------------------------------------------------------===//
 
 public import Buffer_Ring_Primitive
+public import Memory_Heap_Primitives
+public import Storage_Contiguous_Primitives
 public import Buffer_Ring_Primitives
 internal import Index_Primitives
 import Vector_Primitives
@@ -85,14 +87,14 @@ import Vector_Primitives
 public struct Queue<Element: ~Copyable>: ~Copyable {
 
     @usableFromInline
-    package var _buffer: Buffer<Storage<Element>.Heap>.Ring
+    package var _buffer: Buffer<Storage<Element>.Contiguous<Memory.Heap<Element>>>.Ring
 
     /// Creates an empty queue.
     ///
     /// No allocation occurs until the first enqueue.
     @inlinable
     public init() {
-        self._buffer = Buffer<Storage<Element>.Heap>.Ring(minimumCapacity: .zero)
+        self._buffer = Buffer<Storage<Element>.Contiguous<Memory.Heap<Element>>>.Ring(minimumCapacity: .zero)
     }
 
     /// Creates a queue with reserved capacity.
@@ -103,7 +105,7 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
     /// - Parameter capacity: Number of elements to reserve space for.
     @inlinable
     public init(reservingCapacity capacity: Index.Count) {
-        self._buffer = Buffer<Storage<Element>.Heap>.Ring(minimumCapacity: capacity)
+        self._buffer = Buffer<Storage<Element>.Contiguous<Memory.Heap<Element>>>.Ring(minimumCapacity: capacity)
     }
 
     // Note: No deinit needed - Storage.Heap handles cleanup

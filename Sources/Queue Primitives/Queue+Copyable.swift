@@ -10,6 +10,8 @@
 // ===----------------------------------------------------------------------===//
 
 public import Buffer_Ring_Primitive
+public import Memory_Heap_Primitives
+public import Storage_Contiguous_Primitives
 public import Buffer_Ring_Primitives
 public import Queue_Primitive
 
@@ -72,7 +74,7 @@ extension Queue where Element: Copyable {
         _buffer.remove.all()
 
         if !keepingCapacity {
-            _buffer = Buffer<Storage<Element>.Heap>.Ring(minimumCapacity: .zero)
+            _buffer = Buffer<Storage<Element>.Contiguous<Memory.Heap<Element>>>.Ring(minimumCapacity: .zero)
         }
     }
 }
