@@ -19,6 +19,7 @@ let package = Package(
         .library(name: "Queue Primitives Test Support", targets: ["Queue Primitives Test Support"]),
     ],
     dependencies: [
+        .package(url: "https://github.com/swift-primitives/swift-memory-small-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-buffer-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-buffer-ring-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-buffer-linear-primitives.git", branch: "main"),
@@ -43,12 +44,9 @@ let package = Package(
                 .product(name: "Buffer Ring Primitives", package: "swift-buffer-ring-primitives"),
                 .product(name: "Buffer Ring Bounded Primitive", package: "swift-buffer-ring-primitives"),
                 .product(name: "Buffer Ring Bounded Primitives", package: "swift-buffer-ring-primitives"),
-                .product(name: "Buffer Ring Inline Primitives", package: "swift-buffer-ring-primitives"),
-                .product(name: "Buffer Ring Small Primitive", package: "swift-buffer-ring-primitives"),
                 // Cleave-3 #12a/#5a: Queue.Small composes Buffer<Storage<E>.Small<n>>.Ring.
-                .product(name: "Storage Small Primitives", package: "swift-storage-primitives"),
+                .product(name: "Memory Small Primitives", package: "swift-memory-small-primitives"),
                 .product(name: "Storage Primitive", package: "swift-storage-primitives"),
-                .product(name: "Buffer Ring Small Primitives", package: "swift-buffer-ring-primitives"),
                 .product(name: "Buffer Linear Primitive", package: "swift-buffer-linear-primitives"),
                 .product(name: "Buffer Linear Primitives", package: "swift-buffer-linear-primitives"),
                 .product(name: "Index Primitives", package: "swift-index-primitives"),
