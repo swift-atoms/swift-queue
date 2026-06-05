@@ -10,6 +10,8 @@
 // ===----------------------------------------------------------------------===//
 
 import Buffer_Ring_Inline_Primitives
+import Memory_Heap_Primitives
+import Storage_Contiguous_Primitives
 import Buffer_Ring_Primitives
 import Queue_Primitives_Test_Support
 import Testing
@@ -148,8 +150,8 @@ struct QueueDeinitOrderTests {
     /// Wrapper with empty deinit — tests that Storage.Inline's deinit fires
     /// through the explicit-deinit → member-destruction chain.
     private struct _EmptyDeinitWrapper<Element: ~Copyable, let capacity: Int>: ~Copyable {
-        var _buffer: Buffer<Storage<Element>.Heap>.Ring.Inline<capacity>
-        init() { self._buffer = Buffer<Storage<Element>.Heap>.Ring.Inline<capacity>() }
+        var _buffer: Buffer<Storage<Element>.Contiguous<Memory.Heap<Element>>>.Ring.Inline<capacity>
+        init() { self._buffer = Buffer<Storage<Element>.Contiguous<Memory.Heap<Element>>>.Ring.Inline<capacity>() }
         deinit {}
     }
 
@@ -157,8 +159,8 @@ struct QueueDeinitOrderTests {
     /// through pure implicit member destruction. This is the exact shape
     /// Queue.Static would have after removing _deinitWorkaround and deinit.
     private struct _NoDeinitWrapper<Element: ~Copyable, let capacity: Int>: ~Copyable {
-        var _buffer: Buffer<Storage<Element>.Heap>.Ring.Inline<capacity>
-        init() { self._buffer = Buffer<Storage<Element>.Heap>.Ring.Inline<capacity>() }
+        var _buffer: Buffer<Storage<Element>.Contiguous<Memory.Heap<Element>>>.Ring.Inline<capacity>
+        init() { self._buffer = Buffer<Storage<Element>.Contiguous<Memory.Heap<Element>>>.Ring.Inline<capacity>() }
     }
 
     @Test
