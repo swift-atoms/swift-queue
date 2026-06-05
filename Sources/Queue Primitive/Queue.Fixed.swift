@@ -62,7 +62,7 @@ extension Queue where Element: ~Copyable {
             self.capacity = capacity
         }
 
-        // Note: No deinit needed - Storage.Heap handles cleanup
+        // Note: No deinit needed - Storage.Contiguous<Memory.Heap> handles cleanup
     }
 }
 

@@ -108,7 +108,7 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
         self._buffer = Buffer<Storage<Element>.Contiguous<Memory.Heap<Element>>>.Ring(minimumCapacity: capacity)
     }
 
-    // Note: No deinit needed - Storage.Heap handles cleanup
+    // Note: No deinit needed - Storage.Contiguous<Memory.Heap> handles cleanup
 }
 
 // MARK: - Conditional Copyable
