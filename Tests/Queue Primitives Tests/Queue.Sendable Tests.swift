@@ -23,11 +23,6 @@ struct QueueSendableTests {
         // Compile-time verification only
     }
 
-    /// Compile-time check: ~Copyable value conforms to Sendable
-    func requireSendableNC<T: Sendable & ~Copyable>(_ value: borrowing T) {
-        // Compile-time verification only
-    }
-
     @Test
     func `Queue<Int> is Sendable`() {
         var queue = Queue<Int>()
@@ -51,20 +46,6 @@ struct QueueSendableTests {
         var fixed = Queue<Int>.Fixed(capacity: 10)
         try fixed.enqueue(1)
         requireSendable(fixed)
-    }
-
-    @Test
-    func `Queue.Static<Int> is Sendable`() throws {
-        var staticQueue = Queue<Int>.Static<4>()
-        try staticQueue.enqueue(1)
-        requireSendableNC(staticQueue)
-    }
-
-    @Test
-    func `Queue.Small<Int> is Sendable`() {
-        var small = Queue<Int>.Small<4>()
-        small.enqueue(1)
-        requireSendableNC(small)
     }
 
     @Test

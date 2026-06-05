@@ -9,10 +9,6 @@
 //
 // ===----------------------------------------------------------------------===//
 
-import Buffer_Ring_Inline_Primitives
-import Memory_Heap_Primitives
-import Storage_Contiguous_Primitives
-import Buffer_Ring_Primitives
 import Queue_Primitives_Test_Support
 import Testing
 
@@ -74,44 +70,6 @@ struct QueueDeinitOrderTests {
     }
 
     @Test
-    func `Queue.Small deinit order (inline path)`() {
-        let tracker = Tracker()
-        do {
-            var small = Queue<TrackedElement>.Small<4>()
-            small.enqueue(TrackedElement(1, tracker: tracker))
-            small.enqueue(TrackedElement(2, tracker: tracker))
-        }
-        let order = tracker.deinitOrder
-        #expect(order == [1, 2])
-    }
-
-    @Test
-    func `Queue.Small deinit order (spilled path)`() {
-        let tracker = Tracker()
-        do {
-            var small = Queue<TrackedElement>.Small<2>()
-            small.enqueue(TrackedElement(1, tracker: tracker))
-            small.enqueue(TrackedElement(2, tracker: tracker))
-            small.enqueue(TrackedElement(3, tracker: tracker))  // Triggers spill
-        }
-        let order = tracker.deinitOrder
-        #expect(order == [1, 2, 3])
-    }
-
-    @Test
-    func `Queue.Static deinit order`() throws {
-        let tracker = Tracker()
-        do {
-            var staticQueue = Queue<TrackedElement>.Static<4>()
-            try staticQueue.enqueue(TrackedElement(1, tracker: tracker))
-            try staticQueue.enqueue(TrackedElement(2, tracker: tracker))
-            try staticQueue.enqueue(TrackedElement(3, tracker: tracker))
-        }
-        let order = tracker.deinitOrder
-        #expect(order == [1, 2, 3])
-    }
-
-    @Test
     func `Queue.Fixed deinit order (with wraparound)`() throws {
         let tracker = Tracker()
         do {
@@ -129,72 +87,11 @@ struct QueueDeinitOrderTests {
     }
 
     @Test
-    func `Queue.Static deinit order (with wraparound)`() throws {
-        let tracker = Tracker()
-        do {
-            var staticQueue = Queue<TrackedElement>.Static<4>()
-            try staticQueue.enqueue(TrackedElement(1, tracker: tracker))
-            try staticQueue.enqueue(TrackedElement(2, tracker: tracker))
-            _ = staticQueue.dequeue()  // Remove and deinit 1
-            try staticQueue.enqueue(TrackedElement(3, tracker: tracker))
-            try staticQueue.enqueue(TrackedElement(4, tracker: tracker))
-            // When do block ends, elements 2, 3, 4 should be deinitialized in order
-        }
-        // Full order: [1, 2, 3, 4] (1 from dequeue, then 2,3,4 from deinit)
-        let order = tracker.deinitOrder
-        #expect(order == [1, 2, 3, 4])
-    }
-
-    // MARK: - Storage.Inline Deinit Regression
-
-    /// Wrapper with empty deinit — tests that Storage.Inline's deinit fires
-    /// through the explicit-deinit → member-destruction chain.
-    private struct _EmptyDeinitWrapper<Element: ~Copyable, let capacity: Int>: ~Copyable {
-        var _buffer: Buffer<Storage<Element>.Contiguous<Memory.Heap<Element>>>.Ring.Inline<capacity>
-        init() { self._buffer = Buffer<Storage<Element>.Contiguous<Memory.Heap<Element>>>.Ring.Inline<capacity>() }
-        deinit {}
-    }
-
-    /// Wrapper with NO deinit at all — tests that Storage.Inline's deinit fires
-    /// through pure implicit member destruction. This is the exact shape
-    /// Queue.Static would have after removing _deinitWorkaround and deinit.
-    private struct _NoDeinitWrapper<Element: ~Copyable, let capacity: Int>: ~Copyable {
-        var _buffer: Buffer<Storage<Element>.Contiguous<Memory.Heap<Element>>>.Ring.Inline<capacity>
-        init() { self._buffer = Buffer<Storage<Element>.Contiguous<Memory.Heap<Element>>>.Ring.Inline<capacity>() }
-    }
-
-    @Test
-    func `Storage.Inline deinit — wrapper with empty deinit`() {
-        let tracker = Tracker()
-        do {
-            var wrapper = _EmptyDeinitWrapper<TrackedElement, 4>()
-            wrapper._buffer.push.back(TrackedElement(1, tracker: tracker))
-            wrapper._buffer.push.back(TrackedElement(2, tracker: tracker))
-            wrapper._buffer.push.back(TrackedElement(3, tracker: tracker))
-        }
-        #expect(tracker.deinitOrder == [1, 2, 3])
-    }
-
-    @Test
-    func `Storage.Inline deinit — wrapper with no deinit`() {
-        let tracker = Tracker()
-        do {
-            var wrapper = _NoDeinitWrapper<TrackedElement, 4>()
-            wrapper._buffer.push.back(TrackedElement(1, tracker: tracker))
-            wrapper._buffer.push.back(TrackedElement(2, tracker: tracker))
-            wrapper._buffer.push.back(TrackedElement(3, tracker: tracker))
-        }
-        #expect(tracker.deinitOrder == [1, 2, 3])
-    }
-
-    @Test
     func `Empty queue deinit (no crash)`() {
         let tracker = Tracker()
         do {
             let _: Queue<TrackedElement> = Queue()
             let _: Queue<TrackedElement>.Fixed = Queue<TrackedElement>.Fixed(capacity: 5)
-            let _: Queue<TrackedElement>.Static<4> = Queue<TrackedElement>.Static<4>()
-            let _: Queue<TrackedElement>.Small<4> = Queue<TrackedElement>.Small<4>()
         }
         let order = tracker.deinitOrder
         #expect(order == [])

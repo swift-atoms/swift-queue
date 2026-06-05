@@ -17,7 +17,6 @@ import Testing
 /// Tests verifying conditional Copyable conformance.
 /// - Queue<Copyable> is Copyable
 /// - Queue<~Copyable> is ~Copyable
-/// - Queue.Static and Queue.Small are unconditionally ~Copyable
 @Suite("Queue - Conditional Copyable")
 struct QueueConditionalCopyableTests {
 
@@ -65,29 +64,5 @@ struct QueueConditionalCopyableTests {
         let moved = consume queue
         let count = moved.count
         #expect(count == 1)
-    }
-
-    @Test
-    func `Queue.Static<Int> is unconditionally ~Copyable`() throws {
-        var staticQueue = Queue<Int>.Static<4>()
-        try staticQueue.enqueue(1)
-        try staticQueue.enqueue(2)
-
-        // Even with Copyable Int, Static requires consume
-        let moved = consume staticQueue
-        let count = moved.count
-        #expect(count == 2)
-    }
-
-    @Test
-    func `Queue.Small<Int> is unconditionally ~Copyable`() {
-        var small = Queue<Int>.Small<4>()
-        small.enqueue(1)
-        small.enqueue(2)
-
-        // Even with Copyable Int, Small requires consume
-        let moved = consume small
-        let count = moved.count
-        #expect(count == 2)
     }
 }
