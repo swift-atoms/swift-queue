@@ -10,6 +10,10 @@
 // ===----------------------------------------------------------------------===//
 
 public import Buffer_Ring_Primitives
+public import Storage_Small_Primitives
+public import Storage_Primitive
+public import Buffer_Ring_Primitive
+public import Buffer_Ring_Primitives
 public import Memory_Heap_Primitives
 public import Storage_Contiguous_Primitives
 public import Buffer_Ring_Inline_Primitives
@@ -42,7 +46,7 @@ extension Queue.Small where Element: ~Copyable {
     /// - Complexity: O(1) amortized. O(n) when spilling from inline to heap.
     @inlinable
     public mutating func enqueue(_ element: consuming Element) {
-        _buffer.push.back(consume element)
+        _buffer.pushBack(consume element)
     }
 
     /// Dequeues and returns the front element, or nil if empty.
@@ -54,7 +58,7 @@ extension Queue.Small where Element: ~Copyable {
         guard !_buffer.isEmpty else {
             return nil
         }
-        return _buffer.pop.front()
+        return _buffer.popFront()
     }
 
     /// Removes all elements from the queue.
@@ -65,9 +69,9 @@ extension Queue.Small where Element: ~Copyable {
     // on remove.all() + conditional buffer reassignment in deep @inlinable chain.
     @inlinable
     public mutating func clear(keepingCapacity: Bool = true) {
-        _buffer.remove.all()
+        _buffer.removeAll()
         if !keepingCapacity {
-            _buffer = Buffer<Storage<Element>.Contiguous<Memory.Heap<Element>>>.Ring.Small<inlineCapacity>()
+            _buffer = Buffer<Storage<Element>.Small<inlineCapacity>>.Ring()
         }
     }
 }
@@ -101,7 +105,7 @@ extension Queue.Small where Element: Copyable {
         guard !_buffer.isEmpty else {
             return nil
         }
-        return _buffer.peek.front
+        return _buffer.withFront { $0 }
     }
 }
 

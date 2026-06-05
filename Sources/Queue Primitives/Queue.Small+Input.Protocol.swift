@@ -10,6 +10,10 @@
 // ===----------------------------------------------------------------------===//
 
 public import Buffer_Ring_Primitives
+public import Storage_Small_Primitives
+public import Storage_Primitive
+public import Buffer_Ring_Primitive
+public import Buffer_Ring_Primitives
 public import Memory_Heap_Primitives
 public import Storage_Contiguous_Primitives
 public import Buffer_Ring_Small_Primitive
@@ -56,7 +60,7 @@ extension Queue.Small: Input_Primitives.Input.`Protocol` where Element: Copyable
     /// have been enqueued since the checkpoint was created.
     ///
     /// > Note: Works correctly whether storage is inline or on heap.
-    public typealias Checkpoint = Buffer<Storage<Element>.Contiguous<Memory.Heap<Element>>>.Ring.Small<inlineCapacity>.Checkpoint
+    public typealias Checkpoint = Buffer<Storage<Element>.Small<inlineCapacity>>.Ring.Checkpoint
 
     /// Creates a checkpoint at the current position.
     @inlinable

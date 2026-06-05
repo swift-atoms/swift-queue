@@ -45,6 +45,9 @@ let package = Package(
                 .product(name: "Buffer Ring Bounded Primitives", package: "swift-buffer-ring-primitives"),
                 .product(name: "Buffer Ring Inline Primitives", package: "swift-buffer-ring-primitives"),
                 .product(name: "Buffer Ring Small Primitive", package: "swift-buffer-ring-primitives"),
+                // Cleave-3 #12a/#5a: Queue.Small composes Buffer<Storage<E>.Small<n>>.Ring.
+                .product(name: "Storage Small Primitives", package: "swift-storage-primitives"),
+                .product(name: "Storage Primitive", package: "swift-storage-primitives"),
                 .product(name: "Buffer Ring Small Primitives", package: "swift-buffer-ring-primitives"),
                 .product(name: "Buffer Linear Primitive", package: "swift-buffer-linear-primitives"),
                 .product(name: "Buffer Linear Primitives", package: "swift-buffer-linear-primitives"),
