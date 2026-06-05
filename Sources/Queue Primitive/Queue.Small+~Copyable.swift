@@ -105,7 +105,7 @@ extension Queue.Small where Element: Copyable {
         guard !_buffer.isEmpty else {
             return nil
         }
-        return _buffer.withFront { $0 }
+        return _buffer.peekFront()
     }
 }
 
