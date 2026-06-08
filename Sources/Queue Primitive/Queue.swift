@@ -119,8 +119,6 @@ public struct Queue<Element: ~Copyable>: ~Copyable {
 /// copies share storage until mutation.
 extension Queue: Copyable where Element: Copyable {}
 
-// Note: Queue.Small and Queue.Static are UNCONDITIONALLY ~Copyable due to deinit requirement
-
 // MARK: - Sendable
 
 /// `Queue` is `Sendable` when its elements are `Sendable`.

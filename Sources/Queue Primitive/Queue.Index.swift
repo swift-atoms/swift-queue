@@ -70,7 +70,3 @@ extension Queue where Element: Copyable {
 // MARK: - Bounded Queue Index Operations
 // NOTE: Per [MEM-COPY-006], Queue.Fixed extensions are in Queue.swift
 // to avoid breaking ~Copyable propagation.
-
-// MARK: - Static Queue Index Operations
-// NOTE: Per [MEM-COPY-006], Queue.Static extensions are in Queue.swift
-// to avoid breaking ~Copyable propagation.
