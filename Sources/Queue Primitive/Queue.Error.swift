@@ -9,18 +9,15 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Queue where Element: ~Copyable {
-    /// Errors that can occur during unbounded queue operations.
+extension Queue where S: ~Copyable {
+    /// Errors thrown by queue operations.
     ///
-    /// For the unbounded `Queue`, only `invalidCapacity` can occur
-    /// (when reserving negative capacity). The queue grows automatically,
-    /// so overflow is impossible.
-    ///
-    /// ## Cases
-    ///
-    /// - ``Queue/Error/invalidCapacity``: The requested capacity is invalid (negative).
+    /// Only the BOUNDED columns can overflow (`full` — the former `Queue.Fixed.Error`
+    /// semantics, carried by the column now); growable columns grow instead.
     public enum Error: Swift.Error, Sendable, Equatable {
-        /// The requested capacity is invalid (negative).
-        case invalidCapacity
+        /// The fixed-capacity column is full; the enqueued element was rejected
+        /// (and, being unreturned, destroyed — snapshot a copy first if it must
+        /// survive a full queue).
+        case full
     }
 }

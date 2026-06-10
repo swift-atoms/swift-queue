@@ -12,73 +12,74 @@ let package = Package(
         .visionOS(.v26)
     ],
     products: [
-        // MARK: - Type module (lean ~Copyable types; Copyable-requiring conformances live in the ops module per [MOD-004])
+        // MARK: - Namespace + base type
         .library(name: "Queue Primitive", targets: ["Queue Primitive"]),
-        // MARK: - Ops module; `Queue Primitives` doubles as the [MOD-005] umbrella
+
+        // MARK: - Fixed variant: DELETED at the ADT-families reshape (ASK-E, 2026-06-10 —
+        // the fixed-capacity story lives in the COLUMN: Queue<Buffer<…>.Ring.Bounded>)
+
+        // MARK: - Umbrella (ops module; [MOD-005])
         .library(name: "Queue Primitives", targets: ["Queue Primitives"]),
+
+        // MARK: - Test Support
         .library(name: "Queue Primitives Test Support", targets: ["Queue Primitives Test Support"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/swift-primitives/swift-memory-small-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-buffer-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-buffer-ring-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-buffer-linear-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-index-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-vector-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-input-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-collection-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-property-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-iterator-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-sequence-primitives.git", branch: "main"),
-        // E2 (storage-small-substrate.md): verbose Storage.Contiguous<Memory.Heap> needs direct deps (MemberImportVisibility).
         .package(url: "https://github.com/swift-primitives/swift-storage-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-store-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-shared-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-memory-heap-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-memory-allocation-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-index-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-sequence-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-span-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-ordinal-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-affine-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-tagged-primitives.git", branch: "main"),
     ],
     targets: [
 
-        // MARK: - Type module — lean ~Copyable Queue + nested variants/errors + iteration witnesses ([MOD-036])
+        // MARK: - Namespace + base type (struct Queue<S>; the ADT over an explicit ring column)
         .target(
             name: "Queue Primitive",
             dependencies: [
+                .product(name: "Buffer Primitive", package: "swift-buffer-primitives"),
+                .product(name: "Buffer Protocol Primitives", package: "swift-buffer-primitives"),
                 .product(name: "Buffer Ring Primitive", package: "swift-buffer-ring-primitives"),
-                .product(name: "Buffer Ring Primitives", package: "swift-buffer-ring-primitives"),
                 .product(name: "Buffer Ring Bounded Primitive", package: "swift-buffer-ring-primitives"),
-                .product(name: "Buffer Ring Bounded Primitives", package: "swift-buffer-ring-primitives"),
-                // Cleave-3 #12a/#5a: Queue.Small composes Buffer<Storage<E>.Small<n>>.Ring.
-                .product(name: "Memory Small Primitives", package: "swift-memory-small-primitives"),
-                .product(name: "Storage Primitive", package: "swift-storage-primitives"),
-                .product(name: "Buffer Linear Primitive", package: "swift-buffer-linear-primitives"),
-                .product(name: "Buffer Linear Primitives", package: "swift-buffer-linear-primitives"),
-                .product(name: "Index Primitives", package: "swift-index-primitives"),
-                .product(name: "Vector Primitives", package: "swift-vector-primitives"),
-                .product(name: "Input Primitives", package: "swift-input-primitives"),
-                .product(name: "Collection Primitives", package: "swift-collection-primitives"),
-                .product(name: "Property Primitives", package: "swift-property-primitives"),
-                .product(name: "Iterator Primitive", package: "swift-iterator-primitives"),
-                .product(name: "Iterator Protocol", package: "swift-iterator-primitives"),
-                .product(name: "Iterable", package: "swift-iterator-primitives"),
-                .product(name: "Iterator Chunk Primitives", package: "swift-iterator-primitives"),
+                .product(name: "Store Protocol Primitives", package: "swift-store-primitives"),
+                .product(name: "Shared Primitive", package: "swift-shared-primitives"),
                 .product(name: "Storage Contiguous Primitives", package: "swift-storage-primitives"),
                 .product(name: "Memory Heap Primitives", package: "swift-memory-heap-primitives"),
+                .product(name: "Memory Allocator Primitive", package: "swift-memory-allocation-primitives"),
+                .product(name: "Index Primitives", package: "swift-index-primitives"),
+                .product(name: "Ordinal Primitives Standard Library Integration", package: "swift-ordinal-primitives"),
+                .product(name: "Affine Primitives Standard Library Integration", package: "swift-affine-primitives"),
             ]
         ),
 
-        // MARK: - Ops module + umbrella — Copyable conformances + ops, re-exports the type module
+        // MARK: - Base ops + Umbrella ([MOD-005]: re-exports the in-package type module only)
         .target(
             name: "Queue Primitives",
             dependencies: [
                 "Queue Primitive",
+                .product(name: "Buffer Primitive", package: "swift-buffer-primitives"),
+                .product(name: "Buffer Protocol Primitives", package: "swift-buffer-primitives"),
+                .product(name: "Buffer Ring Primitive", package: "swift-buffer-ring-primitives"),
+                .product(name: "Buffer Ring Bounded Primitive", package: "swift-buffer-ring-primitives"),
+                .product(name: "Buffer Ring Primitives", package: "swift-buffer-ring-primitives"),
+                .product(name: "Store Protocol Primitives", package: "swift-store-primitives"),
+                .product(name: "Shared Primitive", package: "swift-shared-primitives"),
                 .product(name: "Storage Contiguous Primitives", package: "swift-storage-primitives"),
                 .product(name: "Memory Heap Primitives", package: "swift-memory-heap-primitives"),
-                .product(name: "Buffer Ring Primitive", package: "swift-buffer-ring-primitives"),
-                .product(name: "Buffer Ring Primitives", package: "swift-buffer-ring-primitives"),
-                .product(name: "Buffer Ring Bounded Primitive", package: "swift-buffer-ring-primitives"),
+                .product(name: "Memory Allocator Primitive", package: "swift-memory-allocation-primitives"),
                 .product(name: "Index Primitives", package: "swift-index-primitives"),
-                .product(name: "Input Primitives", package: "swift-input-primitives"),
-                .product(name: "Property Primitives", package: "swift-property-primitives"),
-                .product(name: "Iterator Primitive", package: "swift-iterator-primitives"),
-                .product(name: "Iterable", package: "swift-iterator-primitives"),
                 .product(name: "Sequence Primitives", package: "swift-sequence-primitives"),
+                .product(name: "Span Protocol Primitives", package: "swift-span-primitives"),
+                .product(name: "Ordinal Primitives Standard Library Integration", package: "swift-ordinal-primitives"),
+                .product(name: "Affine Primitives Standard Library Integration", package: "swift-affine-primitives"),
             ]
         ),
 
@@ -87,7 +88,7 @@ let package = Package(
             name: "Queue Primitives Test Support",
             dependencies: [
                 "Queue Primitives",
-                .product(name: "Index Primitives Test Support", package: "swift-index-primitives"),
+                .product(name: "Buffer Primitives Test Support", package: "swift-buffer-primitives"),
             ],
             path: "Tests/Support"
         ),
@@ -98,6 +99,8 @@ let package = Package(
             dependencies: [
                 "Queue Primitives",
                 "Queue Primitives Test Support",
+                .product(name: "Tagged Primitives Standard Library Integration", package: "swift-tagged-primitives"),
+                .product(name: "Ordinal Primitives Standard Library Integration", package: "swift-ordinal-primitives"),
             ]
         )
     ],
@@ -115,10 +118,7 @@ for target in package.targets where ![.system, .binary, .plugin, .macro].contain
         .enableExperimentalFeature("Lifetimes"),
         .enableExperimentalFeature("SuppressedAssociatedTypes"),
         .enableUpcomingFeature("InferIsolatedConformances"),
-        .enableUpcomingFeature("LifetimeDependence"),
     ]
 
-    let package: [SwiftSetting] = []
-
-    target.swiftSettings = (target.swiftSettings ?? []) + ecosystem + package
+    target.swiftSettings = (target.swiftSettings ?? []) + ecosystem
 }

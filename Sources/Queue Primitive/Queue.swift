@@ -9,117 +9,128 @@
 //
 // ===----------------------------------------------------------------------===//
 
+public import Buffer_Primitive
 public import Buffer_Ring_Primitive
-public import Memory_Heap_Primitives
+public import Buffer_Ring_Bounded_Primitive
+public import Buffer_Protocol_Primitives
+public import Store_Protocol_Primitives
 public import Storage_Contiguous_Primitives
-public import Buffer_Ring_Primitives
-internal import Index_Primitives
-import Vector_Primitives
+public import Memory_Heap_Primitives
+public import Memory_Allocator_Primitive
+public import Shared_Primitive
+public import Index_Primitives
 
-/// A dynamically-growing FIFO queue supporting move-only elements.
-///
-/// `Queue` is the general-purpose queue primitive. It provides O(1) amortized enqueue
-/// and O(1) dequeue with automatic capacity growth using a ring buffer. This is the
-/// canonical queue type - use it unless you have specific constraints requiring a variant.
-///
-/// ## Example
-///
-/// ```swift
-/// var queue = Queue<Int>()
-/// queue.enqueue(1)
-/// queue.enqueue(2)
-/// queue.dequeue()     // Optional(1)
-/// queue.peek { $0 }   // Optional(2)
-/// ```
-///
-/// ## Variants
-///
-/// - ``Queue``: Dynamically-growing with amortized O(1) enqueue (this type)
-/// - ``Queue/Bounded``: Fixed-capacity ring buffer, throws on overflow
-/// - ``Queue/Static``: Zero-allocation inline storage with compile-time capacity
-/// - ``Queue/Small``: Inline storage with automatic spill to heap
-///
-/// ## Ring Buffer Storage
-///
-/// Queue uses a ring buffer internally. Elements wrap around when reaching the
-/// end of the buffer, providing efficient O(1) operations without element shifts.
-///
-/// ## Move-Only Support
-///
-/// Both the queue and its elements can be `~Copyable`:
-///
-/// ```swift
-/// struct FileHandle: ~Copyable { ... }
-/// var handles = Queue<FileHandle>()
-/// handles.enqueue(FileHandle())
-/// ```
-///
-/// ## Sequence Conformance
-///
-/// When `Element` is `Copyable`, `Queue` conforms to `Sequence`:
-///
-/// ```swift
-/// var queue = Queue<Int>()
-/// queue.enqueue(1)
-/// queue.enqueue(2)
-/// for element in queue {
-///     print(element)  // 1, then 2
-/// }
-/// ```
-///
-/// For `~Copyable` elements, use ``forEach(_:)`` instead.
-///
-/// ## Copy-on-Write
-///
-/// When `Element` is `Copyable`, `Queue` uses copy-on-write semantics:
-/// copies share storage until mutation, providing efficient value semantics.
-///
-/// ## Growth Behavior
-///
-/// When capacity is exceeded, the queue allocates new storage at 2x the
-/// current capacity (minimum 4) and moves all elements. This provides
-/// O(1) amortized enqueue with approximately 2.0 copies per element over
-/// the queue's lifetime.
-// WHY: Category D — structural Sendable workaround; the type is
-// WHY: structurally value-safe but the compiler cannot synthesize
-// WHY: Sendable due to a stored pointer / generic parameter shape.
-@safe
-public struct Queue<Element: ~Copyable>: ~Copyable {
+// MARK: - Queue (the ADT tier — generic over the COLUMN)
 
+/// A FIFO queue — the semantic ADT over an explicit RING storage COLUMN.
+///
+/// The ratified two-column design, the queue family's instantiation (ADT-families
+/// tranche, 2026-06-10): `Queue` is generic over `S`, and **copyability flows from the
+/// column** (S5):
+///
+/// ```swift
+/// Queue<            Buffer<Storage<…System>.Contiguous<FD >>.Ring >          // zero-cost MOVE-ONLY (default)
+/// Queue<Shared<Int, Buffer<Storage<…System>.Contiguous<Int>>.Ring>>         // explicit CoW value semantics
+/// Queue<            Buffer<Storage<…System>.Contiguous<Job>>.Ring.Bounded>  // fixed-capacity (the former Queue.Fixed)
+/// Queue<Shared<Int, Buffer<…>.Ring.Bounded>>                                // fixed-capacity CoW
+/// ```
+///
+/// The ring columns implement the FRONT-ANCHORED seam discipline (`Buffer.Ring`'s
+/// `Store.`Protocol`` conformance): logical slot 0 is the front, `move(at: .zero)` is
+/// the O(1) head-advancing dequeue, and `initialize(at: count)` is the back-append —
+/// so the element-generic surface (dequeue, peek, drain, the gated subscript) lives
+/// here ONCE for every column; only construction, growth, and capacity ops pin per
+/// column. The fixed-capacity story lives entirely in the BOUNDED column (ASK-E: the
+/// former `Queue.Fixed` nest is dissolved, not rebuilt).
+@frozen
+public struct Queue<S: Store.`Protocol` & Buffer.`Protocol` & ~Copyable>: ~Copyable
+where S.Count == Index_Primitives.Index<S.Element>.Count {
+
+    /// The ring storage column — a move-only buffer (the default ownership column) or a
+    /// `Shared` CoW column. The ADT is a thin FIFO discipline over it; it carries NO
+    /// deinit (teardown lives in the leaf's oracle / the shared box's drain).
     @usableFromInline
-    package var _buffer: Buffer<Storage<Element>.Contiguous<Memory.Heap<Element>>>.Ring
+    package var store: S
 
-    /// Creates an empty queue.
-    ///
-    /// No allocation occurs until the first enqueue.
+    /// Wraps an existing column.
     @inlinable
-    public init() {
-        self._buffer = Buffer<Storage<Element>.Contiguous<Memory.Heap<Element>>>.Ring(minimumCapacity: .zero)
+    public init(store: consuming S) {
+        self.store = store
     }
 
-    /// Creates a queue with reserved capacity.
+    /// Consumes the queue, yielding its storage column.
     ///
-    /// Pre-allocates storage for the specified number of elements.
-    /// Useful when the approximate number of elements is known.
-    ///
-    /// - Parameter capacity: Number of elements to reserve space for.
+    /// `@inlinable` is enabled by `@frozen` ([API-IMPL-022]): cross-module partial
+    /// consumption of a frozen struct is legal, so the unwrap specializes at the
+    /// call site.
     @inlinable
-    public init(reservingCapacity capacity: Index.Count) {
-        self._buffer = Buffer<Storage<Element>.Contiguous<Memory.Heap<Element>>>.Ring(minimumCapacity: capacity)
+    public consuming func take() -> S {
+        store
     }
-
-    // Note: No deinit needed - Storage.Contiguous<Memory.Heap> handles cleanup
 }
 
-// MARK: - Conditional Copyable
+// MARK: - Conditional Conformances (co-located per [COPY-FIX-004])
 
-/// `Queue` is `Copyable` when its elements are `Copyable`.
-///
-/// This enables value semantics with copy-on-write optimization:
-/// copies share storage until mutation.
-extension Queue: Copyable where Element: Copyable {}
+/// The S5 chain: `Queue<Shared<E, B>>` is `Copyable` exactly when `Shared` is — i.e.
+/// when the ELEMENT is. The direct (move-only buffer) columns never satisfy this, by design.
+extension Queue: Copyable where S: Copyable {}
 
-// MARK: - Sendable
+extension Queue: Sendable where S: Sendable & ~Copyable {}
 
-/// `Queue` is `Sendable` when its elements are `Sendable`.
-extension Queue: @unchecked Sendable where Element: Sendable {}
+// MARK: - Column-pinned construction ([MEM-COPY-017]: the split lives in `Shared`'s
+// pinned constructor pairs; the `Queue` forms simply pick the column)
+
+extension Queue where S: ~Copyable {
+    /// Creates an empty MOVE-ONLY growable queue (the default ownership column).
+    @inlinable
+    public init<E: ~Copyable>(minimumCapacity: Index_Primitives.Index<E>.Count = .zero)
+    where S == Buffer<Storage<Memory.Allocator<Memory.Heap>.System>.Contiguous<E>>.Ring {
+        self.init(store: S(minimumCapacity: minimumCapacity))
+    }
+
+    /// Creates an empty MOVE-ONLY fixed-capacity queue (the bounded column — the former
+    /// `Queue.Fixed`).
+    @inlinable
+    public init<E: ~Copyable>(capacity: Index_Primitives.Index<E>.Count)
+    where S == Buffer<Storage<Memory.Allocator<Memory.Heap>.System>.Contiguous<E>>.Ring.Bounded {
+        self.init(store: S(minimumCapacity: capacity))
+    }
+
+    /// Creates an empty CoW (value-semantic) growable queue on the `Shared` column.
+    @inlinable
+    public init<E>(minimumCapacity: Index_Primitives.Index<E>.Count = .zero)
+    where S == Shared<E, Buffer<Storage<Memory.Allocator<Memory.Heap>.System>.Contiguous<E>>.Ring> {
+        self.init(store: Shared(
+            Buffer<Storage<Memory.Allocator<Memory.Heap>.System>.Contiguous<E>>.Ring(minimumCapacity: minimumCapacity)
+        ))
+    }
+
+    /// Creates an empty statically-unique queue of move-only elements on the `Shared`
+    /// column (the boxed flavor of the move-only regime — the box's O(1) move).
+    @inlinable
+    public init<E: ~Copyable>(minimumCapacity: Index_Primitives.Index<E>.Count = .zero)
+    where S == Shared<E, Buffer<Storage<Memory.Allocator<Memory.Heap>.System>.Contiguous<E>>.Ring> {
+        self.init(store: Shared(
+            Buffer<Storage<Memory.Allocator<Memory.Heap>.System>.Contiguous<E>>.Ring(minimumCapacity: minimumCapacity)
+        ))
+    }
+
+    /// Creates an empty CoW fixed-capacity queue on the `Shared` bounded column.
+    @inlinable
+    public init<E>(capacity: Index_Primitives.Index<E>.Count)
+    where S == Shared<E, Buffer<Storage<Memory.Allocator<Memory.Heap>.System>.Contiguous<E>>.Ring.Bounded> {
+        self.init(store: Shared(
+            Buffer<Storage<Memory.Allocator<Memory.Heap>.System>.Contiguous<E>>.Ring.Bounded(minimumCapacity: capacity)
+        ))
+    }
+
+    /// Creates an empty statically-unique fixed-capacity queue of move-only elements
+    /// on the `Shared` bounded column.
+    @inlinable
+    public init<E: ~Copyable>(capacity: Index_Primitives.Index<E>.Count)
+    where S == Shared<E, Buffer<Storage<Memory.Allocator<Memory.Heap>.System>.Contiguous<E>>.Ring.Bounded> {
+        self.init(store: Shared(
+            Buffer<Storage<Memory.Allocator<Memory.Heap>.System>.Contiguous<E>>.Ring.Bounded(minimumCapacity: capacity)
+        ))
+    }
+}
