@@ -31,7 +31,7 @@ public import Index_Primitives
 /// ```swift
 /// Queue<            Buffer<Storage<…System>.Contiguous<FD >>.Ring >          // zero-cost MOVE-ONLY (default)
 /// Queue<Shared<Int, Buffer<Storage<…System>.Contiguous<Int>>.Ring>>         // explicit CoW value semantics
-/// Queue<            Buffer<Storage<…System>.Contiguous<Job>>.Ring.Bounded>  // fixed-capacity (the former Queue.Fixed)
+/// Queue<            Buffer<Storage<…System>.Contiguous<Job>>.Ring.Bounded>  // fixed-capacity (bounded)
 /// Queue<Shared<Int, Buffer<…>.Ring.Bounded>>                                // fixed-capacity CoW
 /// ```
 ///
@@ -40,8 +40,8 @@ public import Index_Primitives
 /// the O(1) head-advancing dequeue, and `initialize(at: count)` is the back-append —
 /// so the element-generic surface (dequeue, peek, drain, the gated subscript) lives
 /// here ONCE for every column; only construction, growth, and capacity ops pin per
-/// column. The fixed-capacity story lives entirely in the BOUNDED column (ASK-E: the
-/// former `Queue.Fixed` nest is dissolved, not rebuilt).
+/// column. The fixed-capacity story lives entirely in the BOUNDED column (ASK-E:
+/// dissolved into the column vocabulary, not rebuilt as a nest).
 @frozen
 public struct Queue<S: Store.`Protocol` & Buffer.`Protocol` & ~Copyable>: ~Copyable
 where S.Count == Index_Primitives.Index<S.Element>.Count {
@@ -88,8 +88,7 @@ extension Queue where S: ~Copyable {
         self.init(store: S(minimumCapacity: minimumCapacity))
     }
 
-    /// Creates an empty MOVE-ONLY fixed-capacity queue (the bounded column — the former
-    /// `Queue.Fixed`).
+    /// Creates an empty MOVE-ONLY fixed-capacity queue (the bounded column).
     @inlinable
     public init<E: ~Copyable>(capacity: Index_Primitives.Index<E>.Count)
     where S == Buffer<Storage<Memory.Allocator<Memory.Heap>.System>.Contiguous<E>>.Ring.Bounded {

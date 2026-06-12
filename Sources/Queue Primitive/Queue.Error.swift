@@ -12,8 +12,8 @@
 extension Queue where S: ~Copyable {
     /// Errors thrown by queue operations.
     ///
-    /// Only the BOUNDED columns can overflow (`full` — the former `Queue.Fixed.Error`
-    /// semantics, carried by the column now); growable columns grow instead.
+    /// Only the BOUNDED columns can overflow (`full` — fixed-capacity semantics,
+    /// carried by the column); growable columns grow instead.
     public enum Error: Swift.Error, Sendable, Equatable {
         /// The fixed-capacity column is full; the enqueued element was rejected
         /// (and, being unreturned, destroyed — snapshot a copy first if it must

@@ -31,7 +31,7 @@ private typealias MoveQueue<E: ~Copyable> = Queue<GrowableRing<E>>
 /// The explicit CoW value-semantic growable queue (`Shared` column).
 private typealias CoWQueue<E: ~Copyable> = Queue<Shared<E, GrowableRing<E>>>
 
-/// The move-only fixed-capacity queue (the former `Queue.Fixed`).
+/// The move-only fixed-capacity queue (bounded column).
 private typealias FixedQueue<E: ~Copyable> = Queue<BoundedRing<E>>
 
 /// The CoW fixed-capacity queue.

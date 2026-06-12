@@ -56,7 +56,7 @@ extension Queue where S: ~Copyable {
     /// Enqueues an element at the back (direct bounded column).
     ///
     /// - Throws: `Error.full` when the fixed capacity is exhausted (the rejected
-    ///   element is destroyed — the former `Queue.Fixed` contract).
+    ///   element is destroyed — the bounded-column contract).
     /// - Complexity: O(1)
     @inlinable
     public mutating func enqueue<E: ~Copyable>(_ element: consuming E) throws(Error)
