@@ -5,7 +5,6 @@
     @TitleHeading("Swift Primitives")
 }
 
-Queue Primitives — umbrella catalog placeholder. Replace this line with a one-sentence
-description of what the package provides.
+A FIFO queue generic over its ring storage column: O(1) enqueue and dequeue, with ownership and capacity decided by the column (move-only, copy-on-write, or bounded).
 
 ## Topics
