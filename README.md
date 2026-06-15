@@ -22,12 +22,13 @@ The column is a **ring** (`Buffer.Ring`): logical slot 0 is the front, so `deque
 
 ```swift
 import Queue_Primitives
+import Column_Primitives
 
-var queue = Queue<Int>()       // default ring column
+var queue = Queue<Column.Ring<Int>>()    // move-only, over a growable ring column
 queue.enqueue(1)
 queue.enqueue(2)
-let first = queue.dequeue()    // Optional(1) — O(1) head advance
-queue.peek { $0 }              // Optional(2) — borrows the front in place
+let first = queue.dequeue()              // Optional(1) — O(1) head advance
+queue.peek { $0 }                        // Optional(2) — borrows the front in place
 ```
 
 ---
