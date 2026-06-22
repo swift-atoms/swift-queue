@@ -20,7 +20,7 @@ import Testing
 // MARK: - The four ratified columns
 
 private typealias HeapStorage<E: ~Copyable> =
-    Storage<Memory.Allocator<Memory.Heap>.System>.Contiguous<E>
+    Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>
 
 private typealias GrowableRing<E: ~Copyable> = Buffer<HeapStorage<E>>.Ring
 private typealias BoundedRing<E: ~Copyable> = Buffer<HeapStorage<E>>.Ring.Bounded
