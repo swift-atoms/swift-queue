@@ -16,7 +16,7 @@ public import Queue_Primitive
 /// Element-keyed hashing chains through the COLUMN (see `Queue+Equatable.swift`):
 /// `Shared` hashes count + live elements in logical order, so equal queues hash equal
 /// across distinct boxes, capacities, and physical wrap states.
-extension Queue: Hashable where S: Hashable {
+extension __Queue: Hashable where S: Hashable {
     @inlinable
     public func hash(into hasher: inout Hasher) {
         store.hash(into: &hasher)

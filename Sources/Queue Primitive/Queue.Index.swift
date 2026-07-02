@@ -10,8 +10,9 @@
 // ===----------------------------------------------------------------------===//
 
 public import Index_Primitives
+public import Store_Protocol_Primitives
 
-extension Queue where S: ~Copyable {
+extension __Queue where S: Store.`Protocol` & ~Copyable {
     /// Type-safe index for queue elements — typed by the COLUMN's element, preventing
     /// cross-collection index confusion.
     ///

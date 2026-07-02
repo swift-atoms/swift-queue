@@ -12,8 +12,6 @@
 public import Buffer_Primitive
 public import Buffer_Ring_Primitive
 public import Buffer_Ring_Bounded_Primitive
-public import Buffer_Protocol_Primitives
-public import Store_Protocol_Primitives
 public import Storage_Contiguous_Primitives
 public import Memory_Heap_Primitives
 public import Memory_Allocator_Primitive
@@ -29,10 +27,10 @@ public import Index_Primitives
 /// column** (S5):
 ///
 /// ```swift
-/// Queue<            Buffer<Storage<…System>.Contiguous<FD >>.Ring >          // zero-cost MOVE-ONLY (default)
-/// Queue<Shared<Int, Buffer<Storage<…System>.Contiguous<Int>>.Ring>>         // explicit CoW value semantics
-/// Queue<            Buffer<Storage<…System>.Contiguous<Job>>.Ring.Bounded>  // fixed-capacity (bounded)
-/// Queue<Shared<Int, Buffer<…>.Ring.Bounded>>                                // fixed-capacity CoW
+/// __Queue<            Buffer<Storage<…System>.Contiguous<FD >>.Ring >          // zero-cost MOVE-ONLY (default)
+/// __Queue<Shared<Int, Buffer<Storage<…System>.Contiguous<Int>>.Ring>>         // explicit CoW value semantics
+/// __Queue<            Buffer<Storage<…System>.Contiguous<Job>>.Ring.Bounded>  // fixed-capacity (bounded)
+/// __Queue<Shared<Int, Buffer<…>.Ring.Bounded>>                                // fixed-capacity CoW
 /// ```
 ///
 /// The ring columns implement the FRONT-ANCHORED seam discipline (`Buffer.Ring`'s
@@ -42,9 +40,19 @@ public import Index_Primitives
 /// here ONCE for every column; only construction, growth, and capacity ops pin per
 /// column. The fixed-capacity story lives entirely in the BOUNDED column (ASK-E:
 /// dissolved into the column vocabulary, not rebuilt as a nest).
+///
+/// ## Carrier (hoisted per [API-IMPL-009]/[PKG-NAME-006])
+///
+/// `__Queue` is the bound-free carrier ([DS-025]): its column parameter `S` is
+/// bound `~Copyable` **only**; every capability (observability, the FIFO seam
+/// ops, construction/growth) attaches by conditional `@inlinable` extension keyed
+/// on the seams the column conforms. The PUBLIC spelling of the family is the
+/// front-door aliases — `Queue<E>` (canonical) and `Queue<E>.Bounded` (fixed
+/// capacity) — declared in `Queue.FrontDoor.swift` / `Queue.Bounded.swift`
+/// ([DS-028]); the hoisted name never appears in consumer signatures.
+@_documentation(visibility: public)
 @frozen
-public struct Queue<S: Store.`Protocol` & Buffer.`Protocol` & ~Copyable>: ~Copyable
-where S.Count == Index_Primitives.Index<S.Element>.Count {
+public struct __Queue<S: ~Copyable>: ~Copyable {
 
     /// The ring storage column — a move-only buffer (the default ownership column) or a
     /// `Shared` CoW column. The ADT is a thin FIFO discipline over it; it carries NO
@@ -71,16 +79,16 @@ where S.Count == Index_Primitives.Index<S.Element>.Count {
 
 // MARK: - Conditional Conformances (co-located per [COPY-FIX-004])
 
-/// The S5 chain: `Queue<Shared<E, B>>` is `Copyable` exactly when `Shared` is — i.e.
+/// The S5 chain: `__Queue<Shared<E, B>>` is `Copyable` exactly when `Shared` is — i.e.
 /// when the ELEMENT is. The direct (move-only buffer) columns never satisfy this, by design.
-extension Queue: Copyable where S: Copyable {}
+extension __Queue: Copyable where S: Copyable {}
 
-extension Queue: Sendable where S: Sendable & ~Copyable {}
+extension __Queue: Sendable where S: Sendable & ~Copyable {}
 
 // MARK: - Column-pinned construction ([MEM-COPY-017]: the split lives in `Shared`'s
 // pinned constructor pairs; the `Queue` forms simply pick the column)
 
-extension Queue where S: ~Copyable {
+extension __Queue where S: ~Copyable {
     /// Creates an empty MOVE-ONLY growable queue (the default ownership column).
     @inlinable
     public init<E: ~Copyable>(minimumCapacity: Index_Primitives.Index<E>.Count = .zero)

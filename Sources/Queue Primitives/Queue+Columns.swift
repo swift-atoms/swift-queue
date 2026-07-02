@@ -31,7 +31,7 @@ public import Index_Primitives
 // MARK: - Enqueue (growable columns: grows; bounded columns: typed-throws on full)
 // ============================================================================
 
-extension Queue where S: ~Copyable {
+extension __Queue where S: ~Copyable {
     /// Enqueues an element at the back (direct growable column; grows as needed).
     ///
     /// - Complexity: O(1) amortized
@@ -87,7 +87,7 @@ extension Queue where S: ~Copyable {
 // MARK: - Clear (storage rebinding; the Shared forms DETACH, preserving siblings)
 // ============================================================================
 
-extension Queue where S: ~Copyable {
+extension __Queue where S: ~Copyable {
     /// Removes all elements (direct growable column).
     ///
     /// - Parameter keepingCapacity: If `true` (default), slots are retained.
@@ -135,7 +135,7 @@ extension Queue where S: ~Copyable {
 // MARK: - Capacity (growable columns only — bounded capacity is the column's identity)
 // ============================================================================
 
-extension Queue where S: ~Copyable {
+extension __Queue where S: ~Copyable {
     /// Reserves capacity for at least the given number of elements (direct column).
     @inlinable
     public mutating func reserve<E: ~Copyable>(_ minimumCapacity: Index_Primitives.Index<E>.Count)
@@ -177,7 +177,7 @@ extension Queue where S: ~Copyable {
 // MARK: - Cloning (direct columns; the generic `clone()` covers the CoW columns)
 // ============================================================================
 
-extension Queue where S: ~Copyable {
+extension __Queue where S: ~Copyable {
     /// Returns an independent copy of this queue (direct growable column).
     ///
     /// - Complexity: O(`count`)

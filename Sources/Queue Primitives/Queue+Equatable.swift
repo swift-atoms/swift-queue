@@ -19,7 +19,7 @@ public import Queue_Primitive
 /// `Equatable`, by design (R-1: value-semantic comparison flows from the column; the
 /// former hand-rolled `Element: Copyable` equality is withdrawn with the old
 /// conditional-Copyable queue).
-extension Queue: Equatable where S: Equatable {
+extension __Queue: Equatable where S: Equatable {
     @inlinable
     public static func == (lhs: Self, rhs: Self) -> Bool {
         lhs.store == rhs.store

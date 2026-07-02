@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Queue where S: ~Copyable {
+extension __Queue where S: ~Copyable {
     /// Errors thrown by queue operations.
     ///
     /// Only the BOUNDED columns can overflow (`full` — fixed-capacity semantics,

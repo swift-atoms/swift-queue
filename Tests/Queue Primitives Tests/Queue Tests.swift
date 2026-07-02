@@ -25,17 +25,18 @@ private typealias HeapStorage<E: ~Copyable> =
 private typealias GrowableRing<E: ~Copyable> = Buffer<HeapStorage<E>>.Ring
 private typealias BoundedRing<E: ~Copyable> = Buffer<HeapStorage<E>>.Ring.Bounded
 
-/// The default move-only growable queue (zero-cost ownership column).
-private typealias MoveQueue<E: ~Copyable> = Queue<GrowableRing<E>>
+/// The default move-only growable queue — the CANONICAL front door ([DS-028]).
+private typealias MoveQueue<E: ~Copyable> = Queue<E>
 
-/// The explicit CoW value-semantic growable queue (`Shared` column).
-private typealias CoWQueue<E: ~Copyable> = Queue<Shared<E, GrowableRing<E>>>
+/// The explicit CoW value-semantic growable queue (`Shared` column — no front
+/// door yet; spelled through the carrier).
+private typealias CoWQueue<E: ~Copyable> = __Queue<Shared<E, GrowableRing<E>>>
 
-/// The move-only fixed-capacity queue (bounded column).
-private typealias FixedQueue<E: ~Copyable> = Queue<BoundedRing<E>>
+/// The move-only fixed-capacity queue — the `.Bounded` variant front door.
+private typealias FixedQueue<E: ~Copyable> = Queue<E>.Bounded
 
-/// The CoW fixed-capacity queue.
-private typealias CoWFixedQueue<E: ~Copyable> = Queue<Shared<E, BoundedRing<E>>>
+/// The CoW fixed-capacity queue (`Shared` bounded column — carrier-spelled).
+private typealias CoWFixedQueue<E: ~Copyable> = __Queue<Shared<E, BoundedRing<E>>>
 
 // MARK: - [DS-024]: the columns are lawful from the family's own suite
 
@@ -151,7 +152,7 @@ struct QueueCoreTests {
         try q.enqueue(2)
         let isFull = q.freeCapacity == Index<Int>.Count(0)
         #expect(isFull)
-        var thrown: Queue<BoundedRing<Int>>.Error? = nil
+        var thrown: FixedQueue<Int>.Error? = nil
         do {
             try q.enqueue(3)
         } catch {
@@ -336,7 +337,7 @@ struct QueueTeardownTests {
     func `the boxed move-only lane tears down via the box drain`() {
         QueueProbe2.reset()
         do {
-            var q = Queue<Shared<QueueItem2, GrowableRing<QueueItem2>>>(minimumCapacity: 2)
+            var q = __Queue<Shared<QueueItem2, GrowableRing<QueueItem2>>>(minimumCapacity: 2)
             q.enqueue(QueueItem2(1))
             q.enqueue(QueueItem2(2))
             let n = q.count

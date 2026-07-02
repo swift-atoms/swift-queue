@@ -27,7 +27,8 @@ import Affine_Primitives_Standard_Library_Integration
 // MARK: - Properties (generic: Buffer.Protocol count + seam capacity)
 // ============================================================================
 
-extension Queue where S: ~Copyable {
+extension __Queue where S: ~Copyable, S: Store.`Protocol` & Buffer.`Protocol`,
+    S.Count == Index_Primitives.Index<S.Element>.Count {
     /// The number of elements in the queue.
     @inlinable
     public var count: Index.Count {
@@ -56,7 +57,8 @@ extension Queue where S: ~Copyable {
 // MARK: - Core FIFO Operations (generic: gate + the front-anchored seam)
 // ============================================================================
 
-extension Queue where S: ~Copyable {
+extension __Queue where S: ~Copyable, S: Store.`Protocol` & Buffer.`Protocol`,
+    S.Count == Index_Primitives.Index<S.Element>.Count {
     /// Dequeues and returns the front element, or nil if empty.
     ///
     /// The gate runs FIRST (`prepareForMutation()`), so dequeue is
@@ -100,7 +102,8 @@ extension Queue where S: ~Copyable {
 // MARK: - Element Access (generic: the gated logical subscript)
 // ============================================================================
 
-extension Queue where S: ~Copyable {
+extension __Queue where S: ~Copyable, S: Store.`Protocol` & Buffer.`Protocol`,
+    S.Count == Index_Primitives.Index<S.Element>.Count {
     /// Accesses the element at the given typed position (0 = front; positions
     /// re-anchor after a dequeue).
     ///
@@ -131,7 +134,8 @@ extension Queue where S: ~Copyable {
     }
 }
 
-extension Queue where S: ~Copyable, S.Element: Copyable {
+extension __Queue where S: ~Copyable, S.Element: Copyable, S: Store.`Protocol` & Buffer.`Protocol`,
+    S.Count == Index_Primitives.Index<S.Element>.Count {
     /// Returns the front element by value, or nil if empty.
     @inlinable
     public func peek() -> S.Element? {
@@ -151,7 +155,7 @@ extension Queue where S: ~Copyable, S.Element: Copyable {
 // MARK: - Cloning (generic on the CoW columns)
 // ============================================================================
 
-extension Queue where S: Copyable {
+extension __Queue where S: Copyable, S: Store.`Protocol` {
     /// Returns an independent copy of this queue with its own storage.
     ///
     /// On the `Shared` (CoW) columns the fresh value shares the box with `self` at the

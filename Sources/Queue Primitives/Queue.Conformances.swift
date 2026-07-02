@@ -12,6 +12,7 @@
 public import Queue_Primitive
 public import Sequence_Primitives
 public import Store_Protocol_Primitives
+public import Buffer_Protocol_Primitives
 import Index_Primitives
 import Ordinal_Primitives_Standard_Library_Integration
 import Affine_Primitives_Standard_Library_Integration
@@ -28,7 +29,7 @@ import Affine_Primitives_Standard_Library_Integration
 // currently lack a live `Sequenceable` (the bounded ring's was Copyable-substrate-gated
 // — vacuous since W2, flagged at the ring leg); they iterate via `forEach`/`drain`.
 
-extension Queue: Sequenceable where S: Sequenceable & ~Copyable, S.Iterator: Escapable {
+extension __Queue: Sequenceable where S: Sequenceable & ~Copyable, S.Iterator: Escapable {
     @inlinable
     public consuming func makeIterator() -> S.Iterator {
         take().makeIterator()
@@ -37,7 +38,8 @@ extension Queue: Sequenceable where S: Sequenceable & ~Copyable, S.Iterator: Esc
 
 // MARK: - forEach (multipass borrowing walk over the logical order)
 
-extension Queue where S: ~Copyable {
+extension __Queue where S: ~Copyable, S: Store.`Protocol` & Buffer.`Protocol`,
+    S.Count == Index_Primitives.Index<S.Element>.Count {
     /// Calls the given closure for each element, front (oldest) to back (newest).
     ///
     /// - Complexity: O(n)
