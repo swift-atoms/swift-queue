@@ -27,7 +27,7 @@ import Cardinal_Primitives
 // suite spells them (queue tests' column prelude).
 
 typealias HeapStorage<E: ~Copyable> =
-    Storage<Memory.Allocator<Memory.Heap>.System>.Contiguous<E>
+    Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>
 
 typealias GrowableRing<E: ~Copyable> = Buffer<HeapStorage<E>>.Ring
 
