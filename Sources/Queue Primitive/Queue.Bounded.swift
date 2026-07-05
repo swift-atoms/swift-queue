@@ -13,7 +13,7 @@ public import Store_Protocol_Primitives
 
 // MARK: - Queue<E>.Bounded — the CAPACITY variant ([DS-028])
 
-extension __Queue where S: __ColumnDirect, S: ~Copyable {
+extension __Queue where S: Store.Direct, S: ~Copyable {
 
     /// A fixed-capacity FIFO queue: the bounded ring column (rejects on overflow
     /// with typed throws at the family surface — the dissolved former
