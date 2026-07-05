@@ -16,7 +16,7 @@ import Buffer_Ring_Bounded_Primitive
 import Storage_Contiguous_Primitives
 import Memory_Heap_Primitives
 import Memory_Allocator_Primitive
-import Shared_Primitive
+import Ownership_Shared_Primitive
 import Index_Primitives
 import Tagged_Primitives_Standard_Library_Integration
 import Ordinal_Primitives
@@ -35,7 +35,7 @@ typealias BoundedRing<E: ~Copyable> = Buffer<HeapStorage<E>>.Ring.Bounded
 
 typealias MoveQueue<E: ~Copyable> = Queue<GrowableRing<E>>
 
-typealias CoWQueue<E: ~Copyable> = Queue<Shared<E, GrowableRing<E>>>
+typealias CoWQueue<E: ~Copyable> = Queue<Ownership.Shared<E, GrowableRing<E>>>
 
 typealias FixedQueue<E: ~Copyable> = Queue<BoundedRing<E>>
 

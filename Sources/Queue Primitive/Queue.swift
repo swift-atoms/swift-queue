@@ -15,7 +15,7 @@ public import Buffer_Ring_Bounded_Primitive
 public import Storage_Contiguous_Primitives
 public import Memory_Heap_Primitives
 public import Memory_Allocator_Primitive
-public import Shared_Primitive
+public import Ownership_Shared_Primitive
 public import Index_Primitives
 
 // MARK: - Queue (the ADT tier — generic over the COLUMN)
@@ -28,9 +28,9 @@ public import Index_Primitives
 ///
 /// ```swift
 /// __Queue<            Buffer<Storage<…System>.Contiguous<FD >>.Ring >          // zero-cost MOVE-ONLY (default)
-/// __Queue<Shared<Int, Buffer<Storage<…System>.Contiguous<Int>>.Ring>>         // explicit CoW value semantics
+/// __Queue<Ownership.Shared<Int, Buffer<Storage<…System>.Contiguous<Int>>.Ring>>         // explicit CoW value semantics
 /// __Queue<            Buffer<Storage<…System>.Contiguous<Job>>.Ring.Bounded>  // fixed-capacity (bounded)
-/// __Queue<Shared<Int, Buffer<…>.Ring.Bounded>>                                // fixed-capacity CoW
+/// __Queue<Ownership.Shared<Int, Buffer<…>.Ring.Bounded>>                                // fixed-capacity CoW
 /// ```
 ///
 /// The ring columns implement the FRONT-ANCHORED seam discipline (`Buffer.Ring`'s
@@ -79,7 +79,7 @@ public struct __Queue<S: ~Copyable>: ~Copyable {
 
 // MARK: - Conditional Conformances (co-located per [COPY-FIX-004])
 
-/// The S5 chain: `__Queue<Shared<E, B>>` is `Copyable` exactly when `Shared` is — i.e.
+/// The S5 chain: `__Queue<Ownership.Shared<E, B>>` is `Copyable` exactly when `Shared` is — i.e.
 /// when the ELEMENT is. The direct (move-only buffer) columns never satisfy this, by design.
 extension __Queue: Copyable where S: Copyable {}
 
@@ -106,8 +106,8 @@ extension __Queue where S: ~Copyable {
     /// Creates an empty CoW (value-semantic) growable queue on the `Shared` column.
     @inlinable
     public init<E>(minimumCapacity: Index_Primitives.Index<E>.Count = .zero)
-    where S == Shared<E, Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring> {
-        self.init(store: Shared(
+    where S == Ownership.Shared<E, Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring> {
+        self.init(store: Ownership.Shared(
             Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring(minimumCapacity: minimumCapacity)
         ))
     }
@@ -116,8 +116,8 @@ extension __Queue where S: ~Copyable {
     /// column (the boxed flavor of the move-only regime — the box's O(1) move).
     @inlinable
     public init<E: ~Copyable>(minimumCapacity: Index_Primitives.Index<E>.Count = .zero)
-    where S == Shared<E, Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring> {
-        self.init(store: Shared(
+    where S == Ownership.Shared<E, Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring> {
+        self.init(store: Ownership.Shared(
             Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring(minimumCapacity: minimumCapacity)
         ))
     }
@@ -125,8 +125,8 @@ extension __Queue where S: ~Copyable {
     /// Creates an empty CoW fixed-capacity queue on the `Shared` bounded column.
     @inlinable
     public init<E>(capacity: Index_Primitives.Index<E>.Count)
-    where S == Shared<E, Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring.Bounded> {
-        self.init(store: Shared(
+    where S == Ownership.Shared<E, Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring.Bounded> {
+        self.init(store: Ownership.Shared(
             Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring.Bounded(minimumCapacity: capacity)
         ))
     }
@@ -135,8 +135,8 @@ extension __Queue where S: ~Copyable {
     /// on the `Shared` bounded column.
     @inlinable
     public init<E: ~Copyable>(capacity: Index_Primitives.Index<E>.Count)
-    where S == Shared<E, Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring.Bounded> {
-        self.init(store: Shared(
+    where S == Ownership.Shared<E, Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring.Bounded> {
+        self.init(store: Ownership.Shared(
             Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring.Bounded(minimumCapacity: capacity)
         ))
     }

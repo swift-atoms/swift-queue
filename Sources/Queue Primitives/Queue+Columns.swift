@@ -24,7 +24,7 @@ public import Buffer_Ring_Bounded_Primitive
 public import Storage_Contiguous_Primitives
 public import Memory_Heap_Primitives
 public import Memory_Allocator_Primitive
-public import Shared_Primitive
+public import Ownership_Shared_Primitive
 public import Index_Primitives
 
 // ============================================================================
@@ -47,7 +47,7 @@ extension __Queue where S: ~Copyable {
     /// - Complexity: O(1) amortized (O(n) when a copy must be made first)
     @inlinable
     public mutating func enqueue<E: ~Copyable>(_ element: consuming E)
-    where S == Shared<E, Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring> {
+    where S == Ownership.Shared<E, Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring> {
         store.withUnique(consuming: element) { ring, element in
             ring.pushBack(element)
         }
@@ -73,7 +73,7 @@ extension __Queue where S: ~Copyable {
     /// - Complexity: O(1)
     @inlinable
     public mutating func enqueue<E: ~Copyable>(_ element: consuming E) throws(Error)
-    where S == Shared<E, Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring.Bounded> {
+    where S == Ownership.Shared<E, Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring.Bounded> {
         let rejected = store.withUnique(consuming: element) { ring, element in
             ring.push.back(element)
         }
@@ -113,9 +113,9 @@ extension __Queue where S: ~Copyable {
     /// the old box keep their elements untouched, and no deep copy is ever needed.
     @inlinable
     public mutating func clear<E>(keepingCapacity: Bool = true)
-    where S == Shared<E, Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring> {
+    where S == Ownership.Shared<E, Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring> {
         let capacity: Index_Primitives.Index<E>.Count = keepingCapacity ? store.capacity : .zero
-        self.store = Shared(
+        self.store = Ownership.Shared(
             Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring(minimumCapacity: capacity)
         )
     }
@@ -124,8 +124,8 @@ extension __Queue where S: ~Copyable {
     /// same fixed capacity).
     @inlinable
     public mutating func clear<E>()
-    where S == Shared<E, Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring.Bounded> {
-        self.store = Shared(
+    where S == Ownership.Shared<E, Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring.Bounded> {
+        self.store = Ownership.Shared(
             Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring.Bounded(minimumCapacity: store.capacity)
         )
     }
@@ -146,7 +146,7 @@ extension __Queue where S: ~Copyable {
     /// Reserves capacity (`Shared` column; uniquely, behind the gate).
     @inlinable
     public mutating func reserve<E: ~Copyable>(_ minimumCapacity: Index_Primitives.Index<E>.Count)
-    where S == Shared<E, Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring> {
+    where S == Ownership.Shared<E, Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring> {
         store.withUnique { ring in
             ring.reserveCapacity(minimumCapacity)
         }
@@ -166,7 +166,7 @@ extension __Queue where S: ~Copyable {
     /// - Complexity: O(n)
     @inlinable
     public mutating func compact<E: ~Copyable>()
-    where S == Shared<E, Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring> {
+    where S == Ownership.Shared<E, Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring> {
         store.withUnique { ring in
             ring.compact()
         }

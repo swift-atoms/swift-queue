@@ -8,7 +8,7 @@ import Buffer_Primitives_Test_Support
 import Storage_Contiguous_Primitives
 import Memory_Heap_Primitives
 import Memory_Allocator_Primitive
-import Shared_Primitive
+import Ownership_Shared_Primitive
 import Index_Primitives
 import Tagged_Primitives_Standard_Library_Integration
 import Ordinal_Primitives_Standard_Library_Integration
@@ -30,13 +30,13 @@ private typealias MoveQueue<E: ~Copyable> = Queue<E>
 
 /// The explicit CoW value-semantic growable queue (`Shared` column — no front
 /// door yet; spelled through the carrier).
-private typealias CoWQueue<E: ~Copyable> = __Queue<Shared<E, GrowableRing<E>>>
+private typealias CoWQueue<E: ~Copyable> = __Queue<Ownership.Shared<E, GrowableRing<E>>>
 
 /// The move-only fixed-capacity queue — the `.Bounded` variant front door.
 private typealias FixedQueue<E: ~Copyable> = Queue<E>.Bounded
 
 /// The CoW fixed-capacity queue (`Shared` bounded column — carrier-spelled).
-private typealias CoWFixedQueue<E: ~Copyable> = __Queue<Shared<E, BoundedRing<E>>>
+private typealias CoWFixedQueue<E: ~Copyable> = __Queue<Ownership.Shared<E, BoundedRing<E>>>
 
 // MARK: - [DS-024]: the columns are lawful from the family's own suite
 
@@ -64,7 +64,7 @@ struct QueueColumnLawTests {
     @Test
     func `the shared growable-ring column obeys the seam ledger laws`() {
         let violations = Seam.Ledger.violations(
-            makeEmpty: { Shared(GrowableRing<Int>(minimumCapacity: Index<Int>.Count(4))) },
+            makeEmpty: { Ownership.Shared(GrowableRing<Int>(minimumCapacity: Index<Int>.Count(4))) },
             element: { $0 }
         )
         #expect(violations.isEmpty, "\(violations)")
@@ -73,7 +73,7 @@ struct QueueColumnLawTests {
     @Test
     func `the shared bounded-ring column obeys the seam ledger laws`() {
         let violations = Seam.Ledger.violations(
-            makeEmpty: { Shared(BoundedRing<Int>(minimumCapacity: Index<Int>.Count(4))) },
+            makeEmpty: { Ownership.Shared(BoundedRing<Int>(minimumCapacity: Index<Int>.Count(4))) },
             element: { $0 }
         )
         #expect(violations.isEmpty, "\(violations)")
@@ -337,7 +337,7 @@ struct QueueTeardownTests {
     func `the boxed move-only lane tears down via the box drain`() {
         QueueProbe2.reset()
         do {
-            var q = __Queue<Shared<QueueItem2, GrowableRing<QueueItem2>>>(minimumCapacity: 2)
+            var q = __Queue<Ownership.Shared<QueueItem2, GrowableRing<QueueItem2>>>(minimumCapacity: 2)
             q.enqueue(QueueItem2(1))
             q.enqueue(QueueItem2(2))
             let n = q.count

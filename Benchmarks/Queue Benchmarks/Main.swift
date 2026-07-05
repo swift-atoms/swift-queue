@@ -19,7 +19,7 @@ enum Main {
         print("=== swift-queue-primitives — family-tier benchmark (W2) ===")
         print("config: sizes=\(Bench.sizes) samples=\(Bench.samples) warmup=\(Bench.warmup)")
         print("targets/sample: element=\(Bench.elementOpsTarget) structure=\(Bench.structureOpsTarget) copiedSlots=\(Bench.copiedSlotsTarget)")
-        print("subjects: tower.direct=Queue<Ring> · tower.cow=Queue<Shared<E,Ring>> · tower.bounded=Queue<Ring.Bounded> · stdlib.shift=Swift.Array (append/removeFirst, O(n) removeFirst BY DESIGN)")
+        print("subjects: tower.direct=Queue<Ring> · tower.cow=Queue<Ownership.Shared<E,Ring>> · tower.bounded=Queue<Ring.Bounded> · stdlib.shift=Swift.Array (append/removeFirst, O(n) removeFirst BY DESIGN)")
         print("")
         Bench.globalWarmup()
 
