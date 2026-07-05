@@ -250,7 +250,7 @@ struct QueueCoWTests {
         var a = CoWQueue<Int>(minimumCapacity: 2)
         a.enqueue(1)
         let b = a
-        a[0] = 100                              // generic _modify → prepareForMutation()
+        a[0] = 100                              // generic _modify → unshare()
         let aSees = a[0], bSees = b[0]
         #expect(aSees == 100)
         #expect(bSees == 1)

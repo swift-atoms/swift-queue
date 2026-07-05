@@ -61,7 +61,7 @@ extension __Queue where S: ~Copyable, S: Store.`Protocol` & Buffer.`Protocol`,
     S.Count == Index_Primitives.Index<S.Element>.Count {
     /// Dequeues and returns the front element, or nil if empty.
     ///
-    /// The gate runs FIRST (`prepareForMutation()`), so dequeue is
+    /// The gate runs FIRST (`unshare()`), so dequeue is
     /// copy-on-write-correct on the `Shared` columns; the seam's front move advances
     /// the ring head — O(1), no element shifts.
     ///
@@ -69,7 +69,7 @@ extension __Queue where S: ~Copyable, S: Store.`Protocol` & Buffer.`Protocol`,
     @inlinable
     public mutating func dequeue() -> S.Element? {
         guard !isEmpty else { return nil }
-        store.prepareForMutation()
+        store.unshare()
         return store.move(at: .zero)
     }
 
@@ -91,7 +91,7 @@ extension __Queue where S: ~Copyable, S: Store.`Protocol` & Buffer.`Protocol`,
     /// and re-anchors), so the loop terminates when the column reports empty.
     @inlinable
     public mutating func drain(_ body: (consuming S.Element) -> Void) {
-        store.prepareForMutation()
+        store.unshare()
         while !isEmpty {
             body(store.move(at: .zero))
         }
@@ -119,7 +119,7 @@ extension __Queue where S: ~Copyable, S: Store.`Protocol` & Buffer.`Protocol`,
         }
         _modify {
             precondition(index < count, "Index out of bounds")
-            store.prepareForMutation()
+            store.unshare()
             yield &store[index]
         }
     }
@@ -166,7 +166,7 @@ extension __Queue where S: Copyable, S: Store.`Protocol` {
     @inlinable
     public borrowing func clone() -> Self {
         var result = copy self
-        result.store.prepareForMutation()
+        result.store.unshare()
         return result
     }
 }
