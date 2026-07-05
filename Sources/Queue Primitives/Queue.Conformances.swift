@@ -38,8 +38,7 @@ extension __Queue: Sequenceable where S: Sequenceable & ~Copyable, S.Iterator: E
 
 // MARK: - forEach (multipass borrowing walk over the logical order)
 
-extension __Queue where S: ~Copyable, S: Store.`Protocol` & Buffer.`Protocol`,
-    S.Count == Index_Primitives.Index<S.Element>.Count {
+extension __Queue where S: ~Copyable, S: Store.`Protocol` & Buffer.`Protocol` {
     /// Calls the given closure for each element, front (oldest) to back (newest).
     ///
     /// - Complexity: O(n)

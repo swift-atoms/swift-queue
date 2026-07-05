@@ -27,8 +27,7 @@ import Affine_Primitives_Standard_Library_Integration
 // MARK: - Properties (generic: Buffer.Protocol count + seam capacity)
 // ============================================================================
 
-extension __Queue where S: ~Copyable, S: Store.`Protocol` & Buffer.`Protocol`,
-    S.Count == Index_Primitives.Index<S.Element>.Count {
+extension __Queue where S: ~Copyable, S: Store.`Protocol` & Buffer.`Protocol` {
     /// The number of elements in the queue.
     @inlinable
     public var count: Index.Count {
@@ -57,8 +56,7 @@ extension __Queue where S: ~Copyable, S: Store.`Protocol` & Buffer.`Protocol`,
 // MARK: - Core FIFO Operations (generic: gate + the front-anchored seam)
 // ============================================================================
 
-extension __Queue where S: ~Copyable, S: Store.`Protocol` & Buffer.`Protocol`,
-    S.Count == Index_Primitives.Index<S.Element>.Count {
+extension __Queue where S: ~Copyable, S: Store.`Protocol` & Buffer.`Protocol` {
     /// Dequeues and returns the front element, or nil if empty.
     ///
     /// The gate runs FIRST (`unshare()`), so dequeue is
@@ -102,8 +100,7 @@ extension __Queue where S: ~Copyable, S: Store.`Protocol` & Buffer.`Protocol`,
 // MARK: - Element Access (generic: the gated logical subscript)
 // ============================================================================
 
-extension __Queue where S: ~Copyable, S: Store.`Protocol` & Buffer.`Protocol`,
-    S.Count == Index_Primitives.Index<S.Element>.Count {
+extension __Queue where S: ~Copyable, S: Store.`Protocol` & Buffer.`Protocol` {
     /// Accesses the element at the given typed position (0 = front; positions
     /// re-anchor after a dequeue).
     ///
@@ -134,8 +131,7 @@ extension __Queue where S: ~Copyable, S: Store.`Protocol` & Buffer.`Protocol`,
     }
 }
 
-extension __Queue where S: ~Copyable, S.Element: Copyable, S: Store.`Protocol` & Buffer.`Protocol`,
-    S.Count == Index_Primitives.Index<S.Element>.Count {
+extension __Queue where S: ~Copyable, S.Element: Copyable, S: Store.`Protocol` & Buffer.`Protocol` {
     /// Returns the front element by value, or nil if empty.
     @inlinable
     public func peek() -> S.Element? {
