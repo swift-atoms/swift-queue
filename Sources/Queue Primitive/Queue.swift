@@ -15,6 +15,7 @@ public import Buffer_Ring_Bounded_Primitive
 public import Storage_Contiguous_Primitives
 public import Memory_Heap_Primitives
 public import Memory_Allocator_Primitive
+public import Memory_Allocator_Protocol_Primitives
 public import Ownership_Shared_Primitive
 public import Index_Primitives
 
@@ -90,9 +91,13 @@ extension __Queue: Sendable where S: Sendable & ~Copyable {}
 
 extension __Queue where S: ~Copyable {
     /// Creates an empty MOVE-ONLY growable queue (the default ownership column).
+    ///
+    /// Allocation-generic ([DS-029] form 2, `Resource: Memory.Growable`): one pin serves
+    /// the heap column AND the `Small<n>` inline-budget column; `Memory.Inline` correctly
+    /// falls outside the `Memory.Growable` fence.
     @inlinable
-    public init<E: ~Copyable>(minimumCapacity: Index_Primitives.Index<E>.Count = .zero)
-    where S == Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring {
+    public init<E: ~Copyable, Resource: Memory.Growable & ~Copyable>(minimumCapacity: Index_Primitives.Index<E>.Count = .zero)
+    where S == Buffer<Storage<Memory.Allocator<Resource>>.Contiguous<E>>.Ring {
         self.init(store: S(minimumCapacity: minimumCapacity))
     }
 
@@ -104,6 +109,12 @@ extension __Queue where S: ~Copyable {
     }
 
     /// Creates an empty CoW (value-semantic) growable queue on the `Shared` column.
+    ///
+    /// Heap-pinned: the `Shared` column's construction rides
+    /// `Ownership.Shared(_:)`, whose wrapping inits are `Memory.Heap`-pinned in
+    /// swift-ownership-shared-primitives (out of W3.2 scope). The `Shared` leaf generalizes
+    /// once that package's construction inits become allocation-generic; the direct
+    /// `Queue<E>.Small<n>` door does not depend on it.
     @inlinable
     public init<E>(minimumCapacity: Index_Primitives.Index<E>.Count = .zero)
     where S == Ownership.Shared<E, Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring> {
@@ -114,6 +125,8 @@ extension __Queue where S: ~Copyable {
 
     /// Creates an empty statically-unique queue of move-only elements on the `Shared`
     /// column (the boxed flavor of the move-only regime — the box's O(1) move).
+    ///
+    /// Heap-pinned (see the CoW growable init above — `Ownership.Shared(_:)` construction).
     @inlinable
     public init<E: ~Copyable>(minimumCapacity: Index_Primitives.Index<E>.Count = .zero)
     where S == Ownership.Shared<E, Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring> {

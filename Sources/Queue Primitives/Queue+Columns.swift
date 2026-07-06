@@ -24,6 +24,7 @@ public import Buffer_Ring_Bounded_Primitive
 public import Storage_Contiguous_Primitives
 public import Memory_Heap_Primitives
 public import Memory_Allocator_Primitive
+public import Memory_Allocator_Protocol_Primitives
 public import Ownership_Shared_Primitive
 public import Index_Primitives
 
@@ -34,15 +35,24 @@ public import Index_Primitives
 extension __Queue where S: ~Copyable {
     /// Enqueues an element at the back (direct growable column; grows as needed).
     ///
+    /// Allocation-generic ([DS-029] form 2, `Resource: Memory.Growable`): one pin serves
+    /// the heap column AND the `Small<n>` inline-budget column — the ring's `pushBack` is
+    /// itself R-generic (W3.1), so the growth path re-runs the inline→heap spill decision.
+    ///
     /// - Complexity: O(1) amortized
     @inlinable
-    public mutating func enqueue<E: ~Copyable>(_ element: consuming E)
-    where S == Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring {
+    public mutating func enqueue<E: ~Copyable, Resource: Memory.Growable & ~Copyable>(_ element: consuming E)
+    where S == Buffer<Storage<Memory.Allocator<Resource>>.Contiguous<E>>.Ring {
         store.pushBack(element)
     }
 
     /// Enqueues an element at the back (`Shared` growable column; uniqueness restored
     /// first — the gate inside `withUnique` no-ops on the statically-unique lane).
+    ///
+    /// Heap-pinned with the rest of the `Shared` column: its construction rides the
+    /// `Memory.Heap`-pinned `Ownership.Shared(_:)` inits (swift-ownership-shared-primitives,
+    /// out of W3.2 scope), so the whole `Shared` column stays on heap until that package's
+    /// construction generalizes. The direct `Queue<E>.Small<n>` door does not depend on it.
     ///
     /// - Complexity: O(1) amortized (O(n) when a copy must be made first)
     @inlinable
@@ -90,10 +100,14 @@ extension __Queue where S: ~Copyable {
 extension __Queue where S: ~Copyable {
     /// Removes all elements (direct growable column).
     ///
+    /// Allocation-generic ([DS-029] form 2): `removeAll()` rides the ledgered seam (form 1)
+    /// and the `!keepingCapacity` reset rides `S.create` (form 2), so the pin carries the
+    /// `Resource` fence.
+    ///
     /// - Parameter keepingCapacity: If `true` (default), slots are retained.
     @inlinable
-    public mutating func clear<E: ~Copyable>(keepingCapacity: Bool = true)
-    where S == Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring {
+    public mutating func clear<E: ~Copyable, Resource: Memory.Growable & ~Copyable>(keepingCapacity: Bool = true)
+    where S == Buffer<Storage<Memory.Allocator<Resource>>.Contiguous<E>>.Ring {
         store.removeAll()
         if !keepingCapacity {
             store = S(minimumCapacity: .zero)
@@ -111,6 +125,8 @@ extension __Queue where S: ~Copyable {
     ///
     /// Detaches to a fresh box rather than draining in place: sibling values sharing
     /// the old box keep their elements untouched, and no deep copy is ever needed.
+    ///
+    /// Heap-pinned (rides the `Memory.Heap`-pinned `Ownership.Shared(_:)` construction).
     @inlinable
     public mutating func clear<E>(keepingCapacity: Bool = true)
     where S == Ownership.Shared<E, Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring> {
@@ -137,13 +153,17 @@ extension __Queue where S: ~Copyable {
 
 extension __Queue where S: ~Copyable {
     /// Reserves capacity for at least the given number of elements (direct column).
+    ///
+    /// Allocation-generic ([DS-029] form 2).
     @inlinable
-    public mutating func reserve<E: ~Copyable>(_ minimumCapacity: Index_Primitives.Index<E>.Count)
-    where S == Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring {
+    public mutating func reserve<E: ~Copyable, Resource: Memory.Growable & ~Copyable>(_ minimumCapacity: Index_Primitives.Index<E>.Count)
+    where S == Buffer<Storage<Memory.Allocator<Resource>>.Contiguous<E>>.Ring {
         store.reserveCapacity(minimumCapacity)
     }
 
     /// Reserves capacity (`Shared` column; uniquely, behind the gate).
+    ///
+    /// Heap-pinned with the rest of the `Shared` column (see the `Shared` enqueue above).
     @inlinable
     public mutating func reserve<E: ~Copyable>(_ minimumCapacity: Index_Primitives.Index<E>.Count)
     where S == Ownership.Shared<E, Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring> {
@@ -154,14 +174,18 @@ extension __Queue where S: ~Copyable {
 
     /// Reduces capacity to match the current count, linearizing the ring (direct column).
     ///
+    /// Allocation-generic ([DS-029] form 2).
+    ///
     /// - Complexity: O(n)
     @inlinable
-    public mutating func compact<E: ~Copyable>()
-    where S == Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring {
+    public mutating func compact<E: ~Copyable, Resource: Memory.Growable & ~Copyable>()
+    where S == Buffer<Storage<Memory.Allocator<Resource>>.Contiguous<E>>.Ring {
         store.compact()
     }
 
     /// Reduces capacity to match the current count (`Shared` column; uniquely).
+    ///
+    /// Heap-pinned with the rest of the `Shared` column (see the `Shared` enqueue above).
     ///
     /// - Complexity: O(n)
     @inlinable
@@ -180,10 +204,13 @@ extension __Queue where S: ~Copyable {
 extension __Queue where S: ~Copyable {
     /// Returns an independent copy of this queue (direct growable column).
     ///
+    /// Allocation-generic ([DS-029] form 2; `store.clone()` requires `Element: Copyable`,
+    /// already implied by the copyable-only `E`).
+    ///
     /// - Complexity: O(`count`)
     @inlinable
-    public func clone<E>() -> Self
-    where S == Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring {
+    public func clone<E, Resource: Memory.Growable & ~Copyable>() -> Self
+    where S == Buffer<Storage<Memory.Allocator<Resource>>.Contiguous<E>>.Ring {
         Self(store: store.clone())
     }
 
