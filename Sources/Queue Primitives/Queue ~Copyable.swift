@@ -16,12 +16,12 @@
 // first write, so the same generic body is copy-on-write-correct on the `Shared`
 // columns and free on the move-only columns. Only GROWTH, CONSTRUCTION, and capacity
 // ops pin per column (`Queue+Columns.swift`).
-public import Queue_Primitive
+import Affine_Primitives_Standard_Library_Integration
 public import Buffer_Protocol_Primitives
-public import Store_Protocol_Primitives
 import Index_Primitives
 import Ordinal_Primitives_Standard_Library_Integration
-import Affine_Primitives_Standard_Library_Integration
+public import Queue_Primitive
+public import Store_Protocol_Primitives
 
 // ============================================================================
 // MARK: - Properties (generic: Buffer.Protocol count + seam capacity)

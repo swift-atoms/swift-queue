@@ -9,10 +9,10 @@
 //
 // ===----------------------------------------------------------------------===//
 
+import Index_Primitives
+import Memory_Small_Primitives
 import Queue_Primitives
 import Queue_Small_Primitive
-import Memory_Small_Primitives
-import Index_Primitives
 import Testing
 
 // MARK: - W3.2 `Queue<E>.Small<n>` door coverage
@@ -37,7 +37,7 @@ struct QueueSmallDoorTests {
 
         // Enqueue 16 `Int`s (128 bytes) past the 64-byte inline budget, forcing at least
         // one inline→heap spill during growth (the ring's form-2 grow path).
-        for value in 1 ... 16 {
+        for value in 1...16 {
             q.enqueue(value)
         }
         #expect(q.count == Index<Int>.Count(16))
@@ -45,7 +45,7 @@ struct QueueSmallDoorTests {
         // Drain FIFO — order preserved across the spill boundary.
         var seen: [Int] = []
         q.drain { seen.append($0) }
-        #expect(seen == Array(1 ... 16))
+        #expect(seen == Array(1...16))
         let emptyAfter = q.isEmpty
         #expect(emptyAfter)
     }
@@ -90,11 +90,11 @@ struct QueueSmallDoorTests {
             var q = Queue<SmallItem>.Small<64>(minimumCapacity: 2)
             q.enqueue(SmallItem(1))
             q.enqueue(SmallItem(2))
-            q.enqueue(SmallItem(3))            // grows on the Small leaf (still inline: 3×8 < 64)
+            q.enqueue(SmallItem(3))  // grows on the Small leaf (still inline: 3×8 < 64)
             #expect(q.count == Index<SmallItem>.Count(3))
 
             if let first = q.dequeue() {
-                #expect(first.id == 1)         // FIFO front; `first` destroyed at scope end
+                #expect(first.id == 1)  // FIFO front; `first` destroyed at scope end
             } else {
                 Issue.record("expected the front element")
             }

@@ -20,6 +20,7 @@ public import Queue_Primitive
 /// former hand-rolled `Element: Copyable` equality is withdrawn with the old
 /// conditional-Copyable queue).
 extension __Queue: Equatable where S: Equatable {
+    /// Returns whether two queues hold equal elements in equal logical order.
     @inlinable
     public static func == (lhs: Self, rhs: Self) -> Bool {
         lhs.store == rhs.store

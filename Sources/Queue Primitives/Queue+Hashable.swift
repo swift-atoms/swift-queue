@@ -17,6 +17,7 @@ public import Queue_Primitive
 /// `Shared` hashes count + live elements in logical order, so equal queues hash equal
 /// across distinct boxes, capacities, and physical wrap states.
 extension __Queue: Hashable where S: Hashable {
+    /// Hashes the essential components of this queue into the given hasher.
     @inlinable
     public func hash(into hasher: inout Hasher) {
         store.hash(into: &hasher)

@@ -17,16 +17,16 @@
 // consuming closure PARAMETERS). The pins are `where ==` clauses on METHODS
 // (mechanic #2; [MEM-COPY-018]: the column's protocol obligations live in `Shared`'s
 // declaration bound, which is what lets these pins derive).
-public import Queue_Primitive
 public import Buffer_Primitive
-public import Buffer_Ring_Primitive
 public import Buffer_Ring_Bounded_Primitive
-public import Storage_Contiguous_Primitives
-public import Memory_Heap_Primitives
+public import Buffer_Ring_Primitive
+public import Index_Primitives
 public import Memory_Allocator_Primitive
 public import Memory_Allocator_Protocol_Primitives
+public import Memory_Heap_Primitives
 public import Ownership_Shared_Primitive
-public import Index_Primitives
+public import Queue_Primitive
+public import Storage_Contiguous_Primitives
 
 // ============================================================================
 // MARK: - Enqueue (growable columns: grows; bounded columns: typed-throws on full)

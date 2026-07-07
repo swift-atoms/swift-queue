@@ -1,17 +1,17 @@
-import Queue_Primitives
 import Buffer_Primitive
-import Buffer_Ring_Primitive
-import Buffer_Ring_Bounded_Primitive
-import Buffer_Ring_Primitives
-import Sequence_Primitives
 import Buffer_Primitives_Test_Support
-import Storage_Contiguous_Primitives
-import Memory_Heap_Primitives
-import Memory_Allocator_Primitive
-import Ownership_Shared_Primitive
+import Buffer_Ring_Bounded_Primitive
+import Buffer_Ring_Primitive
+import Buffer_Ring_Primitives
 import Index_Primitives
-import Tagged_Primitives_Standard_Library_Integration
+import Memory_Allocator_Primitive
+import Memory_Heap_Primitives
 import Ordinal_Primitives_Standard_Library_Integration
+import Ownership_Shared_Primitive
+import Queue_Primitives
+import Sequence_Primitives
+import Storage_Contiguous_Primitives
+import Tagged_Primitives_Standard_Library_Integration
 import Testing
 
 // The column-keyed queue suite: the four ratified ring columns through the one generic
@@ -94,10 +94,11 @@ struct QueueCoreTests {
         q.enqueue(2)
         q.enqueue(3)
         q.enqueue(4)
-        let a = q.dequeue(), b = q.dequeue()
+        let a = q.dequeue()
+        let b = q.dequeue()
         #expect(a == 1)
         #expect(b == 2)
-        q.enqueue(5)                            // wraps physically
+        q.enqueue(5)  // wraps physically
         q.enqueue(6)
         let n = q.count
         #expect(n == Index<Int>.Count(4))
@@ -115,7 +116,7 @@ struct QueueCoreTests {
         var q = MoveQueue<Int>(minimumCapacity: 2)
         q.enqueue(1)
         q.enqueue(2)
-        q.enqueue(3)                            // grows
+        q.enqueue(3)  // grows
         let capacityOK = q.capacity >= Index<Int>.Count(3)
         #expect(capacityOK)
         var seen: [Int] = []
@@ -134,7 +135,7 @@ struct QueueCoreTests {
         #expect(doubled == 20)
         let e1 = q[1]
         #expect(e1 == 20)
-        q[1] = 25                               // gated _modify
+        q[1] = 25  // gated _modify
         let opt = q.element(at: 1)
         #expect(opt == 25)
         let beyond = q.element(at: 2)
@@ -161,7 +162,7 @@ struct QueueCoreTests {
         #expect(thrown == .full)
         let a = q.dequeue()
         #expect(a == 1)
-        try q.enqueue(3)                        // space again after a dequeue (ring wrap)
+        try q.enqueue(3)  // space again after a dequeue (ring wrap)
         var seen: [Int] = []
         q.drain { seen.append($0) }
         #expect(seen == [2, 3])
@@ -203,7 +204,8 @@ struct QueueCoreTests {
         q.enqueue(5)
         var c = q.clone()
         c[0] = 40
-        let mine = q[0], theirs = c[0]
+        let mine = q[0]
+        let theirs = c[0]
         #expect(mine == 4)
         #expect(theirs == 40)
 
@@ -227,10 +229,11 @@ struct QueueCoWTests {
         var q1 = CoWQueue<Int>(minimumCapacity: 4)
         q1.enqueue(7)
         q1.enqueue(8)
-        let q2 = q1                             // S5: Queue is Copyable because S is
+        let q2 = q1  // S5: Queue is Copyable because S is
         let popped = q1.dequeue()
         #expect(popped == 7)
-        let mine = q1.count, theirs = q2.count
+        let mine = q1.count
+        let theirs = q2.count
         #expect(mine == Index<Int>.Count(1))
         #expect(theirs == Index<Int>.Count(2))
         let theirFront = q2.peek()
@@ -242,16 +245,18 @@ struct QueueCoWTests {
         var q1 = CoWQueue<Int>(minimumCapacity: 2)
         q1.enqueue(1)
         let q2 = q1
-        q1.enqueue(2)                           // withUnique(consuming:) detaches first
-        let mine = q1.count, theirs = q2.count
+        q1.enqueue(2)  // withUnique(consuming:) detaches first
+        let mine = q1.count
+        let theirs = q2.count
         #expect(mine == Index<Int>.Count(2))
         #expect(theirs == Index<Int>.Count(1))
 
         var a = CoWQueue<Int>(minimumCapacity: 2)
         a.enqueue(1)
         let b = a
-        a[0] = 100                              // generic _modify → unshare()
-        let aSees = a[0], bSees = b[0]
+        a[0] = 100  // generic _modify → unshare()
+        let aSees = a[0]
+        let bSees = b[0]
         #expect(aSees == 100)
         #expect(bSees == 1)
     }
@@ -269,8 +274,9 @@ struct QueueCoWTests {
             thrown = true
         }
         #expect(thrown)
-        q1.clear()                              // detach, not drain: sibling intact
-        let mine = q1.isEmpty, theirs = q2.count
+        q1.clear()  // detach, not drain: sibling intact
+        let mine = q1.isEmpty
+        let theirs = q2.count
         #expect(mine)
         #expect(theirs == Index<Int>.Count(2))
     }
@@ -282,7 +288,8 @@ struct QueueCoWTests {
         q.enqueue(2)
         var c = q.clone()
         c[0] = 99
-        let mine = q[0], theirs = c[0]
+        let mine = q[0]
+        let theirs = c[0]
         #expect(mine == 1)
         #expect(theirs == 99)
 
@@ -290,10 +297,11 @@ struct QueueCoWTests {
         x.enqueue(1)
         var y = CoWQueue<Int>(minimumCapacity: 8)
         y.enqueue(1)
-        #expect(x == y)                         // element-wise, capacity-independent
+        #expect(x == y)  // element-wise, capacity-independent
         y.enqueue(2)
         #expect(x != y)
-        var h1 = Hasher(), h2 = Hasher()
+        var h1 = Hasher()
+        var h2 = Hasher()
         x.hash(into: &h1)
         var x2 = x
         x2[0] = 1
@@ -322,15 +330,15 @@ struct QueueTeardownTests {
             } else {
                 Issue.record("expected the front element")
             }
-            _ = q.dequeue()                     // destroy 2 (dropped)
-            q.enqueue(QueueItem(5))             // wraps: two-run ledger behind the seam
+            _ = q.dequeue()  // destroy 2 (dropped)
+            q.enqueue(QueueItem(5))  // wraps: two-run ledger behind the seam
             let mid = QueueProbe.destroyedSorted
             #expect(mid == [1, 2])
             let v = q.withElement(at: 0) { $0.id }
             #expect(v == 3)
         }
         let all = QueueProbe.destroyedSorted
-        #expect(all == [1, 2, 3, 4, 5])         // the oracle walked both runs at drop
+        #expect(all == [1, 2, 3, 4, 5])  // the oracle walked both runs at drop
     }
 
     @Test
@@ -344,7 +352,7 @@ struct QueueTeardownTests {
             #expect(n == Index<QueueItem2>.Count(2))
         }
         let all = QueueProbe2.destroyedSorted
-        #expect(all == [1, 2])                  // R-5: the drain destroyed the live elements
+        #expect(all == [1, 2])  // R-5: the drain destroyed the live elements
     }
 }
 
@@ -388,12 +396,12 @@ struct QueueIterationTests {
         q.enqueue(4)
         _ = q.dequeue()
         _ = q.dequeue()
-        q.enqueue(5)                            // wrapped
+        q.enqueue(5)  // wrapped
         var walked: [Int] = []
         q.forEach { walked.append($0) }
         #expect(walked == [3, 4, 5])
 
-        var it = q.makeIterator()               // consuming, via the S chain
+        var it = q.makeIterator()  // consuming, via the S chain
         var seen: [Int] = []
         while let x = it.next() { seen.append(x) }
         #expect(seen == [3, 4, 5])

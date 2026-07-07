@@ -9,13 +9,13 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Queue_Primitive
-public import Sequence_Primitives
-public import Store_Protocol_Primitives
+import Affine_Primitives_Standard_Library_Integration
 public import Buffer_Protocol_Primitives
 import Index_Primitives
 import Ordinal_Primitives_Standard_Library_Integration
-import Affine_Primitives_Standard_Library_Integration
+public import Queue_Primitive
+public import Sequence_Primitives
+public import Store_Protocol_Primitives
 
 // ============================================================================
 // MARK: - Iteration
@@ -30,6 +30,7 @@ import Affine_Primitives_Standard_Library_Integration
 // — vacuous since W2, flagged at the ring leg); they iterate via `forEach`/`drain`.
 
 extension __Queue: Sequenceable where S: Sequenceable & ~Copyable, S.Iterator: Escapable {
+    /// Consumes the queue, returning an iterator over its elements front to back.
     @inlinable
     public consuming func makeIterator() -> S.Iterator {
         take().makeIterator()
