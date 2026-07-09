@@ -154,7 +154,7 @@ struct QueueCoreTests {
         let isFull = q.freeCapacity == Index<Int>.Count(0)
         #expect(isFull)
         var thrown: FixedQueue<Int>.Error? = nil
-        do {
+        do throws(FixedQueue<Int>.Error) {
             try q.enqueue(3)
         } catch {
             thrown = error
@@ -268,7 +268,7 @@ struct QueueCoWTests {
         try q1.enqueue(2)
         let q2 = q1
         var thrown = false
-        do {
+        do throws(CoWFixedQueue<Int>.Error) {
             try q1.enqueue(3)
         } catch {
             thrown = true
@@ -363,6 +363,9 @@ private struct QueueItem: ~Copyable {
 }
 
 private enum QueueProbe {
+}
+
+extension QueueProbe {
     nonisolated(unsafe) static var _destroyed: [Int] = []
     static func reset() { unsafe _destroyed = [] }
     static func recordDestroy(_ id: Int) { unsafe _destroyed.append(id) }
@@ -376,6 +379,9 @@ private struct QueueItem2: ~Copyable {
 }
 
 private enum QueueProbe2 {
+}
+
+extension QueueProbe2 {
     nonisolated(unsafe) static var _destroyed: [Int] = []
     static func reset() { unsafe _destroyed = [] }
     static func recordDestroy(_ id: Int) { unsafe _destroyed.append(id) }

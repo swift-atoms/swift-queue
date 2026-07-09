@@ -112,6 +112,9 @@ private struct SmallItem: ~Copyable {
 }
 
 private enum SmallItemProbe {
+}
+
+extension SmallItemProbe {
     nonisolated(unsafe) static var _destroyed: [Int] = []
     static func reset() { unsafe _destroyed = [] }
     static func recordDestroy(_ id: Int) { unsafe _destroyed.append(id) }
