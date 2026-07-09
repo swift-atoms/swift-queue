@@ -25,8 +25,8 @@ import Testing
 // MOVE-ONLY element (the M1 `~Copyable` restatement on the door extension — without it the
 // alias would be unreachable from `Queue<E>`'s move-only canonical column).
 
-@Suite("Queue<E>.Small<n> door")
-struct QueueSmallDoorTests {
+@Suite
+struct `Queue Small Door Tests` {
 
     @Test
     func `the door resolves and is FIFO across the inline→heap spill (byte budget)`() {

@@ -41,7 +41,7 @@ private typealias CoWFixedQueue<E: ~Copyable> = __Queue<Ownership.Shared<E, Boun
 // MARK: - [DS-024]: the columns are lawful from the family's own suite
 
 @Suite
-struct QueueColumnLawTests {
+struct `Queue Column Law Tests` {
 
     @Test
     func `the direct growable-ring column obeys the seam ledger laws`() {
@@ -83,7 +83,7 @@ struct QueueColumnLawTests {
 // MARK: - Construction + properties + FIFO core (all four columns)
 
 @Suite(.serialized)
-struct QueueCoreTests {
+struct `Queue Core Tests` {
 
     @Test
     func `direct growable queue constructs, enqueues, wraps, and dequeues FIFO`() {
@@ -222,7 +222,7 @@ struct QueueCoreTests {
 // MARK: - CoW value semantics (the Shared columns)
 
 @Suite(.serialized)
-struct QueueCoWTests {
+struct `Queue CoW Tests` {
 
     @Test
     func `copies share until mutation; dequeue detaches from the sibling`() {
@@ -313,7 +313,7 @@ struct QueueCoWTests {
 // MARK: - Move-only elements end-to-end + teardown
 
 @Suite(.serialized)
-struct QueueTeardownTests {
+struct `Queue Teardown Tests` {
 
     @Test
     func `move-only elements flow through and tear down exactly once (wrapped state)`() {
@@ -391,7 +391,7 @@ extension QueueProbe2 {
 // MARK: - Iteration chains + Sendable smoke
 
 @Suite
-struct QueueIterationTests {
+struct `Queue Iteration Tests` {
 
     @Test
     func `forEach walks front-to-back across the wrap; Sequenceable consumes through the column`() {
