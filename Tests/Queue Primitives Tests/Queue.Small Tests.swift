@@ -27,6 +27,12 @@ import Testing
 
 @Suite
 struct `Queue Small Door Tests` {
+    @Suite struct Unit {}
+    @Suite struct `Edge Case` {}
+    @Suite struct Integration {}
+}
+
+extension `Queue Small Door Tests`.Integration {
 
     @Test
     func `the door resolves and is FIFO across the inline→heap spill (byte budget)`() {

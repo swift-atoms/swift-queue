@@ -42,6 +42,12 @@ private typealias CoWFixedQueue<E: ~Copyable> = __Queue<Ownership.Shared<E, Boun
 
 @Suite
 struct `Queue Column Law Tests` {
+    @Suite struct Unit {}
+    @Suite struct `Edge Case` {}
+    @Suite struct Integration {}
+}
+
+extension `Queue Column Law Tests`.Unit {
 
     @Test
     func `the direct growable-ring column obeys the seam ledger laws`() {
@@ -84,6 +90,12 @@ struct `Queue Column Law Tests` {
 
 @Suite(.serialized)
 struct `Queue Core Tests` {
+    @Suite struct Unit {}
+    @Suite struct `Edge Case` {}
+    @Suite struct Integration {}
+}
+
+extension `Queue Core Tests`.Unit {
 
     @Test
     func `direct growable queue constructs, enqueues, wraps, and dequeues FIFO`() {
@@ -223,6 +235,12 @@ struct `Queue Core Tests` {
 
 @Suite(.serialized)
 struct `Queue CoW Tests` {
+    @Suite struct Unit {}
+    @Suite struct `Edge Case` {}
+    @Suite struct Integration {}
+}
+
+extension `Queue CoW Tests`.Unit {
 
     @Test
     func `copies share until mutation; dequeue detaches from the sibling`() {
@@ -314,6 +332,12 @@ struct `Queue CoW Tests` {
 
 @Suite(.serialized)
 struct `Queue Teardown Tests` {
+    @Suite struct Unit {}
+    @Suite struct `Edge Case` {}
+    @Suite struct Integration {}
+}
+
+extension `Queue Teardown Tests`.Integration {
 
     @Test
     func `move-only elements flow through and tear down exactly once (wrapped state)`() {
@@ -392,6 +416,12 @@ extension QueueProbe2 {
 
 @Suite
 struct `Queue Iteration Tests` {
+    @Suite struct Unit {}
+    @Suite struct `Edge Case` {}
+    @Suite struct Integration {}
+}
+
+extension `Queue Iteration Tests`.Unit {
 
     @Test
     func `forEach walks front-to-back across the wrap; Sequenceable consumes through the column`() {
