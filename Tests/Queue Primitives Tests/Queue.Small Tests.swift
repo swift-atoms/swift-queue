@@ -43,9 +43,7 @@ extension `Queue Small Door Tests`.Integration {
 
         // Enqueue 16 `Int`s (128 bytes) past the 64-byte inline budget, forcing at least
         // one inline→heap spill during growth (the ring's form-2 grow path).
-        for value in 1...16 {
-            q.enqueue(value)
-        }
+        (1...16).forEach { q.enqueue($0) }
         #expect(q.count == Index<Int>.Count(16))
 
         // Drain FIFO — order preserved across the spill boundary.
