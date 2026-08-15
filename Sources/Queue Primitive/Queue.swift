@@ -98,7 +98,9 @@ extension __Queue where S: ~Copyable {
     /// the heap column AND the `Small<n>` inline-budget column; `Memory.Inline` correctly
     /// falls outside the `Memory.Growable` fence.
     @inlinable
-    public init<E: ~Copyable, Resource: Memory.Growable & ~Copyable>(minimumCapacity: Index_Primitives.Index<E>.Count = .zero)
+    public init<E: ~Copyable, Resource: Memory.Growable & ~Copyable>(
+        minimumCapacity: Index_Primitives.Index<E>.Count = .zero
+    )
     where S == Buffer<Storage<Memory.Allocator<Resource>>.Contiguous<E>>.Ring {
         self.init(store: S(minimumCapacity: minimumCapacity))
     }
@@ -119,10 +121,14 @@ extension __Queue where S: ~Copyable {
     /// `Queue<E>.Small<n>` door does not depend on it.
     @inlinable
     public init<E>(minimumCapacity: Index_Primitives.Index<E>.Count = .zero)
-    where S == Ownership.Shared<E, Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring> {
+    where
+        S == Ownership.Shared<E, Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring>
+    {
         self.init(
             store: Ownership.Shared(
-                Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring(minimumCapacity: minimumCapacity)
+                Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring(
+                    minimumCapacity: minimumCapacity
+                )
             )
         )
     }
@@ -133,10 +139,14 @@ extension __Queue where S: ~Copyable {
     /// Heap-pinned (see the CoW growable init above — `Ownership.Shared(_:)` construction).
     @inlinable
     public init<E: ~Copyable>(minimumCapacity: Index_Primitives.Index<E>.Count = .zero)
-    where S == Ownership.Shared<E, Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring> {
+    where
+        S == Ownership.Shared<E, Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring>
+    {
         self.init(
             store: Ownership.Shared(
-                Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring(minimumCapacity: minimumCapacity)
+                Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring(
+                    minimumCapacity: minimumCapacity
+                )
             )
         )
     }
@@ -144,10 +154,16 @@ extension __Queue where S: ~Copyable {
     /// Creates an empty CoW fixed-capacity queue on the `Shared` bounded column.
     @inlinable
     public init<E>(capacity: Index_Primitives.Index<E>.Count)
-    where S == Ownership.Shared<E, Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring.Bounded> {
+    where
+        S == Ownership.Shared<
+            E, Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring.Bounded
+        >
+    {
         self.init(
             store: Ownership.Shared(
-                Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring.Bounded(minimumCapacity: capacity)
+                Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring.Bounded(
+                    minimumCapacity: capacity
+                )
             )
         )
     }
@@ -156,10 +172,16 @@ extension __Queue where S: ~Copyable {
     /// on the `Shared` bounded column.
     @inlinable
     public init<E: ~Copyable>(capacity: Index_Primitives.Index<E>.Count)
-    where S == Ownership.Shared<E, Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring.Bounded> {
+    where
+        S == Ownership.Shared<
+            E, Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring.Bounded
+        >
+    {
         self.init(
             store: Ownership.Shared(
-                Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring.Bounded(minimumCapacity: capacity)
+                Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring.Bounded(
+                    minimumCapacity: capacity
+                )
             )
         )
     }
