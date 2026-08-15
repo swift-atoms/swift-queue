@@ -55,7 +55,9 @@ extension `Queue Small Door Tests`.Integration {
     }
 
     @Test
-    func `the door supports the full growable family surface (enqueue / dequeue / reserve / compact / clear / clone)`() {
+    func
+        `the door supports the full growable family surface (enqueue / dequeue / reserve / compact / clear / clone)`()
+    {
         var q = Queue<Int>.Small<64>()
         q.enqueue(10)
         q.enqueue(20)
@@ -84,7 +86,9 @@ extension `Queue Small Door Tests`.Integration {
     }
 
     @Test
-    func `the door is reachable from a MOVE-ONLY element and tears down exactly once (M1 restatement)`() {
+    func
+        `the door is reachable from a MOVE-ONLY element and tears down exactly once (M1 restatement)`()
+    {
         // Compile-probe: `Queue<SmallItem>.Small<64>` typechecks ONLY if the door
         // extension restates `where S: ~Copyable` (M1) — the canonical `Queue<SmallItem>`
         // column is move-only, so a bare `where S: Store.Direct` would re-impose Copyable

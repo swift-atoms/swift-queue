@@ -70,7 +70,9 @@ extension `Queue Column Law Tests`.Unit {
     @Test
     func `the shared growable-ring column obeys the seam ledger laws`() {
         let violations = Seam.Ledger.violations(
-            makeEmpty: { Ownership.Shared(GrowableRing<Int>(minimumCapacity: Index<Int>.Count(4))) },
+            makeEmpty: {
+                Ownership.Shared(GrowableRing<Int>(minimumCapacity: Index<Int>.Count(4)))
+            },
             element: { $0 }
         )
         #expect(violations.isEmpty, "\(violations)")
@@ -159,7 +161,8 @@ extension `Queue Core Tests`.Unit {
     }
 
     @Test
-    func `the bounded column carries the fixed-capacity contract (the former Queue,Fixed)`() throws {
+    func `the bounded column carries the fixed-capacity contract (the former Queue,Fixed)`() throws
+    {
         var q = FixedQueue<Int>(capacity: 2)
         try q.enqueue(1)
         try q.enqueue(2)
@@ -369,7 +372,9 @@ extension `Queue Teardown Tests`.Integration {
     func `the boxed move-only lane tears down via the box drain`() {
         QueueProbe2.reset()
         do {
-            var q = __Queue<Ownership.Shared<QueueItem2, GrowableRing<QueueItem2>>>(minimumCapacity: 2)
+            var q = __Queue<Ownership.Shared<QueueItem2, GrowableRing<QueueItem2>>>(
+                minimumCapacity: 2
+            )
             q.enqueue(QueueItem2(1))
             q.enqueue(QueueItem2(2))
             let n = q.count
