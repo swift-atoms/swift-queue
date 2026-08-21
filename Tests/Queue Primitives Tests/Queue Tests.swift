@@ -14,31 +14,19 @@ import Storage_Contiguous_Primitives
 import Tagged_Primitives_Standard_Library_Integration
 import Testing
 
-// The column-keyed queue suite: the four ratified ring columns through the one generic
-// ADT. Per-suite destruction recorders from birth (the deterministic-gate rule).
-
-// MARK: - The four ratified columns
-
 private typealias HeapStorage<E: ~Copyable> =
     Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>
 
 private typealias GrowableRing<E: ~Copyable> = Buffer<HeapStorage<E>>.Ring
 private typealias BoundedRing<E: ~Copyable> = Buffer<HeapStorage<E>>.Ring.Bounded
 
-/// The default move-only growable queue — the CANONICAL front door ([DS-028]).
 private typealias MoveQueue<E: ~Copyable> = Queue<E>
 
-/// The explicit CoW value-semantic growable queue (`Shared` column — no front
-/// door yet; spelled through the carrier).
 private typealias CoWQueue<E: ~Copyable> = __Queue<Ownership.Shared<E, GrowableRing<E>>>
 
-/// The move-only fixed-capacity queue — the `.Bounded` variant front door.
 private typealias FixedQueue<E: ~Copyable> = Queue<E>.Bounded
 
-/// The CoW fixed-capacity queue (`Shared` bounded column — carrier-spelled).
 private typealias CoWFixedQueue<E: ~Copyable> = __Queue<Ownership.Shared<E, BoundedRing<E>>>
-
-// MARK: - [DS-024]: the columns are lawful from the family's own suite
 
 @Suite
 struct `Queue Column Law Tests` {
@@ -88,8 +76,6 @@ extension `Queue Column Law Tests`.Unit {
     }
 }
 
-// MARK: - Construction + properties + FIFO core (all four columns)
-
 @Suite(.serialized)
 struct `Queue Core Tests` {
     @Suite struct Unit {}
@@ -112,7 +98,7 @@ extension `Queue Core Tests`.Unit {
         let b = q.dequeue()
         #expect(a == 1)
         #expect(b == 2)
-        q.enqueue(5)  // wraps physically
+        q.enqueue(5)
         q.enqueue(6)
         let n = q.count
         #expect(n == Index<Int>.Count(4))
@@ -130,7 +116,7 @@ extension `Queue Core Tests`.Unit {
         var q = MoveQueue<Int>(minimumCapacity: 2)
         q.enqueue(1)
         q.enqueue(2)
-        q.enqueue(3)  // grows
+        q.enqueue(3)
         let capacityOK = q.capacity >= Index<Int>.Count(3)
         #expect(capacityOK)
         var seen: [Int] = []
@@ -149,7 +135,7 @@ extension `Queue Core Tests`.Unit {
         #expect(doubled == 20)
         let e1 = q[1]
         #expect(e1 == 20)
-        q[1] = 25  // gated _modify
+        q[1] = 25
         let opt = q.element(at: 1)
         #expect(opt == 25)
         let beyond = q.element(at: 2)
@@ -177,7 +163,7 @@ extension `Queue Core Tests`.Unit {
         #expect(thrown == .full)
         let a = q.dequeue()
         #expect(a == 1)
-        try q.enqueue(3)  // space again after a dequeue (ring wrap)
+        try q.enqueue(3)
         var seen: [Int] = []
         q.drain { seen.append($0) }
         #expect(seen == [2, 3])
@@ -234,8 +220,6 @@ extension `Queue Core Tests`.Unit {
     }
 }
 
-// MARK: - CoW value semantics (the Shared columns)
-
 @Suite(.serialized)
 struct `Queue CoW Tests` {
     @Suite struct Unit {}
@@ -250,7 +234,7 @@ extension `Queue CoW Tests`.Unit {
         var q1 = CoWQueue<Int>(minimumCapacity: 4)
         q1.enqueue(7)
         q1.enqueue(8)
-        let q2 = q1  // S5: Queue is Copyable because S is
+        let q2 = q1
         let popped = q1.dequeue()
         #expect(popped == 7)
         let mine = q1.count
@@ -266,7 +250,7 @@ extension `Queue CoW Tests`.Unit {
         var q1 = CoWQueue<Int>(minimumCapacity: 2)
         q1.enqueue(1)
         let q2 = q1
-        q1.enqueue(2)  // withUnique(consuming:) detaches first
+        q1.enqueue(2)
         let mine = q1.count
         let theirs = q2.count
         #expect(mine == Index<Int>.Count(2))
@@ -275,7 +259,7 @@ extension `Queue CoW Tests`.Unit {
         var a = CoWQueue<Int>(minimumCapacity: 2)
         a.enqueue(1)
         let b = a
-        a[0] = 100  // generic _modify → unshare()
+        a[0] = 100
         let aSees = a[0]
         let bSees = b[0]
         #expect(aSees == 100)
@@ -295,7 +279,7 @@ extension `Queue CoW Tests`.Unit {
             thrown = true
         }
         #expect(thrown)
-        q1.clear()  // detach, not drain: sibling intact
+        q1.clear()
         let mine = q1.isEmpty
         let theirs = q2.count
         #expect(mine)
@@ -318,7 +302,7 @@ extension `Queue CoW Tests`.Unit {
         x.enqueue(1)
         var y = CoWQueue<Int>(minimumCapacity: 8)
         y.enqueue(1)
-        #expect(x == y)  // element-wise, capacity-independent
+        #expect(x == y)
         y.enqueue(2)
         #expect(x != y)
         var h1 = Hasher()
@@ -330,8 +314,6 @@ extension `Queue CoW Tests`.Unit {
         #expect(h1.finalize() == h2.finalize())
     }
 }
-
-// MARK: - Move-only elements end-to-end + teardown
 
 @Suite(.serialized)
 struct `Queue Teardown Tests` {
@@ -357,15 +339,15 @@ extension `Queue Teardown Tests`.Integration {
             } else {
                 Issue.record("expected the front element")
             }
-            _ = q.dequeue()  // destroy 2 (dropped)
-            q.enqueue(QueueItem(5))  // wraps: two-run ledger behind the seam
+            _ = q.dequeue()
+            q.enqueue(QueueItem(5))
             let mid = QueueProbe.destroyedSorted
             #expect(mid == [1, 2])
             let v = q.withElement(at: 0) { $0.id }
             #expect(v == 3)
         }
         let all = QueueProbe.destroyedSorted
-        #expect(all == [1, 2, 3, 4, 5])  // the oracle walked both runs at drop
+        #expect(all == [1, 2, 3, 4, 5])
     }
 
     @Test
@@ -381,7 +363,7 @@ extension `Queue Teardown Tests`.Integration {
             #expect(n == Index<QueueItem2>.Count(2))
         }
         let all = QueueProbe2.destroyedSorted
-        #expect(all == [1, 2])  // R-5: the drain destroyed the live elements
+        #expect(all == [1, 2])
     }
 }
 
@@ -417,8 +399,6 @@ extension QueueProbe2 {
     static var destroyedSorted: [Int] { unsafe _destroyed.sorted() }
 }
 
-// MARK: - Iteration chains + Sendable smoke
-
 @Suite
 struct `Queue Iteration Tests` {
     @Suite struct Unit {}
@@ -437,12 +417,12 @@ extension `Queue Iteration Tests`.Unit {
         q.enqueue(4)
         _ = q.dequeue()
         _ = q.dequeue()
-        q.enqueue(5)  // wrapped
+        q.enqueue(5)
         var walked: [Int] = []
         q.forEach { walked.append($0) }
         #expect(walked == [3, 4, 5])
 
-        var it = q.makeIterator()  // consuming, via the S chain
+        var it = q.makeIterator()
         var seen: [Int] = []
         while let x = it.next() { seen.append(x) }
         #expect(seen == [3, 4, 5])

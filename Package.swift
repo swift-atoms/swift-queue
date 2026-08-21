@@ -12,19 +12,13 @@ let package = Package(
         .visionOS(.v27),
     ],
     products: [
-        // MARK: - Namespace + base type
+
         .library(name: "Queue Primitive", targets: ["Queue Primitive"]),
 
-        // MARK: - Fixed variant: DELETED at the ADT-families reshape (ASK-E, 2026-06-10 —
-        // the fixed-capacity story lives in the COLUMN: Queue<Buffer<…>.Ring.Bounded>)
-
-        // MARK: - Small variant ([DS-027].1: own product, NOT umbrella-re-exported)
         .library(name: "Queue Small Primitive", targets: ["Queue Small Primitive"]),
 
-        // MARK: - Umbrella (ops module; [MOD-005])
         .library(name: "Queue Primitives", targets: ["Queue Primitives"]),
 
-        // MARK: - Test Support
         .library(name: "Queue Primitives Test Support", targets: ["Queue Primitives Test Support"]),
     ],
     dependencies: [
@@ -36,8 +30,7 @@ let package = Package(
             url: "https://github.com/swift-primitives/swift-buffer-ring-primitives.git",
             branch: "main"
         ),
-        // swift-memory-small-primitives: for the `Queue Small Primitive` variant target
-        // ONLY ([DS-027].1) — `Queue<E>.Small<n>`'s Memory.Small<n> spill leaf.
+
         .package(
             url: "https://github.com/swift-primitives/swift-memory-small-primitives.git",
             branch: "main"
@@ -85,7 +78,6 @@ let package = Package(
     ],
     targets: [
 
-        // MARK: - Namespace + base type (struct Queue<S>; the ADT over an explicit ring column)
         .target(
             name: "Queue Primitive",
             dependencies: [
@@ -122,10 +114,6 @@ let package = Package(
             ]
         ),
 
-        // MARK: - Small type ([DS-027].1: own product, NO umbrella re-export — keeps the
-        //         heap-only consumers' closure lean; the Memory.Small<n> leaf dep lands on
-        //         THIS target only. The door's ops flow from `__Queue`'s allocation-generic
-        //         pins in `Queue Primitives`, so no op code lives here.)
         .target(
             name: "Queue Small Primitive",
             dependencies: [
@@ -145,7 +133,6 @@ let package = Package(
             ]
         ),
 
-        // MARK: - Base ops + Umbrella ([MOD-005]: re-exports the in-package type module only)
         .target(
             name: "Queue Primitives",
             dependencies: [
@@ -186,7 +173,6 @@ let package = Package(
             ]
         ),
 
-        // MARK: - Test Support
         .target(
             name: "Queue Primitives Test Support",
             dependencies: [
@@ -199,7 +185,6 @@ let package = Package(
             path: "Tests/Support"
         ),
 
-        // MARK: - Tests
         .testTarget(
             name: "Queue Primitives Tests",
             dependencies: [
