@@ -1,13 +1,13 @@
 public import Buffer_Primitive
 public import Buffer_Ring_Bounded_Primitive
 public import Buffer_Ring_Primitive
-public import Index_Primitives
+public import Index
 public import Memory_Allocator_Primitive
-public import Memory_Allocator_Protocol_Primitives
-public import Memory_Heap_Primitives
+public import Memory_Allocator_Protocol
+public import Memory_Heap
 public import Ownership_Shared_Primitive
 public import Queue_Primitive
-public import Storage_Contiguous_Primitives
+public import Storage_Contiguous
 
 extension __Queue where S: ~Copyable {
 
@@ -77,7 +77,7 @@ extension __Queue where S: ~Copyable {
     where
         S == Ownership.Shared<E, Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring>
     {
-        let capacity: Index_Primitives.Index<E>.Count = keepingCapacity ? store.capacity : .zero
+        let capacity: Index.Index<E>.Count = keepingCapacity ? store.capacity : .zero
         self.store = Ownership.Shared(
             Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring(
                 minimumCapacity: capacity
@@ -104,14 +104,14 @@ extension __Queue where S: ~Copyable {
 
     @inlinable
     public mutating func reserve<E: ~Copyable, Resource: Memory.Growable & ~Copyable>(
-        _ minimumCapacity: Index_Primitives.Index<E>.Count
+        _ minimumCapacity: Index.Index<E>.Count
     )
     where S == Buffer<Storage<Memory.Allocator<Resource>>.Contiguous<E>>.Ring {
         store.reserveCapacity(minimumCapacity)
     }
 
     @inlinable
-    public mutating func reserve<E: ~Copyable>(_ minimumCapacity: Index_Primitives.Index<E>.Count)
+    public mutating func reserve<E: ~Copyable>(_ minimumCapacity: Index.Index<E>.Count)
     where
         S == Ownership.Shared<E, Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring>
     {

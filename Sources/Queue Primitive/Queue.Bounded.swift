@@ -1,4 +1,4 @@
-public import Store_Protocol_Primitives
+public import Store_Protocol
 
 extension __Queue where S: Store.Direct, S: ~Copyable {
 

@@ -1,7 +1,7 @@
-# Queue Primitives
+# Queue
 
 ![Development Status](https://img.shields.io/badge/status-active--development-blue.svg)
-[![CI](https://github.com/swift-primitives/swift-queue-primitives/actions/workflows/ci.yml/badge.svg)](https://github.com/swift-primitives/swift-queue-primitives/actions/workflows/ci.yml)
+[![CI](https://github.com/swift-molecules/swift-queue/actions/workflows/ci.yml/badge.svg)](https://github.com/swift-molecules/swift-queue/actions/workflows/ci.yml)
 
 `Queue<S>` — a FIFO queue that is generic over its storage **column**. Like the array family, the queue writes its element surface once against a column seam and lets the column decide ownership and capacity: a move-only ring column gives a zero-cost move-only queue, a `Shared` ring column gives copy-on-write value semantics, and a bounded ring column gives a fixed-capacity queue. Copyability flows from the column, not from per-queue machinery.
 
@@ -21,8 +21,8 @@ The column is a **ring** (`Buffer.Ring`): logical slot 0 is the front, so `deque
 ## Quick Start
 
 ```swift
-import Queue_Primitives
-import Column_Primitives
+import Queue
+import Column
 
 var queue = Queue<Column.Ring<Int>>()    // move-only, over a growable ring column
 queue.enqueue(1)
@@ -39,7 +39,7 @@ Add the dependency to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/swift-primitives/swift-queue-primitives.git", branch: "main")
+    .package(url: "https://github.com/swift-molecules/swift-queue.git", branch: "main")
 ]
 ```
 
@@ -49,7 +49,7 @@ Add the product to your target:
 .target(
     name: "App",
     dependencies: [
-        .product(name: "Queue Primitives", package: "swift-queue-primitives")
+        .product(name: "Queue", package: "swift-queue")
     ]
 )
 ```
@@ -62,7 +62,7 @@ The package is pre-1.0 — depend on `branch: "main"` until `0.1.0` is tagged. R
 
 | Product | Contents | When to import |
 |---------|----------|----------------|
-| `Queue Primitives` | Umbrella — `Queue<S>` and its conformances | Most consumers |
+| `Queue` | Umbrella — `Queue<S>` and its conformances | Most consumers |
 | `Queue Primitive` | `Queue<S>` — the FIFO queue over a ring column | Naming the type directly |
 
 ---
@@ -81,9 +81,9 @@ The package is pre-1.0 — depend on `branch: "main"` until `0.1.0` is tagged. R
 
 ## Related Packages
 
-- [`swift-buffer-ring-primitives`](https://github.com/swift-primitives/swift-buffer-ring-primitives) — the front-anchored ring column the queue is built over.
-- [`swift-array-primitives`](https://github.com/swift-primitives/swift-array-primitives) — the random-access sibling that shares the column-generic design.
-- [`swift-deque-primitives`](https://github.com/swift-primitives/swift-deque-primitives) — the double-ended generalization.
+- [`swift-buffer-ring`](https://github.com/swift-molecules/swift-buffer-ring) — the front-anchored ring column the queue is built over.
+- [`swift-array`](https://github.com/swift-molecules/swift-array) — the random-access sibling that shares the column-generic design.
+- [`swift-deque`](https://github.com/swift-molecules/swift-deque) — the double-ended generalization.
 
 ---
 

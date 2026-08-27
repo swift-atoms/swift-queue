@@ -1,9 +1,9 @@
-import Affine_Primitives_Standard_Library_Integration
-public import Buffer_Protocol_Primitives
-import Index_Primitives
-import Ordinal_Primitives_Standard_Library_Integration
+import Affine_Standard_Library_Integration
+public import Buffer_Protocol
+import Index
+import Ordinal_Standard_Library_Integration
 public import Queue_Primitive
-public import Store_Protocol_Primitives
+public import Store_Protocol
 
 extension __Queue where S: ~Copyable, S: Store.`Protocol` & Buffer.`Protocol` {
 
