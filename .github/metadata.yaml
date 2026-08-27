@@ -2,7 +2,7 @@
 # Triaged 2026-04-29 — anomaly-fix pass after wave-4 PR-branch triage didn't apply.
 description: "Queue<S> — a FIFO queue generic over its ring storage column; O(1) enqueue/dequeue, with ownership and capacity decided by the column."
 topics:
-  - primitives
+  - molecules
   - queue
 homepage: "https://swift-institute.org"
 readme:
