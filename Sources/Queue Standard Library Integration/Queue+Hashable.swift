@@ -1,4 +1,4 @@
-public import Queue_Primitive
+public import Queue
 
 extension __Queue: Hashable where S: Hashable {
 
