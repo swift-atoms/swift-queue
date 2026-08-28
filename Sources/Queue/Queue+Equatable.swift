@@ -1,4 +1,4 @@
-public import Queue
+public import Queue_Primitive
 
 extension __Queue: Equatable where S: Equatable {
 
