@@ -23,6 +23,10 @@ let package = Package(
     ],
     dependencies: [
         .package(
+            url: "https://github.com/swift-atoms/swift-store.git",
+            branch: "main"
+        ),
+        .package(
             url: "https://github.com/swift-atoms/swift-buffer.git",
             branch: "main"
         ),
@@ -88,7 +92,7 @@ let package = Package(
                     name: "Buffer Ring Bounded Primitive",
                     package: "swift-buffer-ring"
                 ),
-                .product(name: "Store Protocol", package: "swift-storage"),
+                .product(name: "Store Protocol", package: "swift-store"),
                 .product(
                     name: "Ownership Shared Primitive",
                     package: "swift-ownership-shared"
@@ -120,7 +124,7 @@ let package = Package(
                 "Queue Primitive",
                 .product(name: "Buffer", package: "swift-buffer"),
                 .product(name: "Buffer Ring Primitive", package: "swift-buffer-ring"),
-                .product(name: "Store Protocol", package: "swift-storage"),
+                .product(name: "Store Protocol", package: "swift-store"),
                 .product(
                     name: "Storage Contiguous",
                     package: "swift-storage"
@@ -145,7 +149,7 @@ let package = Package(
                     package: "swift-buffer-ring"
                 ),
                 .product(name: "Buffer Ring", package: "swift-buffer-ring"),
-                .product(name: "Store Protocol", package: "swift-storage"),
+                .product(name: "Store Protocol", package: "swift-store"),
                 .product(
                     name: "Ownership Shared Primitive",
                     package: "swift-ownership-shared"
