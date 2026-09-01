@@ -97,10 +97,7 @@ let package = Package(
                     name: "Ownership Shared Primitive",
                     package: "swift-ownership-shared"
                 ),
-                .product(
-                    name: "Storage Contiguous",
-                    package: "swift-storage"
-                ),
+                .product(name: "Storage", package: "swift-storage"),
                 .product(name: "Memory", package: "swift-memory"),
                 .product(
                     name: "Memory Allocator Primitive",
@@ -125,10 +122,7 @@ let package = Package(
                 .product(name: "Buffer", package: "swift-buffer"),
                 .product(name: "Buffer Ring Primitive", package: "swift-buffer-ring"),
                 .product(name: "Store Protocol", package: "swift-store"),
-                .product(
-                    name: "Storage Contiguous",
-                    package: "swift-storage"
-                ),
+                .product(name: "Storage", package: "swift-storage"),
                 .product(
                     name: "Memory Allocator Primitive",
                     package: "swift-memory-allocation"
@@ -154,10 +148,7 @@ let package = Package(
                     name: "Ownership Shared Primitive",
                     package: "swift-ownership-shared"
                 ),
-                .product(
-                    name: "Storage Contiguous",
-                    package: "swift-storage"
-                ),
+                .product(name: "Storage", package: "swift-storage"),
                 .product(name: "Memory", package: "swift-memory"),
                 .product(
                     name: "Memory Allocator Primitive",
