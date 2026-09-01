@@ -1,6 +1,6 @@
 public import Buffer
 public import Buffer_Ring_Primitive
-public import Memory_Allocator_Primitive
+public import Memory_Allocator
 public import Memory
 public import Storage
 
