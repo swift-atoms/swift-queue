@@ -1,4 +1,4 @@
-public import Buffer_Primitive
+public import Buffer
 public import Buffer_Ring_Bounded_Primitive
 public import Buffer_Ring_Primitive
 public import Index

@@ -81,7 +81,7 @@ let package = Package(
         .target(
             name: "Queue Primitive",
             dependencies: [
-                .product(name: "Buffer Primitive", package: "swift-buffer"),
+                .product(name: "Buffer", package: "swift-buffer"),
                 .product(name: "Buffer Protocol", package: "swift-buffer"),
                 .product(name: "Buffer Ring Primitive", package: "swift-buffer-ring"),
                 .product(
@@ -118,7 +118,7 @@ let package = Package(
             name: "Queue Small Primitive",
             dependencies: [
                 "Queue Primitive",
-                .product(name: "Buffer Primitive", package: "swift-buffer"),
+                .product(name: "Buffer", package: "swift-buffer"),
                 .product(name: "Buffer Ring Primitive", package: "swift-buffer-ring"),
                 .product(name: "Store Protocol", package: "swift-storage"),
                 .product(
@@ -137,7 +137,7 @@ let package = Package(
             name: "Queue",
             dependencies: [
                 "Queue Primitive",
-                .product(name: "Buffer Primitive", package: "swift-buffer"),
+                .product(name: "Buffer", package: "swift-buffer"),
                 .product(name: "Buffer Protocol", package: "swift-buffer"),
                 .product(name: "Buffer Ring Primitive", package: "swift-buffer-ring"),
                 .product(
