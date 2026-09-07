@@ -4,7 +4,7 @@ public import Memory_Allocator
 public import Memory_Small
 public import Queue_Primitive
 public import Storage
-public import Store_Protocol
+public import Store
 
 extension __Queue where S: ~Copyable, S: Store.Direct {
 

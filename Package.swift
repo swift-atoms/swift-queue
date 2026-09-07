@@ -86,13 +86,12 @@ let package = Package(
             name: "Queue Primitive",
             dependencies: [
                 .product(name: "Buffer", package: "swift-buffer"),
-                .product(name: "Buffer Protocol", package: "swift-buffer"),
                 .product(name: "Buffer Ring Primitive", package: "swift-buffer-ring"),
                 .product(
                     name: "Buffer Ring Bounded Primitive",
                     package: "swift-buffer-ring"
                 ),
-                .product(name: "Store Protocol", package: "swift-store"),
+                .product(name: "Store", package: "swift-store"),
                 .product(
                     name: "Ownership Shared Primitive",
                     package: "swift-ownership-shared"
@@ -121,7 +120,7 @@ let package = Package(
                 "Queue Primitive",
                 .product(name: "Buffer", package: "swift-buffer"),
                 .product(name: "Buffer Ring Primitive", package: "swift-buffer-ring"),
-                .product(name: "Store Protocol", package: "swift-store"),
+                .product(name: "Store", package: "swift-store"),
                 .product(name: "Storage", package: "swift-storage"),
                 .product(
                     name: "Memory Allocator",
@@ -136,14 +135,13 @@ let package = Package(
             dependencies: [
                 "Queue Primitive",
                 .product(name: "Buffer", package: "swift-buffer"),
-                .product(name: "Buffer Protocol", package: "swift-buffer"),
                 .product(name: "Buffer Ring Primitive", package: "swift-buffer-ring"),
                 .product(
                     name: "Buffer Ring Bounded Primitive",
                     package: "swift-buffer-ring"
                 ),
                 .product(name: "Buffer Ring", package: "swift-buffer-ring"),
-                .product(name: "Store Protocol", package: "swift-store"),
+                .product(name: "Store", package: "swift-store"),
                 .product(
                     name: "Ownership Shared Primitive",
                     package: "swift-ownership-shared"
@@ -156,7 +154,7 @@ let package = Package(
                 ),
                 .product(name: "Index", package: "swift-index"),
                 .product(name: "Sequence", package: "swift-sequence"),
-                .product(name: "Span Protocol", package: "swift-span"),
+                .product(name: "Span", package: "swift-span"),
                 .product(
                     name: "Ordinal Standard Library Integration",
                     package: "swift-ordinal"

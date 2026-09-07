@@ -1,10 +1,10 @@
 import Affine_Standard_Library_Integration
-public import Buffer_Protocol
+public import Buffer
 import Index
 import Ordinal_Standard_Library_Integration
 public import Queue_Primitive
 public import Sequence
-public import Store_Protocol
+public import Store
 
 extension __Queue: Sequenceable where S: Sequenceable & ~Copyable, S.Iterator: Escapable {
 
