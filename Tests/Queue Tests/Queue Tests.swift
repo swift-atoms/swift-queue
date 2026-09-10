@@ -6,12 +6,12 @@ import Buffer_Ring
 import Index
 import Memory_Allocator_Primitive
 import Memory
-import Ordinal_Standard_Library_Integration
+import Ordinal
 import Ownership_Shared_Primitive
 import Queue
 import Sequence
 import Storage_Contiguous
-import Tagged_Standard_Library_Integration
+import Tagged
 import Testing
 
 private typealias HeapStorage<E: ~Copyable> =

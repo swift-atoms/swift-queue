@@ -104,11 +104,11 @@ let package = Package(
                 ),
                 .product(name: "Index", package: "swift-index"),
                 .product(
-                    name: "Ordinal Standard Library Integration",
+                    name: "Ordinal",
                     package: "swift-ordinal"
                 ),
                 .product(
-                    name: "Affine Standard Library Integration",
+                    name: "Affine",
                     package: "swift-affine"
                 ),
             ]
@@ -156,11 +156,11 @@ let package = Package(
                 .product(name: "Sequence", package: "swift-sequence"),
                 .product(name: "Span", package: "swift-span"),
                 .product(
-                    name: "Ordinal Standard Library Integration",
+                    name: "Ordinal",
                     package: "swift-ordinal"
                 ),
                 .product(
-                    name: "Affine Standard Library Integration",
+                    name: "Affine",
                     package: "swift-affine"
                 ),
             ]
@@ -186,11 +186,11 @@ let package = Package(
                 "Queue Test Support",
                 .product(name: "Memory Small", package: "swift-memory-small"),
                 .product(
-                    name: "Tagged Standard Library Integration",
+                    name: "Tagged",
                     package: "swift-tagged"
                 ),
                 .product(
-                    name: "Ordinal Standard Library Integration",
+                    name: "Ordinal",
                     package: "swift-ordinal"
                 ),
             ]

@@ -1,7 +1,7 @@
-import Affine_Standard_Library_Integration
+import Affine
 public import Buffer
 import Index
-import Ordinal_Standard_Library_Integration
+import Ordinal
 public import Queue_Primitive
 public import Store
 
