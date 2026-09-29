@@ -34,15 +34,9 @@ let package = Package(
             url: "https://github.com/swift-molecules/swift-buffer-ring.git",
             branch: "main"
         ),
-
-        .package(
-            url: "https://github.com/swift-molecules/swift-memory-small.git",
-            branch: "main"
-        ),
         .package(
             url: "https://github.com/swift-atoms/swift-storage.git",
-            branch: "main"
-        ),
+            branch: "main", traits: ["Memory"]),
         .package(
             url: "https://github.com/swift-molecules/swift-ownership-shared.git",
             branch: "main"
@@ -53,8 +47,7 @@ let package = Package(
         ),
         .package(
             url: "https://github.com/swift-molecules/swift-memory-allocation.git",
-            branch: "main"
-        ),
+            branch: "main", traits: ["MemorySmall"]),
         .package(
             url: "https://github.com/swift-atoms/swift-index.git",
             branch: "main"
@@ -126,7 +119,7 @@ let package = Package(
                     name: "Memory Allocator",
                     package: "swift-memory-allocation"
                 ),
-                .product(name: "Memory Small", package: "swift-memory-small"),
+                .product(name: "Memory Small", package: "swift-memory-allocation"),
             ]
         ),
 
@@ -184,7 +177,6 @@ let package = Package(
                 "Queue",
                 "Queue Small Primitive",
                 "Queue Test Support",
-                .product(name: "Memory Small", package: "swift-memory-small"),
                 .product(
                     name: "Tagged",
                     package: "swift-tagged"
@@ -193,6 +185,7 @@ let package = Package(
                     name: "Ordinal",
                     package: "swift-ordinal"
                 ),
+                .product(name: "Memory Small", package: "swift-memory-allocation"),
             ]
         ),
     ],

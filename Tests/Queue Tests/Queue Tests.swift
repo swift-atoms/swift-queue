@@ -1,16 +1,16 @@
-import Buffer_Primitive
+import Buffer
 import Buffer_Test_Support
 import Buffer_Ring_Bounded_Primitive
 import Buffer_Ring_Primitive
 import Buffer_Ring
 import Index
-import Memory_Allocator_Primitive
+import Memory_Allocator
 import Memory
 import Ordinal
 import Ownership_Shared_Primitive
 import Queue
 import Sequence
-import Storage_Contiguous
+import Storage
 import Tagged
 import Testing
 
