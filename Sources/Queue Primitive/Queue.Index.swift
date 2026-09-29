@@ -3,5 +3,5 @@ public import Store
 
 extension __Queue where S: Store.`Protocol` & ~Copyable {
 
-    public typealias Index = Index.Index<S.Element>
+    public typealias Index = Index::Index<S.Element>
 }
