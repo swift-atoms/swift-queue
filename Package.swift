@@ -110,7 +110,7 @@ let package = Package(
         .target(
             name: "Queue Small Primitive",
             dependencies: [
-                "Queue Primitive",
+                .target(name: "Queue Primitive"),
                 .product(name: "Buffer", package: "swift-buffer"),
                 .product(name: "Buffer Ring Primitive", package: "swift-buffer-ring"),
                 .product(name: "Store", package: "swift-store"),
@@ -126,7 +126,7 @@ let package = Package(
         .target(
             name: "Queue",
             dependencies: [
-                "Queue Primitive",
+                .target(name: "Queue Primitive"),
                 .product(name: "Buffer", package: "swift-buffer"),
                 .product(name: "Buffer Ring Primitive", package: "swift-buffer-ring"),
                 .product(
@@ -162,7 +162,7 @@ let package = Package(
         .target(
             name: "Queue Test Support",
             dependencies: [
-                "Queue",
+                .target(name: "Queue"),
                 .product(
                     name: "Buffer Test Support",
                     package: "swift-buffer"
@@ -174,9 +174,9 @@ let package = Package(
         .testTarget(
             name: "Queue Tests",
             dependencies: [
-                "Queue",
-                "Queue Small Primitive",
-                "Queue Test Support",
+                .target(name: "Queue"),
+                .target(name: "Queue Small Primitive"),
+                .target(name: "Queue Test Support"),
                 .product(
                     name: "Tagged",
                     package: "swift-tagged"
@@ -193,15 +193,14 @@ let package = Package(
 )
 
 for target in package.targets where ![.system, .binary, .plugin, .macro].contains(target.type) {
-    let ecosystem: [SwiftSetting] = [
+    target.swiftSettings = (target.swiftSettings ?? []) + [
         .strictMemorySafety(),
         .enableUpcomingFeature("ExistentialAny"),
         .enableUpcomingFeature("InternalImportsByDefault"),
         .enableUpcomingFeature("MemberImportVisibility"),
         .enableUpcomingFeature("NonisolatedNonsendingByDefault"),
-        .enableExperimentalFeature("Lifetimes"),
         .enableUpcomingFeature("InferIsolatedConformances"),
+        .enableExperimentalFeature("Lifetimes"),
+        .treatAllWarnings(as: .error),
     ]
-
-    target.swiftSettings = (target.swiftSettings ?? []) + ecosystem
 }

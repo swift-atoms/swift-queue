@@ -19,7 +19,9 @@ public struct __Queue<S: ~Copyable>: ~Copyable {
     public init(store: consuming S) {
         self.store = store
     }
+}
 
+extension __Queue where S: ~Copyable {
     @inlinable
     public consuming func take() -> S {
         store
