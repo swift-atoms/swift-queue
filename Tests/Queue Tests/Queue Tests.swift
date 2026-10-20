@@ -1,11 +1,11 @@
 import Buffer
-import Buffer_Test_Support
+import Buffer_Ring
 import Buffer_Ring_Bounded_Primitive
 import Buffer_Ring_Primitive
-import Buffer_Ring
+import Buffer_Test_Support
 import Index
-import Memory_Allocator
 import Memory
+import Memory_Allocator
 import Ordinal
 import Ownership_Shared_Primitive
 import Queue
@@ -147,8 +147,7 @@ extension `Queue Core Tests`.Unit {
     }
 
     @Test
-    func `the bounded column carries the fixed-capacity contract (the former Queue,Fixed)`() throws
-    {
+    func `the bounded column carries the fixed-capacity contract (the former Queue,Fixed)`() throws {
         var q = FixedQueue<Int>(capacity: 2)
         try q.enqueue(1)
         try q.enqueue(2)
