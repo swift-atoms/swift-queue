@@ -28,14 +28,18 @@ private typealias FixedQueue<E: ~Copyable> = Queue<E>.Bounded
 
 private typealias CoWFixedQueue<E: ~Copyable> = __Queue<Ownership.Shared<E, BoundedRing<E>>>
 
-@Suite
-struct `Queue Column Law Tests` {
-    @Suite struct Unit {}
-    @Suite struct `Edge Case` {}
-    @Suite struct Integration {}
+enum `Queue Tests` {}
+
+extension `Queue Tests` {
+    @Suite
+    struct `Queue Column Law Tests` {
+        @Suite struct Unit {}
+        @Suite struct `Edge Case` {}
+        @Suite struct Integration {}
+    }
 }
 
-extension `Queue Column Law Tests`.Unit {
+extension `Queue Tests`.`Queue Column Law Tests`.Unit {
 
     @Test
     func `the direct growable-ring column obeys the seam ledger laws`() {
@@ -76,14 +80,16 @@ extension `Queue Column Law Tests`.Unit {
     }
 }
 
-@Suite(.serialized)
-struct `Queue Core Tests` {
-    @Suite struct Unit {}
-    @Suite struct `Edge Case` {}
-    @Suite struct Integration {}
+extension `Queue Tests` {
+    @Suite(.serialized)
+    struct `Queue Core Tests` {
+        @Suite struct Unit {}
+        @Suite struct `Edge Case` {}
+        @Suite struct Integration {}
+    }
 }
 
-extension `Queue Core Tests`.Unit {
+extension `Queue Tests`.`Queue Core Tests`.Unit {
 
     @Test
     func `direct growable queue constructs, enqueues, wraps, and dequeues FIFO`() {
@@ -219,14 +225,16 @@ extension `Queue Core Tests`.Unit {
     }
 }
 
-@Suite(.serialized)
-struct `Queue CoW Tests` {
-    @Suite struct Unit {}
-    @Suite struct `Edge Case` {}
-    @Suite struct Integration {}
+extension `Queue Tests` {
+    @Suite(.serialized)
+    struct `Queue CoW Tests` {
+        @Suite struct Unit {}
+        @Suite struct `Edge Case` {}
+        @Suite struct Integration {}
+    }
 }
 
-extension `Queue CoW Tests`.Unit {
+extension `Queue Tests`.`Queue CoW Tests`.Unit {
 
     @Test
     func `copies share until mutation; dequeue detaches from the sibling`() {
@@ -314,14 +322,16 @@ extension `Queue CoW Tests`.Unit {
     }
 }
 
-@Suite(.serialized)
-struct `Queue Teardown Tests` {
-    @Suite struct Unit {}
-    @Suite struct `Edge Case` {}
-    @Suite struct Integration {}
+extension `Queue Tests` {
+    @Suite(.serialized)
+    struct `Queue Teardown Tests` {
+        @Suite struct Unit {}
+        @Suite struct `Edge Case` {}
+        @Suite struct Integration {}
+    }
 }
 
-extension `Queue Teardown Tests`.Integration {
+extension `Queue Tests`.`Queue Teardown Tests`.Integration {
 
     @Test
     func `move-only elements flow through and tear down exactly once (wrapped state)`() {
@@ -398,14 +408,16 @@ extension QueueProbe2 {
     static var destroyedSorted: [Int] { unsafe _destroyed.sorted() }
 }
 
-@Suite
-struct `Queue Iteration Tests` {
-    @Suite struct Unit {}
-    @Suite struct `Edge Case` {}
-    @Suite struct Integration {}
+extension `Queue Tests` {
+    @Suite
+    struct `Queue Iteration Tests` {
+        @Suite struct Unit {}
+        @Suite struct `Edge Case` {}
+        @Suite struct Integration {}
+    }
 }
 
-extension `Queue Iteration Tests`.Unit {
+extension `Queue Tests`.`Queue Iteration Tests`.Unit {
 
     @Test
     func `forEach walks front-to-back across the wrap; Sequenceable consumes through the column`() {

@@ -4,14 +4,18 @@ import Queue
 import Queue_Small_Primitive
 import Testing
 
-@Suite
-struct `Queue Small Door Tests` {
-    @Suite struct Unit {}
-    @Suite struct `Edge Case` {}
-    @Suite struct Integration {}
+enum `Queue.Small Tests` {}
+
+extension `Queue.Small Tests` {
+    @Suite
+    struct `Queue Small Door Tests` {
+        @Suite struct Unit {}
+        @Suite struct `Edge Case` {}
+        @Suite struct Integration {}
+    }
 }
 
-extension `Queue Small Door Tests`.Integration {
+extension `Queue.Small Tests`.`Queue Small Door Tests`.Integration {
 
     @Test
     func `the door resolves and is FIFO across the inline→heap spill (byte budget)`() {
