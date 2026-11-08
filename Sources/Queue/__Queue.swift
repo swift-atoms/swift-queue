@@ -151,3 +151,19 @@ extension __Queue where S: ~Copyable {
         Self(store: store.clone())
     }
 }
+
+extension __Queue: Equatable where S: Equatable {
+
+    @inlinable
+    public static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.store == rhs.store
+    }
+}
+
+extension __Queue: Hashable where S: Hashable {
+
+    @inlinable
+    public func hash(into hasher: inout Hasher) {
+        store.hash(into: &hasher)
+    }
+}
