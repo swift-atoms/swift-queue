@@ -29,26 +29,29 @@ extension __Queue where S: ~Copyable {
         }
     }
 
+    /// Appends `element` at the back, or hands it back when the queue is full.
+    ///
+    /// - Returns: `nil` when the element was enqueued; the refused element
+    ///   itself when `count` equals `capacity`, so it is never destroyed.
     @inlinable
-    public mutating func enqueue<E: ~Copyable>(_ element: consuming E) throws(Error)
+    public mutating func enqueue<E: ~Copyable>(_ element: consuming E) -> E?
     where S == Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring.Bounded {
-        guard store.push.back(element) == nil else {
-            throw .full
-        }
+        store.push.back(element)
     }
 
+    /// Appends `element` at the back, or hands it back when the queue is full.
+    ///
+    /// - Returns: `nil` when the element was enqueued; the refused element
+    ///   itself when `count` equals `capacity`, so it is never destroyed.
     @inlinable
-    public mutating func enqueue<E: ~Copyable>(_ element: consuming E) throws(Error)
+    public mutating func enqueue<E: ~Copyable>(_ element: consuming E) -> E?
     where
         S == Ownership.Shared<
             E, Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<E>>.Ring.Bounded
         >
     {
-        let rejected = store.withUnique(consuming: element) { ring, element in
+        store.withUnique(consuming: element) { ring, element in
             ring.push.back(element)
-        }
-        guard rejected == nil else {
-            throw .full
         }
     }
 }

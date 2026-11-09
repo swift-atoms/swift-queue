@@ -153,22 +153,20 @@ extension `Queue Tests`.`Queue Core Tests`.Unit {
     }
 
     @Test
-    func `the bounded column carries the fixed-capacity contract (the former Queue,Fixed)`() throws {
+    func `the bounded column carries the fixed-capacity contract (the former Queue,Fixed)`() {
         var q = FixedQueue<Int>(capacity: 2)
-        try q.enqueue(1)
-        try q.enqueue(2)
+        let first = q.enqueue(1)
+        #expect(first == nil)
+        let second = q.enqueue(2)
+        #expect(second == nil)
         let isFull = q.freeCapacity == Index<Int>.Count(0)
         #expect(isFull)
-        var thrown: FixedQueue<Int>.Error? = nil
-        do throws(FixedQueue<Int>.Error) {
-            try q.enqueue(3)
-        } catch {
-            thrown = error
-        }
-        #expect(thrown == .full)
+        let refused = q.enqueue(3)
+        #expect(refused == 3)
         let a = q.dequeue()
         #expect(a == 1)
-        try q.enqueue(3)
+        let accepted = q.enqueue(3)
+        #expect(accepted == nil)
         var seen: [Int] = []
         q.drain { seen.append($0) }
         #expect(seen == [2, 3])
@@ -216,7 +214,7 @@ extension `Queue Tests`.`Queue Core Tests`.Unit {
         #expect(theirs == 40)
 
         var f = FixedQueue<Int>(capacity: 2)
-        try? f.enqueue(9)
+        _ = f.enqueue(9)
         let fc = f.clone()
         let fcFront = fc.peek()
         #expect(fcFront == 9)
@@ -274,18 +272,13 @@ extension `Queue Tests`.`Queue CoW Tests`.Unit {
     }
 
     @Test
-    func `the CoW bounded column keeps the fixed contract and detaches on write`() throws {
+    func `the CoW bounded column keeps the fixed contract and detaches on write`() {
         var q1 = CoWFixedQueue<Int>(capacity: 2)
-        try q1.enqueue(1)
-        try q1.enqueue(2)
+        _ = q1.enqueue(1)
+        _ = q1.enqueue(2)
         let q2 = q1
-        var thrown = false
-        do throws(CoWFixedQueue<Int>.Error) {
-            try q1.enqueue(3)
-        } catch {
-            thrown = true
-        }
-        #expect(thrown)
+        let refused = q1.enqueue(3)
+        #expect(refused == 3)
         q1.clear()
         let mine = q1.isEmpty
         let theirs = q2.count
@@ -372,6 +365,50 @@ extension `Queue Tests`.`Queue Teardown Tests`.Integration {
             #expect(n == Index<QueueItem2>.Count(2))
         }
         let all = QueueProbe2.destroyedSorted
+        #expect(all == [1, 2])
+    }
+
+    @Test
+    func `a full bounded queue hands the refused move-only element back intact`() {
+        QueueProbe.reset()
+        do {
+            var q = FixedQueue<QueueItem>(capacity: 1)
+            if let unexpected = q.enqueue(QueueItem(1)) {
+                Issue.record("refused \(unexpected.id) with free capacity")
+            }
+            if let refused = q.enqueue(QueueItem(2)) {
+                let id = refused.id
+                #expect(id == 2)
+                let alive = QueueProbe.destroyedSorted
+                #expect(alive == [])
+            } else {
+                Issue.record("expected the full queue to hand the element back")
+            }
+            let count = q.count
+            #expect(count == Index<QueueItem>.Count(1))
+        }
+        let all = QueueProbe.destroyedSorted
+        #expect(all == [1, 2])
+    }
+
+    @Test
+    func `a full shared bounded queue hands the refused move-only element back intact`() {
+        QueueProbe.reset()
+        do {
+            var q = CoWFixedQueue<QueueItem>(capacity: 1)
+            if let unexpected = q.enqueue(QueueItem(1)) {
+                Issue.record("refused \(unexpected.id) with free capacity")
+            }
+            if let refused = q.enqueue(QueueItem(2)) {
+                let id = refused.id
+                #expect(id == 2)
+                let alive = QueueProbe.destroyedSorted
+                #expect(alive == [])
+            } else {
+                Issue.record("expected the full queue to hand the element back")
+            }
+        }
+        let all = QueueProbe.destroyedSorted
         #expect(all == [1, 2])
     }
 }
