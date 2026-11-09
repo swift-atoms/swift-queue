@@ -240,13 +240,13 @@ extension `Queue Tests`.`Queue CoW Tests`.Unit {
         q1.enqueue(7)
         q1.enqueue(8)
         let q2 = q1
-        let popped = q1.dequeue()
+        let popped: Int? = q1.dequeue()
         #expect(popped == 7)
-        let mine = q1.count
-        let theirs = q2.count
+        let mine: Index<Int>.Count = q1.count
+        let theirs: Index<Int>.Count = q2.count
         #expect(mine == Index<Int>.Count(1))
         #expect(theirs == Index<Int>.Count(2))
-        let theirFront = q2.peek()
+        let theirFront: Int? = q2.peek()
         #expect(theirFront == 7)
     }
 
@@ -256,8 +256,8 @@ extension `Queue Tests`.`Queue CoW Tests`.Unit {
         q1.enqueue(1)
         let q2 = q1
         q1.enqueue(2)
-        let mine = q1.count
-        let theirs = q2.count
+        let mine: Index<Int>.Count = q1.count
+        let theirs: Index<Int>.Count = q2.count
         #expect(mine == Index<Int>.Count(2))
         #expect(theirs == Index<Int>.Count(1))
 
@@ -265,8 +265,8 @@ extension `Queue Tests`.`Queue CoW Tests`.Unit {
         a.enqueue(1)
         let b = a
         a[0] = 100
-        let aSees = a[0]
-        let bSees = b[0]
+        let aSees: Int = a[0]
+        let bSees: Int = b[0]
         #expect(aSees == 100)
         #expect(bSees == 1)
     }
@@ -281,7 +281,7 @@ extension `Queue Tests`.`Queue CoW Tests`.Unit {
         #expect(refused == 3)
         q1.clear()
         let mine = q1.isEmpty
-        let theirs = q2.count
+        let theirs: Index<Int>.Count = q2.count
         #expect(mine)
         #expect(theirs == Index<Int>.Count(2))
     }
@@ -293,8 +293,8 @@ extension `Queue Tests`.`Queue CoW Tests`.Unit {
         q.enqueue(2)
         var c = q.clone()
         c[0] = 99
-        let mine = q[0]
-        let theirs = c[0]
+        let mine: Int = q[0]
+        let theirs: Int = c[0]
         #expect(mine == 1)
         #expect(theirs == 99)
 
@@ -361,7 +361,7 @@ extension `Queue Tests`.`Queue Teardown Tests`.Integration {
             )
             q.enqueue(QueueItem2(1))
             q.enqueue(QueueItem2(2))
-            let n = q.count
+            let n: Index<QueueItem2>.Count = q.count
             #expect(n == Index<QueueItem2>.Count(2))
         }
         let all = QueueProbe2.destroyedSorted
